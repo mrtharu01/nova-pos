@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Product placeholder">
+  <rect width="400" height="400" rx="48" fill="#e2e8f0"/>
+  <path d="M128 142h144l-14 152H142l-14-152Z" fill="#94a3b8"/>
+  <path d="M165 151v-18c0-20 15-36 35-36s35 16 35 36v18" fill="none" stroke="#64748b" stroke-width="18" stroke-linecap="round"/>
+</svg>
