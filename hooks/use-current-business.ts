@@ -44,11 +44,15 @@ const DEMO_BUSINESS: CurrentBusiness = {
 
 
 /*
- * These live for the lifetime of the browser application.
+ * These live for the lifetime of the
+ * browser application.
  *
- * They survive client-side page navigation because the module
- * itself does not get recreated every time AppLayout mounts.
+ * They survive client-side page
+ * navigation because the module itself
+ * does not get recreated every time
+ * AppLayout mounts.
  */
+
 let cachedSnapshot:
   | CurrentBusinessSnapshot
   | null = null;
@@ -65,11 +69,14 @@ let pendingRequest:
 
 async function loadCurrentBusinessSnapshot() {
   /*
-   * AppLayout and Sidebar can call this hook at the same time.
+   * AppLayout and Sidebar can call this
+   * hook at the same time.
    *
-   * Reuse one in-flight request instead of sending duplicate
-   * Supabase queries.
+   * Reuse one in-flight request instead
+   * of sending duplicate Supabase
+   * queries.
    */
+
   if (pendingRequest) {
     return pendingRequest;
   }
@@ -157,8 +164,10 @@ async function loadCurrentBusinessSnapshot() {
     return await request;
   } finally {
     /*
-     * Only clear the promise belonging to this request.
+     * Only clear the promise belonging
+     * to this request.
      */
+
     if (
       pendingRequest ===
       request
@@ -175,17 +184,25 @@ async function loadCurrentBusinessSnapshot() {
 ============================================================ */
 
 export function useCurrentBusiness() {
+  /*
+   * Demo Mode must now be explicitly
+   * enabled.
+   */
+
   const demo =
-    isDemoMode() ||
-    !isSupabaseConfigured();
+    isDemoMode();
+
+
+  const configured =
+    isSupabaseConfigured();
 
 
   /*
-   * The important part:
-   *
-   * On a client-side route change we initialise state using
-   * the cached business instead of null.
+   * On a client-side route change we
+   * initialise state using the cached
+   * business instead of null.
    */
+
   const [
     email,
     setEmail,
@@ -194,8 +211,10 @@ export function useCurrentBusiness() {
       () =>
         demo
           ? "demo@nova.local"
-          : cachedSnapshot?.email ??
-            "",
+          : configured
+            ? cachedSnapshot?.email ??
+              ""
+            : "",
     );
 
 
@@ -209,8 +228,10 @@ export function useCurrentBusiness() {
       () =>
         demo
           ? DEMO_BUSINESS
-          : cachedSnapshot?.business ??
-            null,
+          : configured
+            ? cachedSnapshot?.business ??
+              null
+            : null,
     );
 
 
@@ -221,6 +242,7 @@ export function useCurrentBusiness() {
     React.useState(
       () =>
         !demo &&
+        configured &&
         !cachedSnapshot,
     );
 
@@ -231,7 +253,12 @@ export function useCurrentBusiness() {
   ] =
     React.useState<
       string | null
-    >(null);
+    >(
+      !demo &&
+        !configured
+        ? "Supabase is not configured. Check the NOVA environment variables."
+        : null,
+    );
 
 
   const [
@@ -242,6 +269,10 @@ export function useCurrentBusiness() {
 
 
   React.useEffect(() => {
+    /*
+     * Explicit Demo Mode.
+     */
+
     if (demo) {
       setEmail(
         "demo@nova.local",
@@ -251,9 +282,43 @@ export function useCurrentBusiness() {
         DEMO_BUSINESS,
       );
 
-      setLoading(false);
+      setLoading(
+        false,
+      );
 
-      setError(null);
+      setError(
+        null,
+      );
+
+      return;
+    }
+
+
+    /*
+     * Missing Supabase configuration
+     * must never silently become demo
+     * mode.
+     */
+
+    if (!configured) {
+      cachedSnapshot =
+        null;
+
+      setEmail(
+        "",
+      );
+
+      setBusiness(
+        null,
+      );
+
+      setLoading(
+        false,
+      );
+
+      setError(
+        "Supabase is not configured. Check the NOVA environment variables.",
+      );
 
       return;
     }
@@ -264,11 +329,14 @@ export function useCurrentBusiness() {
 
 
     /*
-     * Immediately restore cached information.
+     * Immediately restore cached
+     * information.
      *
-     * This happens synchronously enough that route navigation
-     * no longer rebuilds the sidebar from business=null.
+     * This prevents sidebar/business
+     * information from flashing during
+     * client navigation.
      */
+
     if (cachedSnapshot) {
       setEmail(
         cachedSnapshot.email,
@@ -278,14 +346,20 @@ export function useCurrentBusiness() {
         cachedSnapshot.business,
       );
 
-      setLoading(false);
+      setLoading(
+        false,
+      );
     } else {
-      setLoading(true);
+      setLoading(
+        true,
+      );
     }
 
 
     async function load() {
-      setError(null);
+      setError(
+        null,
+      );
 
 
       try {
@@ -312,6 +386,15 @@ export function useCurrentBusiness() {
         }
 
 
+        setEmail(
+          "",
+        );
+
+        setBusiness(
+          null,
+        );
+
+
         setError(
           cause instanceof Error
             ? cause.message
@@ -319,19 +402,20 @@ export function useCurrentBusiness() {
         );
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          setLoading(
+            false,
+          );
         }
       }
     }
 
 
     /*
-     * Even if we already have cache, revalidate quietly.
-     *
-     * This means updated business information eventually
-     * reaches the application without producing navigation
-     * flicker.
+     * Even if cached data exists,
+     * quietly revalidate against
+     * Supabase.
      */
+
     void load();
 
 
@@ -341,11 +425,22 @@ export function useCurrentBusiness() {
     };
   }, [
     demo,
+    configured,
     refreshKey,
   ]);
 
 
   function refresh() {
+    /*
+     * Drop the cached snapshot so the
+     * next refresh represents the latest
+     * business information.
+     */
+
+    cachedSnapshot =
+      null;
+
+
     setRefreshKey(
       (value) =>
         value + 1,

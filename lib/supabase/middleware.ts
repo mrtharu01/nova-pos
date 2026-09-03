@@ -63,14 +63,17 @@ export async function updateSession(
   request: NextRequest,
 ) {
   /*
-   * Keep Demo Mode behaviour
-   * available.
+   * Demo Mode must now be explicitly
+   * enabled.
+   *
+   * Missing environment configuration
+   * must never silently expose the
+   * demo POS.
    */
 
   if (
-    process.env
-      .NEXT_PUBLIC_NOVA_DEMO_MODE !==
-    "false"
+    process.env.NEXT_PUBLIC_NOVA_DEMO_MODE ===
+    "true"
   ) {
     return NextResponse.next({
       request,
@@ -85,10 +88,27 @@ export async function updateSession(
     process.env
       .NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+  /*
+   * Fail closed when NOVA has not been
+   * configured correctly.
+   *
+   * Previously this returned
+   * NextResponse.next(), which could
+   * accidentally expose application
+   * routes without authentication.
+   */
   if (!url || !key) {
-    return NextResponse.next({
-      request,
-    });
+    return new NextResponse(
+      "NOVA POS configuration error. Supabase environment variables are missing.",
+      {
+        status: 503,
+
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
   }
 
   let response =
@@ -230,6 +250,17 @@ export async function updateSession(
       businessRows?.length,
     );
 
+  /*
+   * Auth routes are allowed to continue
+   * even when the user does not yet
+   * belong to a business.
+   *
+   * This is required for:
+   *
+   * /auth/setup-password
+   * /auth/reset-password
+   * invitation acceptance
+   */
   if (
     !hasBusiness &&
     pathname !==
@@ -263,6 +294,10 @@ export async function updateSession(
     );
   }
 
+  /*
+   * Authenticated users should not
+   * remain on login/signup/check-email.
+   */
   if (
     publicPath &&
     !pathname.startsWith(
