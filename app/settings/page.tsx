@@ -30,9 +30,17 @@ import {
 } from "@/components/settings/ReceiptSettingsClient";
 
 import {
+  ReportSettingsCard,
+} from "@/components/settings/ReportSettingsCard";
+
+import {
   StaffSettingsCard,
 } from "@/components/settings/StaffSettingsCard";
 
+
+/* ============================================================
+   SETTINGS SECTIONS
+============================================================ */
 
 const SECTIONS = [
   "General",
@@ -42,6 +50,7 @@ const SECTIONS = [
   "Inventory",
   "QR Codes",
   "Loyalty",
+  "Reports",
   "Staff",
 ] as const;
 
@@ -49,6 +58,10 @@ const SECTIONS = [
 type Section =
   (typeof SECTIONS)[number];
 
+
+/* ============================================================
+   PAGE
+============================================================ */
 
 export default function SettingsPage() {
   const [
@@ -65,9 +78,9 @@ export default function SettingsPage() {
 
       <div className="grid gap-6 md:grid-cols-4">
 
-        {/* =========================================
+        {/* ====================================================
             SETTINGS NAVIGATION
-        ========================================== */}
+        ===================================================== */}
 
         <div className="space-y-2 md:col-span-1">
 
@@ -91,9 +104,11 @@ export default function SettingsPage() {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
+
                 {
                   section
                 }
+
               </button>
 
             ),
@@ -102,15 +117,15 @@ export default function SettingsPage() {
         </div>
 
 
-        {/* =========================================
+        {/* ====================================================
             SETTINGS CONTENT
-        ========================================== */}
+        ===================================================== */}
 
         <div className="space-y-6 md:col-span-3">
 
-          {/* =====================================
+          {/* ==================================================
               GENERAL
-          ====================================== */}
+          =================================================== */}
 
           {active ===
           "General" ? (
@@ -200,8 +215,7 @@ export default function SettingsPage() {
 
 
                   <p className="mt-3 text-xs text-muted-foreground">
-                    Your preference is stored on this device.
-                    Account-level settings will be connected later.
+                    Your appearance preference is stored on this device.
                   </p>
 
                 </CardContent>
@@ -211,48 +225,57 @@ export default function SettingsPage() {
             </>
 
           ) : active ===
-            "Receipts" ? (
+          "Receipts" ? (
 
-            /* ===================================
+            /* ================================================
                RECEIPT SETTINGS
-            ==================================== */
+            ================================================= */
 
             <ReceiptSettingsClient
               embedded
             />
 
           ) : active ===
-            "Emails" ? (
+          "Emails" ? (
 
-            /* ===================================
+            /* ================================================
                EMAIL SETTINGS
-            ==================================== */
+            ================================================= */
 
             <EmailSettingsCard />
 
           ) : active ===
-            "Loyalty" ? (
+          "Loyalty" ? (
 
-            /* ===================================
+            /* ================================================
                CUSTOMER + LOYALTY SETTINGS
-            ==================================== */
+            ================================================= */
 
             <LoyaltySettingsCard />
 
           ) : active ===
-            "Staff" ? (
+          "Reports" ? (
 
-            /* ===================================
+            /* ================================================
+               PRINTED REPORT SETTINGS
+            ================================================= */
+
+            <ReportSettingsCard />
+
+          ) : active ===
+          "Staff" ? (
+
+            /* ================================================
                STAFF SETTINGS
-            ==================================== */
+            ================================================= */
 
             <StaffSettingsCard />
 
           ) : (
 
-            /* ===================================
-               FUTURE SETTINGS
-            ==================================== */
+            /* ================================================
+               REMAINING SETTINGS
+            ================================================= */
 
             <Card className="rounded-[24px]">
 
@@ -275,7 +298,7 @@ export default function SettingsPage() {
                     {
                       active
                     }{" "}
-                    settings are prepared for a later backend phase.
+                    settings are prepared for the backend phase.
                   </p>
 
 

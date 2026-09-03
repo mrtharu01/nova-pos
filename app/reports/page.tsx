@@ -21,6 +21,10 @@ import {
 } from "@/components/layout/AppLayout";
 
 import {
+  ReportPrintDialog,
+} from "@/components/reports/ReportPrintDialog";
+
+import {
   Button,
 } from "@/components/ui/button";
 
@@ -61,50 +65,28 @@ type ReportPreset =
 
 
 const PRESETS: {
-  id:
-    ReportPreset;
-
-  label:
-    string;
+  id: ReportPreset;
+  label: string;
 }[] = [
   {
-    id:
-      "today",
-
-    label:
-      "Today",
+    id: "today",
+    label: "Today",
   },
-
   {
-    id:
-      "yesterday",
-
-    label:
-      "Yesterday",
+    id: "yesterday",
+    label: "Yesterday",
   },
-
   {
-    id:
-      "7d",
-
-    label:
-      "7 Days",
+    id: "7d",
+    label: "7 Days",
   },
-
   {
-    id:
-      "30d",
-
-    label:
-      "30 Days",
+    id: "30d",
+    label: "30 Days",
   },
-
   {
-    id:
-      "month",
-
-    label:
-      "This Month",
+    id: "month",
+    label: "This Month",
   },
 ];
 
@@ -119,16 +101,13 @@ function localDate(
   const year =
     date.getFullYear();
 
-
   const month =
     String(
-      date.getMonth() +
-        1,
+      date.getMonth() + 1,
     ).padStart(
       2,
       "0",
     );
-
 
   const day =
     String(
@@ -138,18 +117,15 @@ function localDate(
       "0",
     );
 
-
   return `${year}-${month}-${day}`;
 }
 
 
 function presetRange(
-  preset:
-    ReportPreset,
+  preset: ReportPreset,
 ) {
   const now =
     new Date();
-
 
   const end =
     new Date(
@@ -158,47 +134,36 @@ function presetRange(
       now.getDate(),
     );
 
-
   const start =
     new Date(
       end,
     );
 
-
-  switch (
-    preset
-  ) {
+  switch (preset) {
     case "yesterday":
       start.setDate(
-        start.getDate() -
-          1,
+        start.getDate() - 1,
       );
 
       end.setDate(
-        end.getDate() -
-          1,
+        end.getDate() - 1,
       );
 
       break;
-
 
     case "7d":
       start.setDate(
-        start.getDate() -
-          6,
+        start.getDate() - 6,
       );
 
       break;
-
 
     case "30d":
       start.setDate(
-        start.getDate() -
-          29,
+        start.getDate() - 29,
       );
 
       break;
-
 
     case "month":
       start.setDate(
@@ -207,12 +172,10 @@ function presetRange(
 
       break;
 
-
     case "today":
     default:
       break;
   }
-
 
   return {
     startDate:
@@ -237,6 +200,24 @@ function getErrorMessage(
     return error.message;
   }
 
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error
+  ) {
+    const message =
+      (
+        error as {
+          message?: unknown;
+        }
+      ).message;
+
+    if (
+      typeof message === "string"
+    ) {
+      return message;
+    }
+  }
 
   return "Reports could not be loaded.";
 }
@@ -249,15 +230,11 @@ function formatReportDate(
     return "—";
   }
 
-
   return new Intl.DateTimeFormat(
     "en-LK",
     {
-      month:
-        "short",
-
-      day:
-        "numeric",
+      month: "short",
+      day: "numeric",
     },
   ).format(
     new Date(
@@ -273,17 +250,10 @@ function formatDateTime(
   return new Intl.DateTimeFormat(
     "en-LK",
     {
-      month:
-        "short",
-
-      day:
-        "numeric",
-
-      hour:
-        "numeric",
-
-      minute:
-        "2-digit",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     },
   ).format(
     new Date(
@@ -294,12 +264,9 @@ function formatDateTime(
 
 
 function statusClass(
-  status:
-    SaleStatus,
+  status: SaleStatus,
 ) {
-  switch (
-    status
-  ) {
+  switch (status) {
     case "completed":
       return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
 
@@ -319,21 +286,15 @@ function methodLabel(
   method: string,
 ) {
   if (
-    method ===
-      "cash" ||
-    method ===
-      "card" ||
-    method ===
-      "bank_transfer" ||
-    method ===
-      "other"
+    method === "cash" ||
+    method === "card" ||
+    method === "bank_transfer" ||
+    method === "other"
   ) {
     return paymentMethodLabel(
-      method as
-        PaymentMethod,
+      method as PaymentMethod,
     );
   }
-
 
   return method;
 }
@@ -351,8 +312,7 @@ export default function ReportsPage() {
 
 
   const businessId =
-    business?.id ??
-    "";
+    business?.id ?? "";
 
 
   const currencyCode =
@@ -364,9 +324,7 @@ export default function ReportsPage() {
     preset,
     setPreset,
   ] =
-    React.useState<
-      ReportPreset
-    >(
+    React.useState<ReportPreset>(
       "7d",
     );
 
@@ -375,25 +333,36 @@ export default function ReportsPage() {
     report,
     setReport,
   ] =
-    React.useState<
-      DashboardReport | null
-    >(null);
+    React.useState<DashboardReport | null>(
+      null,
+    );
 
 
   const [
     loading,
     setLoading,
   ] =
-    React.useState(true);
+    React.useState(
+      true,
+    );
 
 
   const [
     error,
     setError,
   ] =
-    React.useState<
-      string | null
-    >(null);
+    React.useState<string | null>(
+      null,
+    );
+
+
+  const [
+    printOpen,
+    setPrintOpen,
+  ] =
+    React.useState(
+      false,
+    );
 
 
   const range =
@@ -409,28 +378,23 @@ export default function ReportsPage() {
 
 
   /* ==========================================================
-     LOAD
+     LOAD REPORT
   ========================================================== */
 
   const loadReport =
     React.useCallback(
       async () => {
-        if (
-          !businessId
-        ) {
+        if (!businessId) {
           return;
         }
-
 
         setLoading(
           true,
         );
 
-
         setError(
           null,
         );
-
 
         try {
           const result =
@@ -443,7 +407,6 @@ export default function ReportsPage() {
               endDate:
                 range.endDate,
             });
-
 
           setReport(
             result,
@@ -476,7 +439,7 @@ export default function ReportsPage() {
 
 
   /* ==========================================================
-     EXPORT CSV
+     CSV EXPORT
   ========================================================== */
 
   function exportCsv() {
@@ -484,162 +447,201 @@ export default function ReportsPage() {
       return;
     }
 
+    const rows: string[][] = [
+      [
+        "NOVA POS REPORT",
+      ],
 
-    const rows:
-      string[][] = [
-        [
-          "NOVA POS REPORT",
-        ],
+      [
+        "Business",
+        business?.name ??
+          "NOVA POS",
+      ],
 
-        [
-          "Business",
-          business?.name ??
-            "NOVA POS",
-        ],
+      [
+        "Start Date",
+        report.startDate,
+      ],
 
-        [
-          "Start Date",
-          report.startDate,
-        ],
+      [
+        "End Date",
+        report.endDate,
+      ],
 
-        [
-          "End Date",
-          report.endDate,
-        ],
+      [],
 
-        [],
+      [
+        "SUMMARY",
+      ],
 
-        [
-          "SUMMARY",
-        ],
-
-        [
-          "Gross Revenue",
-          report.summary.grossRevenue.toFixed(
-            2,
-          ),
-        ],
-
-        [
-          "Refunds",
-          report.summary.refundAmount.toFixed(
-            2,
-          ),
-        ],
-
-        [
-          "Net Revenue",
-          report.summary.revenue.toFixed(
-            2,
-          ),
-        ],
-
-        [
-          "COGS",
-          report.summary.cogs.toFixed(
-            2,
-          ),
-        ],
-
-        [
-          "Gross Profit",
-          report.summary.grossProfit.toFixed(
-            2,
-          ),
-        ],
-
-        [
-          "Transactions",
-          report.summary.transactions.toString(),
-        ],
-
-        [
-          "Refund Transactions",
-          report.summary.refunds.toString(),
-        ],
-
-        [
-          "Items Sold",
-          report.summary.itemsSold.toString(),
-        ],
-
-        [],
-
-        [
-          "DAILY SALES",
-        ],
-
-        [
-          "Date",
-          "Net Revenue",
-          "Transactions",
-          "Items Sold",
-        ],
-
-        ...report.dailySales.map(
-          (day) => [
-            day.date,
-
-            day.revenue.toFixed(
-              2,
-            ),
-
-            day.transactions.toString(),
-
-            day.itemsSold.toString(),
-          ],
+      [
+        "Gross Revenue",
+        report.summary.grossRevenue.toFixed(
+          2,
         ),
+      ],
 
-        [],
-
-        [
-          "TOP PRODUCTS",
-        ],
-
-        [
-          "Product",
-          "Quantity",
-          "Net Revenue",
-        ],
-
-        ...report.topProducts.map(
-          (product) => [
-            product.name,
-
-            product.quantity.toString(),
-
-            product.revenue.toFixed(
-              2,
-            ),
-          ],
+      [
+        "Refunds",
+        report.summary.refundAmount.toFixed(
+          2,
         ),
+      ],
 
-        [],
-
-        [
-          "PAYMENT METHODS",
-        ],
-
-        [
-          "Method",
-          "Net Amount",
-          "Transactions",
-        ],
-
-        ...report.paymentBreakdown.map(
-          (payment) => [
-            methodLabel(
-              payment.method,
-            ),
-
-            payment.amount.toFixed(
-              2,
-            ),
-
-            payment.transactions.toString(),
-          ],
+      [
+        "Net Revenue",
+        report.summary.revenue.toFixed(
+          2,
         ),
-      ];
+      ],
+
+      [
+        "COGS",
+        report.summary.cogs.toFixed(
+          2,
+        ),
+      ],
+
+      [
+        "Gross Profit",
+        report.summary.grossProfit.toFixed(
+          2,
+        ),
+      ],
+
+      [
+        "Transactions",
+        report.summary.transactions.toString(),
+      ],
+
+      [
+        "Refund Transactions",
+        report.summary.refunds.toString(),
+      ],
+
+      [
+        "Items Sold",
+        report.summary.itemsSold.toString(),
+      ],
+
+      [],
+
+      [
+        "DAILY SALES",
+      ],
+
+      [
+        "Date",
+        "Net Revenue",
+        "Transactions",
+        "Items Sold",
+      ],
+
+      ...report.dailySales.map(
+        (day) => [
+          day.date,
+
+          day.revenue.toFixed(
+            2,
+          ),
+
+          day.transactions.toString(),
+
+          day.itemsSold.toString(),
+        ],
+      ),
+
+      [],
+
+      [
+        "TOP PRODUCTS",
+      ],
+
+      [
+        "Product",
+        "Quantity",
+        "Net Revenue",
+      ],
+
+      ...report.topProducts.map(
+        (product) => [
+          product.name,
+
+          product.quantity.toString(),
+
+          product.revenue.toFixed(
+            2,
+          ),
+        ],
+      ),
+
+      [],
+
+      [
+        "PAYMENT METHODS",
+      ],
+
+      [
+        "Method",
+        "Net Amount",
+        "Transactions",
+      ],
+
+      ...report.paymentBreakdown.map(
+        (payment) => [
+          methodLabel(
+            payment.method,
+          ),
+
+          payment.amount.toFixed(
+            2,
+          ),
+
+          payment.transactions.toString(),
+        ],
+      ),
+
+      [],
+
+      [
+        "RECENT TRANSACTIONS",
+      ],
+
+      [
+        "Receipt",
+        "Date",
+        "Customer",
+        "Status",
+        "Original",
+        "Refund",
+        "Net",
+      ],
+
+      ...report.recentSales.map(
+        (sale) => [
+          sale.receiptNumber,
+
+          sale.createdAt,
+
+          sale.customerName ??
+            "Walk-in",
+
+          sale.status,
+
+          sale.total.toFixed(
+            2,
+          ),
+
+          sale.refundAmount.toFixed(
+            2,
+          ),
+
+          sale.netTotal.toFixed(
+            2,
+          ),
+        ],
+      ),
+    ];
 
 
     const csv =
@@ -691,7 +693,15 @@ export default function ReportsPage() {
       `nova-report-${report.startDate}-${report.endDate}.csv`;
 
 
+    document.body.appendChild(
+      anchor,
+    );
+
+
     anchor.click();
+
+
+    anchor.remove();
 
 
     URL.revokeObjectURL(
@@ -727,6 +737,10 @@ export default function ReportsPage() {
   }
 
 
+  /* ==========================================================
+     PAGE
+  ========================================================== */
+
   return (
     <AppLayout title="Reports">
 
@@ -752,7 +766,7 @@ export default function ReportsPage() {
           </div>
 
 
-          <div className="flex flex-wrap gap-2 print:hidden">
+          <div className="flex flex-wrap gap-2">
 
             <Button
               type="button"
@@ -800,19 +814,20 @@ export default function ReportsPage() {
 
             <Button
               type="button"
-              variant="outline"
               className="rounded-[12px]"
               disabled={
                 !report
               }
               onClick={() =>
-                window.print()
+                setPrintOpen(
+                  true,
+                )
               }
             >
 
               <Printer className="mr-2 h-4 w-4" />
 
-              Print
+              Print Report
 
             </Button>
 
@@ -825,7 +840,7 @@ export default function ReportsPage() {
             DATE FILTERS
         ===================================================== */}
 
-        <div className="flex flex-col gap-3 rounded-[18px] border bg-card p-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
+        <div className="flex flex-col gap-3 rounded-[18px] border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
 
           <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
 
@@ -894,14 +909,21 @@ export default function ReportsPage() {
 
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
-            {
-              error
-            }
+
+            <span>
+              {
+                error
+              }
+            </span>
 
           </div>
 
         )}
 
+
+        {/* ====================================================
+            REPORT
+        ===================================================== */}
 
         {report && (
 
@@ -938,8 +960,7 @@ export default function ReportsPage() {
                   currencyCode,
                 )}`}
                 hint={`${report.summary.refunds} refund transaction${
-                  report.summary.refunds ===
-                  1
+                  report.summary.refunds === 1
                     ? ""
                     : "s"
                 }`}
@@ -1011,12 +1032,12 @@ export default function ReportsPage() {
 
 
             {/* ================================================
-                TREND + FINANCIAL SUMMARY
+                SALES TREND + FINANCIAL SUMMARY
             ================================================= */}
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.7fr)]">
 
-              <Card className="rounded-[24px] print:shadow-none">
+              <Card className="rounded-[24px]">
 
                 <CardHeader>
 
@@ -1043,7 +1064,7 @@ export default function ReportsPage() {
               </Card>
 
 
-              <Card className="rounded-[24px] print:shadow-none">
+              <Card className="rounded-[24px]">
 
                 <CardHeader>
 
@@ -1073,6 +1094,10 @@ export default function ReportsPage() {
                       report.summary.refundAmount,
                       currencyCode,
                     )}`}
+                    destructive={
+                      report.summary.refundAmount >
+                      0
+                    }
                   />
 
 
@@ -1116,7 +1141,9 @@ export default function ReportsPage() {
 
                   <div className="rounded-[14px] border border-dashed bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
 
-                    Operating expenses are not deducted yet. They will be connected in the next Expenses step, after which NOVA can calculate true net operating profit.
+                    Operating expenses are not deducted yet.
+                    They will be connected in the Expenses module,
+                    after which NOVA can calculate true net operating profit.
 
                   </div>
 
@@ -1128,12 +1155,12 @@ export default function ReportsPage() {
 
 
             {/* ================================================
-                PAYMENT + PRODUCTS
+                PAYMENT METHODS + PRODUCTS
             ================================================= */}
 
             <div className="grid gap-6 xl:grid-cols-2">
 
-              <Card className="rounded-[24px] print:shadow-none">
+              <Card className="rounded-[24px]">
 
                 <CardHeader>
 
@@ -1160,7 +1187,7 @@ export default function ReportsPage() {
               </Card>
 
 
-              <Card className="rounded-[24px] print:shadow-none">
+              <Card className="rounded-[24px]">
 
                 <CardHeader>
 
@@ -1185,17 +1212,14 @@ export default function ReportsPage() {
                         ) => (
 
                           <div
-                            key={
-                              `${product.productId ?? product.name}-${index}`
-                            }
+                            key={`${product.productId ?? product.name}-${index}`}
                             className="flex items-center gap-3 rounded-[14px] border p-3"
                           >
 
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-muted text-sm font-bold">
 
                               {
-                                index +
-                                1
+                                index + 1
                               }
 
                             </div>
@@ -1211,14 +1235,15 @@ export default function ReportsPage() {
 
 
                               <p className="mt-0.5 text-xs text-muted-foreground">
+
                                 {
                                   product.quantity
                                 }{" "}
                                 unit
-                                {product.quantity ===
-                                1
+                                {product.quantity === 1
                                   ? ""
                                   : "s"}
+
                               </p>
 
                             </div>
@@ -1256,10 +1281,10 @@ export default function ReportsPage() {
 
 
             {/* ================================================
-                RECENT SALES
+                TRANSACTIONS
             ================================================= */}
 
-            <Card className="rounded-[24px] print:shadow-none">
+            <Card className="rounded-[24px]">
 
               <CardHeader>
 
@@ -1277,7 +1302,7 @@ export default function ReportsPage() {
 
                   <div className="overflow-x-auto">
 
-                    <table className="w-full min-w-[720px] text-sm">
+                    <table className="w-full min-w-[760px] text-sm">
 
                       <thead>
 
@@ -1344,9 +1369,11 @@ export default function ReportsPage() {
 
 
                               <td className="py-3 text-muted-foreground">
+
                                 {formatDateTime(
                                   sale.createdAt,
                                 )}
+
                               </td>
 
 
@@ -1430,13 +1457,42 @@ export default function ReportsPage() {
 
       </div>
 
+
+      {/* ======================================================
+          PRINTABLE REPORT DIALOG
+      ======================================================= */}
+
+      <ReportPrintDialog
+        isOpen={
+          printOpen
+        }
+        onClose={() =>
+          setPrintOpen(
+            false,
+          )
+        }
+        report={
+          report
+        }
+        businessId={
+          businessId
+        }
+        businessName={
+          business?.name ??
+          "NOVA POS"
+        }
+        currencyCode={
+          currencyCode
+        }
+      />
+
     </AppLayout>
   );
 }
 
 
 /* ============================================================
-   METRIC
+   METRIC CARD
 ============================================================ */
 
 function MetricCard({
@@ -1447,26 +1503,20 @@ function MetricCard({
   primary = false,
   destructive = false,
 }: {
-  icon:
-    React.ReactNode;
+  icon: React.ReactNode;
 
-  label:
-    string;
+  label: string;
 
-  value:
-    string;
+  value: string;
 
-  hint:
-    string;
+  hint: string;
 
-  primary?:
-    boolean;
+  primary?: boolean;
 
-  destructive?:
-    boolean;
+  destructive?: boolean;
 }) {
   return (
-    <Card className="rounded-[20px] print:shadow-none">
+    <Card className="rounded-[20px]">
 
       <CardContent className="flex items-center gap-4 p-5">
 
@@ -1505,9 +1555,11 @@ function MetricCard({
                   : ""
             }`}
           >
+
             {
               value
             }
+
           </p>
 
 
@@ -1527,18 +1579,16 @@ function MetricCard({
 
 
 /* ============================================================
-   TREND
+   SALES TREND
 ============================================================ */
 
 function SalesTrend({
   report,
   currencyCode,
 }: {
-  report:
-    DashboardReport;
+  report: DashboardReport;
 
-  currencyCode:
-    string;
+  currencyCode: string;
 }) {
   const maximum =
     Math.max(
@@ -1567,7 +1617,7 @@ function SalesTrend({
       1,
       Math.ceil(
         report.dailySales.length /
-        7,
+          7,
       ),
     );
 
@@ -1583,15 +1633,14 @@ function SalesTrend({
             index,
           ) => {
             const height =
-              day.revenue <=
-              0
+              day.revenue <= 0
                 ? 4
                 : Math.max(
                     8,
                     Math.round(
                       day.revenue /
-                      maximum *
-                      210,
+                        maximum *
+                        210,
                     ),
                   );
 
@@ -1636,11 +1685,23 @@ function SalesTrend({
                     {
                       day.transactions
                     }{" "}
-                    transactions
+                    transaction
+                    {day.transactions === 1
+                      ? ""
+                      : "s"}
 
                   </p>
 
                 </div>
+
+
+                {index ===
+                  report.dailySales.length -
+                    1 && (
+                  <span className="sr-only">
+                    Latest
+                  </span>
+                )}
 
               </div>
             );
@@ -1679,9 +1740,11 @@ function SalesTrend({
                   1 ? (
 
                 <span className="text-[9px] text-muted-foreground">
+
                   {formatReportDate(
                     day.date,
                   )}
+
                 </span>
 
               ) : null}
@@ -1706,11 +1769,9 @@ function PaymentBreakdown({
   report,
   currencyCode,
 }: {
-  report:
-    DashboardReport;
+  report: DashboardReport;
 
-  currencyCode:
-    string;
+  currencyCode: string;
 }) {
   if (
     report.paymentBreakdown.length ===
@@ -1764,9 +1825,11 @@ function PaymentBreakdown({
                 <div>
 
                   <p className="text-sm font-semibold">
+
                     {methodLabel(
                       payment.method,
                     )}
+
                   </p>
 
 
@@ -1776,8 +1839,7 @@ function PaymentBreakdown({
                       payment.transactions
                     }{" "}
                     transaction
-                    {payment.transactions ===
-                    1
+                    {payment.transactions === 1
                       ? ""
                       : "s"}
 
@@ -1841,18 +1903,17 @@ function FinancialRow({
   value,
   strong = false,
   primary = false,
+  destructive = false,
 }: {
-  label:
-    string;
+  label: string;
 
-  value:
-    string;
+  value: string;
 
-  strong?:
-    boolean;
+  strong?: boolean;
 
-  primary?:
-    boolean;
+  primary?: boolean;
+
+  destructive?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-[14px] bg-muted/30 p-3.5">
@@ -1864,9 +1925,11 @@ function FinancialRow({
             : "text-muted-foreground"
         }`}
       >
+
         {
           label
         }
+
       </span>
 
 
@@ -1878,12 +1941,16 @@ function FinancialRow({
         } ${
           primary
             ? "text-primary"
-            : ""
+            : destructive
+              ? "text-destructive"
+              : ""
         }`}
       >
+
         {
           value
         }
+
       </span>
 
     </div>
@@ -1892,14 +1959,13 @@ function FinancialRow({
 
 
 /* ============================================================
-   EMPTY
+   EMPTY STATE
 ============================================================ */
 
 function EmptyState({
   text,
 }: {
-  text:
-    string;
+  text: string;
 }) {
   return (
     <div className="flex min-h-[180px] flex-col items-center justify-center text-center">
