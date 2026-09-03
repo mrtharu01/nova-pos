@@ -43,9 +43,17 @@ import {
   fetchDashboardReport,
 } from "@/lib/data/dashboard";
 
+import {
+  fetchExpenseReport,
+} from "@/lib/data/expenses";
+
 import type {
   DashboardReport,
 } from "@/lib/domain/dashboard";
+
+import type {
+  ExpenseReport,
+} from "@/lib/domain/expenses";
 
 import {
   formatSaleMoney,
@@ -90,10 +98,6 @@ const PRESETS: {
   },
 ];
 
-
-/* ============================================================
-   HELPERS
-============================================================ */
 
 function localDate(
   date: Date,
@@ -300,9 +304,18 @@ function methodLabel(
 }
 
 
-/* ============================================================
-   PAGE
-============================================================ */
+function roundMoney(
+  value: number,
+) {
+  return Math.round(
+    (
+      value +
+      Number.EPSILON
+    ) *
+      100,
+  ) / 100;
+}
+
 
 export default function ReportsPage() {
   const {
@@ -334,6 +347,15 @@ export default function ReportsPage() {
     setReport,
   ] =
     React.useState<DashboardReport | null>(
+      null,
+    );
+
+
+  const [
+    expenseReport,
+    setExpenseReport,
+  ] =
+    React.useState<ExpenseReport | null>(
       null,
     );
 
@@ -377,10 +399,6 @@ export default function ReportsPage() {
     );
 
 
-  /* ==========================================================
-     LOAD REPORT
-  ========================================================== */
-
   const loadReport =
     React.useCallback(
       async () => {
@@ -397,19 +415,40 @@ export default function ReportsPage() {
         );
 
         try {
-          const result =
-            await fetchDashboardReport({
-              businessId,
+          const [
+            salesResult,
+            expenseResult,
+          ] =
+            await Promise.all([
+              fetchDashboardReport({
+                businessId,
 
-              startDate:
-                range.startDate,
+                startDate:
+                  range.startDate,
 
-              endDate:
-                range.endDate,
-            });
+                endDate:
+                  range.endDate,
+              }),
+
+              fetchExpenseReport({
+                businessId,
+
+                startDate:
+                  range.startDate,
+
+                endDate:
+                  range.endDate,
+              }),
+            ]);
+
 
           setReport(
-            result,
+            salesResult,
+          );
+
+
+          setExpenseReport(
+            expenseResult,
           );
         } catch (cause) {
           setError(
@@ -438,14 +477,31 @@ export default function ReportsPage() {
   ]);
 
 
-  /* ==========================================================
-     CSV EXPORT
-  ========================================================== */
+  const operatingExpenses =
+    expenseReport?.summary.total ??
+    0;
+
+
+  const grossProfit =
+    report?.summary.grossProfit ??
+    0;
+
+
+  const netOperatingProfit =
+    roundMoney(
+      grossProfit -
+      operatingExpenses,
+    );
+
 
   function exportCsv() {
-    if (!report) {
+    if (
+      !report ||
+      !expenseReport
+    ) {
       return;
     }
+
 
     const rows: string[][] = [
       [
@@ -471,7 +527,7 @@ export default function ReportsPage() {
       [],
 
       [
-        "SUMMARY",
+        "FINANCIAL SUMMARY",
       ],
 
       [
@@ -496,7 +552,7 @@ export default function ReportsPage() {
       ],
 
       [
-        "COGS",
+        "Cost of Goods",
         report.summary.cogs.toFixed(
           2,
         ),
@@ -507,6 +563,26 @@ export default function ReportsPage() {
         report.summary.grossProfit.toFixed(
           2,
         ),
+      ],
+
+      [
+        "Operating Expenses",
+        expenseReport.summary.total.toFixed(
+          2,
+        ),
+      ],
+
+      [
+        "Net Operating Profit",
+        netOperatingProfit.toFixed(
+          2,
+        ),
+      ],
+
+      [],
+
+      [
+        "TRANSACTION SUMMARY",
       ],
 
       [
@@ -522,6 +598,11 @@ export default function ReportsPage() {
       [
         "Items Sold",
         report.summary.itemsSold.toString(),
+      ],
+
+      [
+        "Expense Entries",
+        expenseReport.summary.count.toString(),
       ],
 
       [],
@@ -554,6 +635,30 @@ export default function ReportsPage() {
       [],
 
       [
+        "OPERATING EXPENSES",
+      ],
+
+      [
+        "Category",
+        "Entries",
+        "Amount",
+      ],
+
+      ...expenseReport.categoryBreakdown.map(
+        (expense) => [
+          expense.category,
+
+          expense.count.toString(),
+
+          expense.amount.toFixed(
+            2,
+          ),
+        ],
+      ),
+
+      [],
+
+      [
         "TOP PRODUCTS",
       ],
 
@@ -570,73 +675,6 @@ export default function ReportsPage() {
           product.quantity.toString(),
 
           product.revenue.toFixed(
-            2,
-          ),
-        ],
-      ),
-
-      [],
-
-      [
-        "PAYMENT METHODS",
-      ],
-
-      [
-        "Method",
-        "Net Amount",
-        "Transactions",
-      ],
-
-      ...report.paymentBreakdown.map(
-        (payment) => [
-          methodLabel(
-            payment.method,
-          ),
-
-          payment.amount.toFixed(
-            2,
-          ),
-
-          payment.transactions.toString(),
-        ],
-      ),
-
-      [],
-
-      [
-        "RECENT TRANSACTIONS",
-      ],
-
-      [
-        "Receipt",
-        "Date",
-        "Customer",
-        "Status",
-        "Original",
-        "Refund",
-        "Net",
-      ],
-
-      ...report.recentSales.map(
-        (sale) => [
-          sale.receiptNumber,
-
-          sale.createdAt,
-
-          sale.customerName ??
-            "Walk-in",
-
-          sale.status,
-
-          sale.total.toFixed(
-            2,
-          ),
-
-          sale.refundAmount.toFixed(
-            2,
-          ),
-
-          sale.netTotal.toFixed(
             2,
           ),
         ],
@@ -710,10 +748,6 @@ export default function ReportsPage() {
   }
 
 
-  /* ==========================================================
-     LOADING
-  ========================================================== */
-
   if (
     loading &&
     !report
@@ -727,7 +761,7 @@ export default function ReportsPage() {
 
 
           <p className="mt-4 text-sm text-muted-foreground">
-            Building report…
+            Building financial report…
           </p>
 
         </div>
@@ -737,18 +771,10 @@ export default function ReportsPage() {
   }
 
 
-  /* ==========================================================
-     PAGE
-  ========================================================== */
-
   return (
     <AppLayout title="Reports">
 
       <div className="space-y-6">
-
-        {/* ====================================================
-            HEADER
-        ===================================================== */}
 
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
 
@@ -760,7 +786,7 @@ export default function ReportsPage() {
 
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Real sales, refunds and gross-profit reporting from PostgreSQL.
+              Sales, refunds, cost of goods and operating-expense reporting from NOVA.
             </p>
 
           </div>
@@ -798,7 +824,8 @@ export default function ReportsPage() {
               variant="outline"
               className="rounded-[12px]"
               disabled={
-                !report
+                !report ||
+                !expenseReport
               }
               onClick={
                 exportCsv
@@ -816,7 +843,8 @@ export default function ReportsPage() {
               type="button"
               className="rounded-[12px]"
               disabled={
-                !report
+                !report ||
+                !expenseReport
               }
               onClick={() =>
                 setPrintOpen(
@@ -835,10 +863,6 @@ export default function ReportsPage() {
 
         </div>
 
-
-        {/* ====================================================
-            DATE FILTERS
-        ===================================================== */}
 
         <div className="flex flex-col gap-3 rounded-[18px] border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
 
@@ -899,16 +923,11 @@ export default function ReportsPage() {
         </div>
 
 
-        {/* ====================================================
-            ERROR
-        ===================================================== */}
-
         {error && (
 
           <div className="flex items-start gap-3 rounded-[18px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
 
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-
 
             <span>
               {
@@ -921,19 +940,12 @@ export default function ReportsPage() {
         )}
 
 
-        {/* ====================================================
-            REPORT
-        ===================================================== */}
-
-        {report && (
+        {report &&
+        expenseReport && (
 
           <>
 
-            {/* ================================================
-                PRIMARY METRICS
-            ================================================= */}
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
               <MetricCard
                 icon={
@@ -982,10 +994,26 @@ export default function ReportsPage() {
                     currencyCode,
                   )
                 }
-                hint="Revenue after refunds"
+                hint="After refunds"
                 primary
               />
 
+
+              <MetricCard
+                icon={
+                  <ShoppingBag className="h-5 w-5" />
+                }
+                label="Net Items Sold"
+                value={
+                  report.summary.itemsSold.toLocaleString()
+                }
+                hint="After returned quantities"
+              />
+
+            </div>
+
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
               <MetricCard
                 icon={
@@ -1004,18 +1032,6 @@ export default function ReportsPage() {
 
               <MetricCard
                 icon={
-                  <ShoppingBag className="h-5 w-5" />
-                }
-                label="Net Items Sold"
-                value={
-                  report.summary.itemsSold.toLocaleString()
-                }
-                hint="After returned quantities"
-              />
-
-
-              <MetricCard
-                icon={
                   <TrendingUp className="h-5 w-5" />
                 }
                 label="Gross Profit"
@@ -1025,15 +1041,56 @@ export default function ReportsPage() {
                     currencyCode,
                   )
                 }
-                hint="Before operating expenses"
+                hint="Revenue minus COGS"
+              />
+
+
+              <MetricCard
+                icon={
+                  <WalletCards className="h-5 w-5" />
+                }
+                label="Operating Expenses"
+                value={`-${formatSaleMoney(
+                  operatingExpenses,
+                  currencyCode,
+                )}`}
+                hint={`${expenseReport.summary.count} expense entr${
+                  expenseReport.summary.count ===
+                  1
+                    ? "y"
+                    : "ies"
+                }`}
+                destructive={
+                  operatingExpenses >
+                  0
+                }
+              />
+
+
+              <MetricCard
+                icon={
+                  <TrendingUp className="h-5 w-5" />
+                }
+                label="Net Operating Profit"
+                value={
+                  formatSaleMoney(
+                    netOperatingProfit,
+                    currencyCode,
+                  )
+                }
+                hint="After operating expenses"
+                primary={
+                  netOperatingProfit >=
+                  0
+                }
+                destructive={
+                  netOperatingProfit <
+                  0
+                }
               />
 
             </div>
 
-
-            {/* ================================================
-                SALES TREND + FINANCIAL SUMMARY
-            ================================================= */}
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.7fr)]">
 
@@ -1069,7 +1126,7 @@ export default function ReportsPage() {
                 <CardHeader>
 
                   <CardTitle>
-                    Financial Summary
+                    Profit & Loss Summary
                   </CardTitle>
 
                 </CardHeader>
@@ -1122,28 +1179,51 @@ export default function ReportsPage() {
                   />
 
 
+                  <FinancialRow
+                    label="Gross profit"
+                    value={
+                      formatSaleMoney(
+                        report.summary.grossProfit,
+                        currencyCode,
+                      )
+                    }
+                    strong
+                  />
+
+
+                  <FinancialRow
+                    label="Operating expenses"
+                    value={`-${formatSaleMoney(
+                      operatingExpenses,
+                      currencyCode,
+                    )}`}
+                    destructive={
+                      operatingExpenses >
+                      0
+                    }
+                  />
+
+
                   <div className="border-t pt-3">
 
                     <FinancialRow
-                      label="Gross profit"
+                      label="Net operating profit"
                       value={
                         formatSaleMoney(
-                          report.summary.grossProfit,
+                          netOperatingProfit,
                           currencyCode,
                         )
                       }
-                      primary
+                      primary={
+                        netOperatingProfit >=
+                        0
+                      }
+                      destructive={
+                        netOperatingProfit <
+                        0
+                      }
                       strong
                     />
-
-                  </div>
-
-
-                  <div className="rounded-[14px] border border-dashed bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
-
-                    Operating expenses are not deducted yet.
-                    They will be connected in the Expenses module,
-                    after which NOVA can calculate true net operating profit.
 
                   </div>
 
@@ -1154,20 +1234,50 @@ export default function ReportsPage() {
             </div>
 
 
-            {/* ================================================
-                PAYMENT METHODS + PRODUCTS
-            ================================================= */}
-
             <div className="grid gap-6 xl:grid-cols-2">
 
               <Card className="rounded-[24px]">
 
                 <CardHeader>
+                  <CardTitle>
+                    Operating Expenses
+                  </CardTitle>
+                </CardHeader>
 
+
+                <CardContent>
+
+                  {expenseReport.categoryBreakdown.length >
+                  0 ? (
+
+                    <ExpenseBreakdown
+                      expenseReport={
+                        expenseReport
+                      }
+                      currencyCode={
+                        currencyCode
+                      }
+                    />
+
+                  ) : (
+
+                    <EmptyState
+                      text="No operating expenses in this period."
+                    />
+
+                  )}
+
+                </CardContent>
+
+              </Card>
+
+
+              <Card className="rounded-[24px]">
+
+                <CardHeader>
                   <CardTitle>
                     Payment Methods
                   </CardTitle>
-
                 </CardHeader>
 
 
@@ -1186,112 +1296,100 @@ export default function ReportsPage() {
 
               </Card>
 
-
-              <Card className="rounded-[24px]">
-
-                <CardHeader>
-
-                  <CardTitle>
-                    Top Products
-                  </CardTitle>
-
-                </CardHeader>
-
-
-                <CardContent>
-
-                  {report.topProducts.length >
-                  0 ? (
-
-                    <div className="space-y-2">
-
-                      {report.topProducts.map(
-                        (
-                          product,
-                          index,
-                        ) => (
-
-                          <div
-                            key={`${product.productId ?? product.name}-${index}`}
-                            className="flex items-center gap-3 rounded-[14px] border p-3"
-                          >
-
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-muted text-sm font-bold">
-
-                              {
-                                index + 1
-                              }
-
-                            </div>
-
-
-                            <div className="min-w-0 flex-1">
-
-                              <p className="truncate text-sm font-semibold">
-                                {
-                                  product.name
-                                }
-                              </p>
-
-
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-
-                                {
-                                  product.quantity
-                                }{" "}
-                                unit
-                                {product.quantity === 1
-                                  ? ""
-                                  : "s"}
-
-                              </p>
-
-                            </div>
-
-
-                            <p className="shrink-0 text-sm font-bold">
-
-                              {formatSaleMoney(
-                                product.revenue,
-                                currencyCode,
-                              )}
-
-                            </p>
-
-                          </div>
-
-                        ),
-                      )}
-
-                    </div>
-
-                  ) : (
-
-                    <EmptyState
-                      text="No product sales in this period."
-                    />
-
-                  )}
-
-                </CardContent>
-
-              </Card>
-
             </div>
 
-
-            {/* ================================================
-                TRANSACTIONS
-            ================================================= */}
 
             <Card className="rounded-[24px]">
 
               <CardHeader>
-
                 <CardTitle>
-                  Transactions in Period
+                  Top Products
                 </CardTitle>
+              </CardHeader>
 
+
+              <CardContent>
+
+                {report.topProducts.length >
+                0 ? (
+
+                  <div className="grid gap-3 lg:grid-cols-2">
+
+                    {report.topProducts.map(
+                      (
+                        product,
+                        index,
+                      ) => (
+
+                        <div
+                          key={`${product.productId ?? product.name}-${index}`}
+                          className="flex items-center gap-3 rounded-[14px] border p-3"
+                        >
+
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-muted text-sm font-bold">
+                            {
+                              index + 1
+                            }
+                          </div>
+
+
+                          <div className="min-w-0 flex-1">
+
+                            <p className="truncate text-sm font-semibold">
+                              {
+                                product.name
+                              }
+                            </p>
+
+
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {
+                                product.quantity
+                              }{" "}
+                              unit
+                              {product.quantity === 1
+                                ? ""
+                                : "s"}
+                            </p>
+
+                          </div>
+
+
+                          <p className="shrink-0 text-sm font-bold">
+
+                            {formatSaleMoney(
+                              product.revenue,
+                              currencyCode,
+                            )}
+
+                          </p>
+
+                        </div>
+
+                      ),
+                    )}
+
+                  </div>
+
+                ) : (
+
+                  <EmptyState
+                    text="No product sales in this period."
+                  />
+
+                )}
+
+              </CardContent>
+
+            </Card>
+
+
+            <Card className="rounded-[24px]">
+
+              <CardHeader>
+                <CardTitle>
+                  Recent Transactions
+                </CardTitle>
               </CardHeader>
 
 
@@ -1458,10 +1556,6 @@ export default function ReportsPage() {
       </div>
 
 
-      {/* ======================================================
-          PRINTABLE REPORT DIALOG
-      ======================================================= */}
-
       <ReportPrintDialog
         isOpen={
           printOpen
@@ -1473,6 +1567,9 @@ export default function ReportsPage() {
         }
         report={
           report
+        }
+        expenseReport={
+          expenseReport
         }
         businessId={
           businessId
@@ -1491,10 +1588,6 @@ export default function ReportsPage() {
 }
 
 
-/* ============================================================
-   METRIC CARD
-============================================================ */
-
 function MetricCard({
   icon,
   label,
@@ -1503,17 +1596,23 @@ function MetricCard({
   primary = false,
   destructive = false,
 }: {
-  icon: React.ReactNode;
+  icon:
+    React.ReactNode;
 
-  label: string;
+  label:
+    string;
 
-  value: string;
+  value:
+    string;
 
-  hint: string;
+  hint:
+    string;
 
-  primary?: boolean;
+  primary?:
+    boolean;
 
-  destructive?: boolean;
+  destructive?:
+    boolean;
 }) {
   return (
     <Card className="rounded-[20px]">
@@ -1529,11 +1628,9 @@ function MetricCard({
                 : "bg-muted"
           }`}
         >
-
           {
             icon
           }
-
         </div>
 
 
@@ -1555,11 +1652,9 @@ function MetricCard({
                   : ""
             }`}
           >
-
             {
               value
             }
-
           </p>
 
 
@@ -1578,17 +1673,15 @@ function MetricCard({
 }
 
 
-/* ============================================================
-   SALES TREND
-============================================================ */
-
 function SalesTrend({
   report,
   currencyCode,
 }: {
-  report: DashboardReport;
+  report:
+    DashboardReport;
 
-  currencyCode: string;
+  currencyCode:
+    string;
 }) {
   const maximum =
     Math.max(
@@ -1617,7 +1710,7 @@ function SalesTrend({
       1,
       Math.ceil(
         report.dailySales.length /
-          7,
+        7,
       ),
     );
 
@@ -1633,14 +1726,15 @@ function SalesTrend({
             index,
           ) => {
             const height =
-              day.revenue <= 0
+              day.revenue <=
+              0
                 ? 4
                 : Math.max(
                     8,
                     Math.round(
                       day.revenue /
-                        maximum *
-                        210,
+                      maximum *
+                      210,
                     ),
                   );
 
@@ -1651,12 +1745,6 @@ function SalesTrend({
                   day.date
                 }
                 className="group relative flex h-full min-w-0 flex-1 items-end justify-center"
-                title={`${formatReportDate(
-                  day.date,
-                )}: ${formatSaleMoney(
-                  day.revenue,
-                  currencyCode,
-                )}`}
               >
 
                 <div
@@ -1681,15 +1769,14 @@ function SalesTrend({
 
 
                   <p className="text-[10px] text-muted-foreground">
-
                     {
                       day.transactions
                     }{" "}
                     transaction
-                    {day.transactions === 1
+                    {day.transactions ===
+                    1
                       ? ""
                       : "s"}
-
                   </p>
 
                 </div>
@@ -1761,17 +1848,15 @@ function SalesTrend({
 }
 
 
-/* ============================================================
-   PAYMENT BREAKDOWN
-============================================================ */
-
 function PaymentBreakdown({
   report,
   currencyCode,
 }: {
-  report: DashboardReport;
+  report:
+    DashboardReport;
 
-  currencyCode: string;
+  currencyCode:
+    string;
 }) {
   if (
     report.paymentBreakdown.length ===
@@ -1825,24 +1910,21 @@ function PaymentBreakdown({
                 <div>
 
                   <p className="text-sm font-semibold">
-
                     {methodLabel(
                       payment.method,
                     )}
-
                   </p>
 
 
                   <p className="text-[10px] text-muted-foreground">
-
                     {
                       payment.transactions
                     }{" "}
                     transaction
-                    {payment.transactions === 1
+                    {payment.transactions ===
+                    1
                       ? ""
                       : "s"}
-
                   </p>
 
                 </div>
@@ -1856,12 +1938,10 @@ function PaymentBreakdown({
                       : ""
                   }`}
                 >
-
                   {formatSaleMoney(
                     payment.amount,
                     currencyCode,
                   )}
-
                 </p>
 
               </div>
@@ -1894,9 +1974,104 @@ function PaymentBreakdown({
 }
 
 
-/* ============================================================
-   FINANCIAL ROW
-============================================================ */
+function ExpenseBreakdown({
+  expenseReport,
+  currencyCode,
+}: {
+  expenseReport:
+    ExpenseReport;
+
+  currencyCode:
+    string;
+}) {
+  const maxAmount =
+    Math.max(
+      1,
+      ...expenseReport.categoryBreakdown.map(
+        (item) =>
+          item.amount,
+      ),
+    );
+
+
+  return (
+    <div className="space-y-4">
+
+      {expenseReport.categoryBreakdown.map(
+        (item) => {
+          const width =
+            Math.max(
+              2,
+              item.amount /
+              maxAmount *
+              100,
+            );
+
+
+          return (
+            <div
+              key={
+                item.category
+              }
+            >
+
+              <div className="mb-2 flex items-center justify-between gap-4">
+
+                <div>
+
+                  <p className="text-sm font-semibold capitalize">
+                    {item.category.replace(
+                      /_/g,
+                      " ",
+                    )}
+                  </p>
+
+
+                  <p className="text-[10px] text-muted-foreground">
+                    {
+                      item.count
+                    }{" "}
+                    entr
+                    {item.count ===
+                    1
+                      ? "y"
+                      : "ies"}
+                  </p>
+
+                </div>
+
+
+                <p className="text-sm font-bold">
+                  {formatSaleMoney(
+                    item.amount,
+                    currencyCode,
+                  )}
+                </p>
+
+              </div>
+
+
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{
+                    width:
+                      `${width}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+          );
+        },
+      )}
+
+    </div>
+  );
+}
+
 
 function FinancialRow({
   label,
@@ -1905,15 +2080,20 @@ function FinancialRow({
   primary = false,
   destructive = false,
 }: {
-  label: string;
+  label:
+    string;
 
-  value: string;
+  value:
+    string;
 
-  strong?: boolean;
+  strong?:
+    boolean;
 
-  primary?: boolean;
+  primary?:
+    boolean;
 
-  destructive?: boolean;
+  destructive?:
+    boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-[14px] bg-muted/30 p-3.5">
@@ -1925,11 +2105,9 @@ function FinancialRow({
             : "text-muted-foreground"
         }`}
       >
-
         {
           label
         }
-
       </span>
 
 
@@ -1946,11 +2124,9 @@ function FinancialRow({
               : ""
         }`}
       >
-
         {
           value
         }
-
       </span>
 
     </div>
@@ -1958,14 +2134,11 @@ function FinancialRow({
 }
 
 
-/* ============================================================
-   EMPTY STATE
-============================================================ */
-
 function EmptyState({
   text,
 }: {
-  text: string;
+  text:
+    string;
 }) {
   return (
     <div className="flex min-h-[180px] flex-col items-center justify-center text-center">
