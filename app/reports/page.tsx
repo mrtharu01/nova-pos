@@ -40,8 +40,8 @@ import {
 } from "@/hooks/use-current-business";
 
 import {
-  fetchDashboardReport,
-} from "@/lib/data/dashboard";
+  fetchFinancialReport,
+} from "@/lib/data/financial-report";
 
 import {
   fetchExpenseReport,
@@ -420,7 +420,7 @@ export default function ReportsPage() {
             expenseResult,
           ] =
             await Promise.all([
-              fetchDashboardReport({
+              fetchFinancialReport({
                 businessId,
 
                 startDate:
