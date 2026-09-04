@@ -152,9 +152,6 @@ const NAV_ITEMS:
 
       icon:
         Users,
-
-      requirement:
-        "manager",
     },
 
     {

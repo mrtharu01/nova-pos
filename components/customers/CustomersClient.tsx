@@ -36,6 +36,10 @@ import {
 } from "@/components/ui/dialog";
 
 import {
+  useBusinessAccess,
+} from "@/hooks/use-business-access";
+
+import {
   useCurrentBusiness,
 } from "@/hooks/use-current-business";
 
@@ -113,8 +117,27 @@ function formatDate(
 export function CustomersClient() {
   const {
     business,
+    demo,
   } =
     useCurrentBusiness();
+
+
+  const {
+    access,
+  } =
+    useBusinessAccess(
+      demo
+        ? undefined
+        : business?.id,
+    );
+
+
+  const canManagePermanentDiscount =
+    demo ||
+    access?.role ===
+      "owner" ||
+    access?.role ===
+      "manager";
 
 
   const [
@@ -727,6 +750,9 @@ export function CustomersClient() {
           business?.id ??
           null
         }
+        canManagePermanentDiscount={
+          canManagePermanentDiscount
+        }
         onClose={() =>
           setAddOpen(
             false,
@@ -783,6 +809,9 @@ export function CustomersClient() {
             business?.id ??
             null
           }
+          canManagePermanentDiscount={
+            canManagePermanentDiscount
+          }
           detail={
             selected
           }
@@ -811,6 +840,7 @@ function CustomerFormDialog({
   mode,
   isOpen,
   businessId,
+  canManagePermanentDiscount,
   detail,
   onClose,
   onSaved,
@@ -825,6 +855,9 @@ function CustomerFormDialog({
   businessId:
     | string
     | null;
+
+  canManagePermanentDiscount:
+    boolean;
 
   detail?:
     CustomerDetail;
@@ -1100,8 +1133,12 @@ function CustomerFormDialog({
       description={
         mode ===
         "edit"
-          ? "Update customer information and permanent checkout discount."
-          : "Register a customer using their mobile number."
+          ? canManagePermanentDiscount
+            ? "Update customer information and permanent checkout discount."
+            : "Update customer information. Permanent checkout discounts are controlled by an Owner or Manager."
+          : canManagePermanentDiscount
+            ? "Register a customer and optionally assign a permanent checkout discount."
+            : "Register a customer using their mobile number."
       }
       className="max-h-[calc(100vh-2rem)] max-w-xl overflow-hidden"
     >
@@ -1213,7 +1250,8 @@ function CustomerFormDialog({
                   discount
                 }
                 disabled={
-                  saving
+                  saving ||
+                  !canManagePermanentDiscount
                 }
                 onChange={(
                   event,
@@ -1226,7 +1264,7 @@ function CustomerFormDialog({
                 max="100"
                 step="0.01"
                 type="number"
-                className="h-11 w-full rounded-[14px] border bg-background px-3 pr-10 text-sm outline-none focus:border-primary"
+                className="h-11 w-full rounded-[14px] border bg-background px-3 pr-10 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/50 disabled:text-muted-foreground"
               />
 
 
@@ -1238,7 +1276,14 @@ function CustomerFormDialog({
 
 
             <p className="text-[11px] leading-5 text-muted-foreground">
-              Automatically applied whenever this registered customer is selected during checkout.
+
+              {canManagePermanentDiscount
+                ? "Automatically applied whenever this registered customer is selected during checkout."
+                : mode === "edit" &&
+                    detail?.customer.defaultDiscountPercent
+                  ? `Current permanent discount: ${detail.customer.defaultDiscountPercent}%. Only an Owner or Manager can change permanent discounts.`
+                  : "Only an Owner or Manager can assign permanent customer discounts."}
+
             </p>
 
           </Field>
@@ -1270,10 +1315,6 @@ function CustomerFormDialog({
 
           </Field>
 
-
-          {/* ==================================================
-              CUSTOMER STATUS
-          =================================================== */}
 
           {mode ===
             "edit" && (
@@ -1368,10 +1409,6 @@ function CustomerFormDialog({
 
           )}
 
-
-          {/* ==================================================
-              ACTIONS
-          =================================================== */}
 
           <div className="flex justify-end gap-2 border-t pt-4">
 

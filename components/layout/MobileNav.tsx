@@ -81,11 +81,16 @@ const MOBILE_NAV_ITEMS:
       icon: ReceiptText,
     },
 
+    /*
+     * More is available to every active business member.
+     *
+     * The /more page filters its own links, so Cashiers can
+     * reach Customers without seeing management-only pages.
+     */
     {
       href: "/more",
       label: "More",
       icon: Menu,
-      requirement: "manager",
     },
   ];
 
@@ -132,9 +137,6 @@ export function MobileNav({
       /*
        * While access is loading,
        * only show universally available items.
-       *
-       * This prevents manager-only items
-       * flashing briefly for cashiers.
        */
       return MOBILE_NAV_ITEMS.filter(
         (item) =>
@@ -162,10 +164,6 @@ export function MobileNav({
                 )
               );
 
-
-            /* ===============================================
-               PRIMARY SCAN BUTTON
-            ================================================ */
 
             if (item.primary) {
               return (
@@ -203,10 +201,6 @@ export function MobileNav({
               );
             }
 
-
-            /* ===============================================
-               NORMAL ITEM
-            ================================================ */
 
             return (
               <Link

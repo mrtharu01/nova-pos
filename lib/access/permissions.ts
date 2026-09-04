@@ -25,6 +25,9 @@ type RouteRule = {
    - navigation visibility
    - direct route access
    - client-side redirects
+
+   Routes without a rule are available to every active
+   business member (Owner, Manager and Cashier).
 ============================================================ */
 
 const ROUTE_RULES:
@@ -37,11 +40,6 @@ const ROUTE_RULES:
     {
       path: "/inventory",
       requirement: "manageInventory",
-    },
-
-    {
-      path: "/customers",
-      requirement: "manager",
     },
 
     {
@@ -65,13 +63,20 @@ const ROUTE_RULES:
     },
 
     /*
-     * /more is the mobile overflow screen
-     * containing management navigation.
+     * /customers is intentionally available to all active
+     * business members.
+     *
+     * Permanent customer discounts remain Manager/Owner-only
+     * at both the UI and PostgreSQL layers.
      */
-    {
-      path: "/more",
-      requirement: "manager",
-    },
+
+    /*
+     * /more is also available to all active business members.
+     *
+     * The More screen filters its own links using the same
+     * permission model, allowing Cashiers to reach Customers
+     * without exposing management pages.
+     */
   ];
 
 
