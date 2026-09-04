@@ -7,6 +7,9 @@ import {
 import type {
   BusinessAccess,
   BusinessStaffMember,
+  StaffInvitation,
+  StaffInvitationActionResult,
+  StaffInvitationStatus,
   StaffRole,
   StaffStatus,
 } from "@/lib/domain/access";
@@ -20,7 +23,7 @@ type AccessRow = {
   isOwner: boolean;
 
   role:
-    "owner"
+    | "owner"
     | "manager"
     | "cashier";
 
@@ -59,7 +62,7 @@ type StaffRow = {
   email: string;
 
   role:
-    "owner"
+    | "owner"
     | "manager"
     | "cashier";
 
@@ -71,6 +74,42 @@ type StaffRow = {
   created_at: string;
 };
 
+
+type InvitationRow = {
+  id: string;
+
+  email: string;
+
+  role:
+    StaffRole;
+
+  status:
+    StaffInvitationStatus;
+
+  expires_at: string;
+
+  created_at: string;
+};
+
+
+type InviteApiResponse = {
+  ok?: boolean;
+
+  status?:
+    | "invited"
+    | "existing_user_added";
+
+  message?: string;
+
+  invitationId?: string;
+
+  error?: string;
+};
+
+
+/* ============================================================
+   BUSINESS ACCESS
+============================================================ */
 
 export async function fetchBusinessAccess(
   businessId: string,
@@ -99,10 +138,21 @@ export async function fetchBusinessAccess(
   }
 
 
+  if (!data) {
+    throw new Error(
+      "Business access information was not returned.",
+    );
+  }
+
+
   return data as
     AccessRow;
 }
 
+
+/* ============================================================
+   BUSINESS STAFF
+============================================================ */
 
 export async function fetchBusinessStaff(
   businessId: string,
@@ -167,17 +217,15 @@ export async function fetchBusinessStaff(
 }
 
 
-export async function addBusinessStaff({
-  businessId,
-  email,
-  role,
-}: {
-  businessId: string;
+/* ============================================================
+   STAFF INVITATIONS
+============================================================ */
 
-  email: string;
-
-  role: StaffRole;
-}) {
+export async function fetchStaffInvitations(
+  businessId: string,
+): Promise<
+  StaffInvitation[]
+> {
   const supabase =
     createClient();
 
@@ -187,16 +235,10 @@ export async function addBusinessStaff({
     error,
   } =
     await supabase.rpc(
-      "add_business_staff",
+      "list_staff_invitations",
       {
         p_business_id:
           businessId,
-
-        p_email:
-          email,
-
-        p_role:
-          role,
       },
     );
 
@@ -208,9 +250,181 @@ export async function addBusinessStaff({
   }
 
 
-  return data as string;
+  const rows =
+    (
+      data ??
+      []
+    ) as InvitationRow[];
+
+
+  return rows.map(
+    (row) => ({
+      id:
+        row.id,
+
+      email:
+        row.email,
+
+      role:
+        row.role,
+
+      status:
+        row.status,
+
+      expiresAt:
+        row.expires_at,
+
+      createdAt:
+        row.created_at,
+    }),
+  );
 }
 
+
+/* ============================================================
+   SEND STAFF INVITATION
+
+   This deliberately goes through the Next.js API route.
+
+   The API route:
+   - calls the authorization RPC
+   - uses the Supabase Admin client
+   - sends the secure invitation email
+
+   The service-role / secret key never reaches the browser.
+============================================================ */
+
+export async function sendStaffInvitation({
+  businessId,
+  email,
+  role,
+}: {
+  businessId: string;
+
+  email: string;
+
+  role: StaffRole;
+}): Promise<
+  StaffInvitationActionResult
+> {
+  const response =
+    await fetch(
+      "/api/staff/invite",
+      {
+        method:
+          "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify({
+            businessId,
+
+            email,
+
+            role,
+          }),
+      },
+    );
+
+
+  let body:
+    InviteApiResponse;
+
+
+  try {
+    body =
+      (await response.json()) as
+        InviteApiResponse;
+  } catch {
+    throw new Error(
+      "NOVA could not read the staff invitation response.",
+    );
+  }
+
+
+  if (
+    !response.ok ||
+    !body.ok
+  ) {
+    throw new Error(
+      body.error ??
+        "Staff invitation could not be sent.",
+    );
+  }
+
+
+  if (
+    body.status !==
+      "invited" &&
+    body.status !==
+      "existing_user_added"
+  ) {
+    throw new Error(
+      "NOVA received an unexpected invitation response.",
+    );
+  }
+
+
+  return {
+    ok:
+      true,
+
+    status:
+      body.status,
+
+    message:
+      body.message ??
+      (
+        body.status ===
+        "existing_user_added"
+          ? "Existing NOVA account added."
+          : "Staff invitation sent."
+      ),
+
+    invitationId:
+      body.invitationId,
+  };
+}
+
+
+/* ============================================================
+   REVOKE INVITATION
+============================================================ */
+
+export async function revokeStaffInvitation(
+  invitationId: string,
+) {
+  const supabase =
+    createClient();
+
+
+  const {
+    error,
+  } =
+    await supabase.rpc(
+      "revoke_staff_invitation",
+      {
+        p_invitation_id:
+          invitationId,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+}
+
+
+/* ============================================================
+   UPDATE EXISTING STAFF
+============================================================ */
 
 export async function updateBusinessStaff({
   businessId,

@@ -7,6 +7,7 @@ import {
   type NextRequest,
 } from "next/server";
 
+
 const PUBLIC_PATHS = [
   "/login",
   "/signup",
@@ -15,28 +16,25 @@ const PUBLIC_PATHS = [
   "/auth/confirm",
   "/auth/error",
 
-  /*
-   * Phase 3D
-   *
-   * The remote scanner must be
-   * accessible from a phone without
-   * requiring the entire phone to
-   * sign into NOVA.
-   */
   "/remote-scanner",
 ];
+
 
 function isPublicPath(
   pathname: string,
 ) {
   return PUBLIC_PATHS.some(
-    (path) =>
-      pathname === path ||
+    (
+      path,
+    ) =>
+      pathname ===
+        path ||
       pathname.startsWith(
         `${path}/`,
       ),
   );
 }
+
 
 function safeNextPath(
   value: string | null,
@@ -49,30 +47,32 @@ function safeNextPath(
     return "/";
   }
 
+
   if (
     value.startsWith("/login") ||
-    value.startsWith("/signup")
+    value.startsWith("/signup") ||
+    value.startsWith("/check-email") ||
+    value.startsWith("/auth/") ||
+    value.startsWith("/onboarding")
   ) {
     return "/";
   }
 
+
   return value;
 }
+
 
 export async function updateSession(
   request: NextRequest,
 ) {
-  /*
-   * Demo Mode must now be explicitly
-   * enabled.
-   *
-   * Missing environment configuration
-   * must never silently expose the
-   * demo POS.
-   */
+  /* ==========================================================
+     EXPLICIT DEMO MODE ONLY
+  ========================================================== */
 
   if (
-    process.env.NEXT_PUBLIC_NOVA_DEMO_MODE ===
+    process.env
+      .NEXT_PUBLIC_NOVA_DEMO_MODE ===
     "true"
   ) {
     return NextResponse.next({
@@ -80,28 +80,30 @@ export async function updateSession(
     });
   }
 
+
   const url =
     process.env
       .NEXT_PUBLIC_SUPABASE_URL;
+
 
   const key =
     process.env
       .NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  /*
-   * Fail closed when NOVA has not been
-   * configured correctly.
-   *
-   * Previously this returned
-   * NextResponse.next(), which could
-   * accidentally expose application
-   * routes without authentication.
-   */
-  if (!url || !key) {
+
+  /* ==========================================================
+     FAIL CLOSED
+  ========================================================== */
+
+  if (
+    !url ||
+    !key
+  ) {
     return new NextResponse(
       "NOVA POS configuration error. Supabase environment variables are missing.",
       {
-        status: 503,
+        status:
+          503,
 
         headers: {
           "Cache-Control":
@@ -111,10 +113,12 @@ export async function updateSession(
     );
   }
 
+
   let response =
     NextResponse.next({
       request,
     });
+
 
   const supabase =
     createServerClient(
@@ -125,6 +129,7 @@ export async function updateSession(
           getAll() {
             return request.cookies.getAll();
           },
+
 
           setAll(
             cookiesToSet,
@@ -141,10 +146,12 @@ export async function updateSession(
               },
             );
 
+
             response =
               NextResponse.next({
                 request,
               });
+
 
             cookiesToSet.forEach(
               ({
@@ -164,22 +171,22 @@ export async function updateSession(
       },
     );
 
+
   const pathname =
     request.nextUrl.pathname;
+
 
   const publicPath =
     isPublicPath(
       pathname,
     );
 
-  /*
-   * Remote scanner pairing pages
-   * intentionally support anonymous
-   * visitors.
-   *
-   * Their UUID pairing token acts as
-   * the temporary session secret.
-   */
+
+  /* ==========================================================
+     REMOTE SCANNER
+
+     Anonymous by design.
+  ========================================================== */
 
   if (
     pathname ===
@@ -193,98 +200,232 @@ export async function updateSession(
       "private, no-store",
     );
 
+
     return response;
   }
 
+
+  /* ==========================================================
+     AUTH SESSION
+  ========================================================== */
+
   const {
-    data: claimsData,
-    error: claimsError,
+    data:
+      claimsData,
+
+    error:
+      claimsError,
   } =
-    await supabase.auth.getClaims();
+    await supabase.auth
+      .getClaims();
+
 
   const isAuthenticated =
     !claimsError &&
     Boolean(
-      claimsData?.claims?.sub,
+      claimsData?.claims
+        ?.sub,
     );
 
-  if (!isAuthenticated) {
-    if (publicPath) {
+
+  /* ==========================================================
+     UNAUTHENTICATED
+  ========================================================== */
+
+  if (
+    !isAuthenticated
+  ) {
+    if (
+      publicPath
+    ) {
       return response;
     }
+
 
     const redirectUrl =
       request.nextUrl.clone();
 
+
     redirectUrl.pathname =
       "/login";
 
-    redirectUrl.search = "";
+
+    redirectUrl.search =
+      "";
+
 
     redirectUrl.searchParams.set(
       "next",
       `${pathname}${request.nextUrl.search}`,
     );
 
+
     return NextResponse.redirect(
       redirectUrl,
     );
   }
 
-  /*
-   * RLS means only businesses
-   * belonging to the authenticated
-   * user are returned.
-   */
+
+  /* ==========================================================
+     AUTHENTICATED LOGIN/SIGNUP/CHECK-EMAIL
+
+     Centralize routing through /auth/continue.
+  ========================================================== */
+
+  if (
+    publicPath &&
+    !pathname.startsWith(
+      "/auth/",
+    )
+  ) {
+    const next =
+      safeNextPath(
+        request.nextUrl
+          .searchParams
+          .get(
+            "next",
+          ),
+      );
+
+
+    const continueUrl =
+      new URL(
+        "/auth/continue",
+        request.url,
+      );
+
+
+    if (
+      next !== "/"
+    ) {
+      continueUrl.searchParams.set(
+        "next",
+        next,
+      );
+    }
+
+
+    return NextResponse.redirect(
+      continueUrl,
+    );
+  }
+
+
+  /* ==========================================================
+     CURRENT BUSINESS ACCESS
+  ========================================================== */
 
   const {
-    data: businessRows,
+    data:
+      businessRows,
+
+    error:
+      businessError,
   } =
     await supabase
-      .from("businesses")
-      .select("id")
-      .limit(1);
+      .from(
+        "businesses",
+      )
+      .select(
+        "id",
+      )
+      .limit(
+        1,
+      );
+
+
+  /*
+   * Do not silently treat a database error as "no business".
+   */
+
+  if (
+    businessError
+  ) {
+    return new NextResponse(
+      "NOVA POS could not verify business access.",
+      {
+        status:
+          503,
+
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+
 
   const hasBusiness =
     Boolean(
       businessRows?.length,
     );
 
-  /*
-   * Auth routes are allowed to continue
-   * even when the user does not yet
-   * belong to a business.
-   *
-   * This is required for:
-   *
-   * /auth/setup-password
-   * /auth/reset-password
-   * invitation acceptance
-   */
+
+  /* ==========================================================
+     AUTH ROUTES
+
+     These need to remain reachable before business access exists:
+
+     /auth/continue
+     /auth/setup-password
+     /auth/reset-password
+     /auth/signout
+  ========================================================== */
+
+  const isAuthRoute =
+    pathname.startsWith(
+      "/auth/",
+    );
+
+
   if (
     !hasBusiness &&
     pathname !==
       "/onboarding" &&
-    !pathname.startsWith(
-      "/auth/",
-    )
+    !isAuthRoute
   ) {
-    const redirectUrl =
-      request.nextUrl.clone();
+    const continueUrl =
+      new URL(
+        "/auth/continue",
+        request.url,
+      );
 
-    redirectUrl.pathname =
-      "/onboarding";
 
-    redirectUrl.search = "";
+    const requestedPath =
+      `${pathname}${request.nextUrl.search}`;
+
+
+    const next =
+      safeNextPath(
+        requestedPath,
+      );
+
+
+    if (
+      next !== "/"
+    ) {
+      continueUrl.searchParams.set(
+        "next",
+        next,
+      );
+    }
+
 
     return NextResponse.redirect(
-      redirectUrl,
+      continueUrl,
     );
   }
 
+
+  /* ==========================================================
+     BUSINESS MEMBER SHOULD NOT SEE OWNER ONBOARDING
+  ========================================================== */
+
   if (
     hasBusiness &&
-    pathname === "/onboarding"
+    pathname ===
+      "/onboarding"
   ) {
     return NextResponse.redirect(
       new URL(
@@ -294,35 +435,12 @@ export async function updateSession(
     );
   }
 
-  /*
-   * Authenticated users should not
-   * remain on login/signup/check-email.
-   */
-  if (
-    publicPath &&
-    !pathname.startsWith(
-      "/auth/",
-    )
-  ) {
-    const next =
-      safeNextPath(
-        request.nextUrl.searchParams.get(
-          "next",
-        ),
-      );
-
-    return NextResponse.redirect(
-      new URL(
-        next,
-        request.url,
-      ),
-    );
-  }
 
   response.headers.set(
     "Cache-Control",
     "private, no-store",
   );
+
 
   return response;
 }

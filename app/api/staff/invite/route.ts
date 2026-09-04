@@ -39,12 +39,17 @@ type InvitationResult = {
 
   userId?:
     string;
+
+  existingAuthUserId?:
+    string | null;
+
+  existingAuthUserWasInvited?:
+    boolean;
 };
 
 
 function roleLabel(
-  role:
-    StaffRole,
+  role: StaffRole,
 ) {
   return role ===
     "manager"
@@ -53,9 +58,46 @@ function roleLabel(
 }
 
 
+function errorMessage(
+  cause: unknown,
+) {
+  return cause instanceof Error
+    ? cause.message
+    : "Staff invitation failed.";
+}
+
+
+/* ============================================================
+   REVOKE DATABASE INVITATION
+============================================================ */
+
+async function revokeInvitation(
+  supabase:
+    Awaited<
+      ReturnType<
+        typeof createClient
+      >
+    >,
+
+  invitationId:
+    string,
+) {
+  await supabase.rpc(
+    "revoke_staff_invitation",
+    {
+      p_invitation_id:
+        invitationId,
+    },
+  );
+}
+
+
+/* ============================================================
+   POST
+============================================================ */
+
 export async function POST(
-  request:
-    NextRequest,
+  request: NextRequest,
 ) {
   try {
     const body =
@@ -86,6 +128,10 @@ export async function POST(
       body.role;
 
 
+    /* ========================================================
+       REQUEST VALIDATION
+    ======================================================== */
+
     if (
       !businessId ||
       !email ||
@@ -95,6 +141,24 @@ export async function POST(
         {
           error:
             "Business, email and role are required.",
+        },
+        {
+          status:
+            400,
+        },
+      );
+    }
+
+
+    if (
+      !email.includes(
+        "@",
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Enter a valid staff email address.",
         },
         {
           status:
@@ -123,6 +187,10 @@ export async function POST(
     }
 
 
+    /* ========================================================
+       AUTHENTICATED SUPABASE CLIENT
+    ======================================================== */
+
     const supabase =
       await createClient();
 
@@ -131,10 +199,12 @@ export async function POST(
       data: {
         user,
       },
+
       error:
         userError,
     } =
-      await supabase.auth.getUser();
+      await supabase.auth
+        .getUser();
 
 
     if (
@@ -154,13 +224,18 @@ export async function POST(
     }
 
 
-    /*
-     * Database performs all actual
-     * authorization:
-     *
-     * Owner → Manager/Cashier
-     * Manager → Cashier only
-     */
+    /* ========================================================
+       CREATE DATABASE INVITATION
+       
+       Database performs authorization:
+       
+       Owner:
+         Manager + Cashier
+       
+       Manager:
+         Cashier only
+    ======================================================== */
+
     const {
       data,
       error:
@@ -191,7 +266,10 @@ export async function POST(
         },
         {
           status:
-            403,
+            invitationError.code ===
+              "42501"
+              ? 403
+              : 400,
         },
       );
     }
@@ -202,10 +280,14 @@ export async function POST(
         InvitationResult;
 
 
-    /*
-     * Existing NOVA account:
-     * no invitation email is necessary.
-     */
+    /* ========================================================
+       CONFIRMED EXISTING NOVA USER
+       
+       No setup email is necessary.
+       
+       Their existing NOVA password remains unchanged.
+    ======================================================== */
+
     if (
       result.status ===
         "existing_user_added"
@@ -222,6 +304,10 @@ export async function POST(
       });
     }
 
+
+    /* ========================================================
+       PENDING INVITATION
+    ======================================================== */
 
     const invitationId =
       result.invitationId;
@@ -241,6 +327,241 @@ export async function POST(
     }
 
 
+    const admin =
+      createAdminClient();
+
+
+    /* ========================================================
+       EXISTING UNCONFIRMED AUTH USER
+       
+       There are two different cases:
+       
+       1. Previous Supabase staff invitation account
+          → safe to remove and recreate the invitation user.
+       
+       2. Normal NOVA signup waiting for email verification
+          → DO NOT delete.
+    ======================================================== */
+
+    const existingAuthUserId =
+      result.existingAuthUserId ??
+      null;
+
+
+    if (
+      existingAuthUserId
+    ) {
+      const {
+        data:
+          existingUserData,
+
+        error:
+          existingUserError,
+      } =
+        await admin.auth.admin
+          .getUserById(
+            existingAuthUserId,
+          );
+
+
+      if (
+        existingUserError ||
+        !existingUserData.user
+      ) {
+        await revokeInvitation(
+          supabase,
+          invitationId,
+        );
+
+
+        return NextResponse.json(
+          {
+            error:
+              existingUserError?.message ??
+              "Existing NOVA account could not be inspected.",
+          },
+          {
+            status:
+              400,
+          },
+        );
+      }
+
+
+      const existingUser =
+        existingUserData.user;
+
+
+      /*
+       * Race protection:
+       *
+       * The user may have verified their
+       * account after create_staff_invitation()
+       * initially inspected auth.users.
+       */
+
+      if (
+        existingUser.email_confirmed_at
+      ) {
+        const {
+          data:
+            retryData,
+
+          error:
+            retryError,
+        } =
+          await supabase.rpc(
+            "create_staff_invitation",
+            {
+              p_business_id:
+                businessId,
+
+              p_email:
+                email,
+
+              p_role:
+                role,
+            },
+          );
+
+
+        if (
+          retryError
+        ) {
+          await revokeInvitation(
+            supabase,
+            invitationId,
+          );
+
+
+          return NextResponse.json(
+            {
+              error:
+                retryError.message,
+            },
+            {
+              status:
+                400,
+            },
+          );
+        }
+
+
+        const retryResult =
+          retryData as
+            InvitationResult;
+
+
+        if (
+          retryResult.status ===
+            "existing_user_added"
+        ) {
+          return NextResponse.json({
+            ok:
+              true,
+
+            status:
+              "existing_user_added",
+
+            message:
+              "Existing NOVA account added to this business.",
+          });
+        }
+
+
+        await revokeInvitation(
+          supabase,
+          invitationId,
+        );
+
+
+        return NextResponse.json(
+          {
+            error:
+              "The account changed while the invitation was being created. Try again.",
+          },
+          {
+            status:
+              409,
+          },
+        );
+      }
+
+
+      /*
+       * A normal unconfirmed signup must
+       * never be deleted by the staff
+       * invitation system.
+       */
+
+      if (
+        !existingUser.invited_at
+      ) {
+        await revokeInvitation(
+          supabase,
+          invitationId,
+        );
+
+
+        return NextResponse.json(
+          {
+            error:
+              "This email already has an unverified NOVA account. Ask the user to verify that account first, then send the staff invitation again.",
+          },
+          {
+            status:
+              409,
+          },
+        );
+      }
+
+
+      /*
+       * Previous Supabase invitation user.
+       *
+       * It is still unconfirmed and was
+       * created through the invitation
+       * system, so it is safe to remove
+       * before issuing a fresh invite.
+       */
+
+      const {
+        error:
+          deleteError,
+      } =
+        await admin.auth.admin
+          .deleteUser(
+            existingAuthUserId,
+          );
+
+
+      if (
+        deleteError
+      ) {
+        await revokeInvitation(
+          supabase,
+          invitationId,
+        );
+
+
+        return NextResponse.json(
+          {
+            error:
+              `Previous invitation could not be refreshed: ${deleteError.message}`,
+          },
+          {
+            status:
+              400,
+          },
+        );
+      }
+    }
+
+
+    /* ========================================================
+       INVITATION REDIRECT
+    ======================================================== */
+
     const origin =
       request.nextUrl.origin;
 
@@ -251,9 +572,9 @@ export async function POST(
       )}`;
 
 
-    const admin =
-      createAdminClient();
-
+    /* ========================================================
+       SEND SUPABASE AUTH INVITATION
+    ======================================================== */
 
     const {
       error:
@@ -288,74 +609,18 @@ export async function POST(
         );
 
 
-    if (inviteError) {
+    if (
+      inviteError
+    ) {
       /*
-       * Race case:
-       *
-       * Another process may have created
-       * the Auth user between our DB check
-       * and Supabase invite call.
+       * Never leave a database invitation
+       * active if Supabase failed to issue
+       * the corresponding Auth invitation.
        */
-      if (
-        inviteError.message
-          .toLowerCase()
-          .includes(
-            "already",
-          )
-      ) {
-        const {
-          data:
-            retryData,
-          error:
-            retryError,
-        } =
-          await supabase.rpc(
-            "create_staff_invitation",
-            {
-              p_business_id:
-                businessId,
 
-              p_email:
-                email,
-
-              p_role:
-                role,
-            },
-          );
-
-
-        if (
-          !retryError &&
-          (
-            retryData as
-              InvitationResult
-          )?.status ===
-            "existing_user_added"
-        ) {
-          return NextResponse.json({
-            ok:
-              true,
-
-            status:
-              "existing_user_added",
-
-            message:
-              "Existing NOVA account added to this business.",
-          });
-        }
-      }
-
-
-      /*
-       * Email could not be sent.
-       * Remove pending invite state.
-       */
-      await supabase.rpc(
-        "revoke_staff_invitation",
-        {
-          p_invitation_id:
-            invitationId,
-        },
+      await revokeInvitation(
+        supabase,
+        invitationId,
       );
 
 
@@ -371,6 +636,10 @@ export async function POST(
       );
     }
 
+
+    /* ========================================================
+       SUCCESS
+    ======================================================== */
 
     return NextResponse.json({
       ok:
@@ -388,10 +657,9 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          cause instanceof
-          Error
-            ? cause.message
-            : "Staff invitation failed.",
+          errorMessage(
+            cause,
+          ),
       },
       {
         status:

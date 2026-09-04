@@ -18,10 +18,6 @@ import {
 } from "@/components/ui/theme-toggle";
 
 import {
-  EmailSettingsCard,
-} from "@/components/settings/EmailSettingsCard";
-
-import {
   LoyaltySettingsCard,
 } from "@/components/settings/LoyaltySettingsCard";
 
@@ -37,16 +33,24 @@ import {
   StaffSettingsCard,
 } from "@/components/settings/StaffSettingsCard";
 
+import {
+  useCurrentBusiness,
+} from "@/hooks/use-current-business";
 
-/* ============================================================
-   SETTINGS SECTIONS
-============================================================ */
+import {
+  Building2,
+  CircleDollarSign,
+  Clock3,
+  PackageSearch,
+  QrCode,
+  ShoppingCart,
+} from "lucide-react";
+
 
 const SECTIONS = [
   "General",
   "POS & Checkout",
   "Receipts",
-  "Emails",
   "Inventory",
   "QR Codes",
   "Loyalty",
@@ -57,6 +61,74 @@ const SECTIONS = [
 
 type Section =
   (typeof SECTIONS)[number];
+
+
+/* ============================================================
+   PLACEHOLDER SETTING SECTION
+
+   These are intentionally honest placeholders.
+
+   There are currently no persistent settings behind these
+   areas, so NOVA must not pretend values are being saved.
+============================================================ */
+
+function FutureSettingsCard({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+
+  description: string;
+
+  icon:
+    React.ReactNode;
+}) {
+  return (
+    <Card className="rounded-[24px]">
+
+      <CardHeader>
+
+        <CardTitle>
+          {title}
+        </CardTitle>
+
+      </CardHeader>
+
+
+      <CardContent>
+
+        <div className="rounded-[18px] border border-dashed bg-muted/20 p-8">
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-muted text-muted-foreground">
+              {icon}
+            </div>
+
+
+            <div>
+
+              <p className="font-semibold">
+                No additional settings required
+              </p>
+
+
+              <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
+                {description}
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </CardContent>
+
+    </Card>
+  );
+}
 
 
 /* ============================================================
@@ -73,20 +145,32 @@ export default function SettingsPage() {
     );
 
 
+  const {
+    business,
+    email,
+    loading:
+      businessLoading,
+    error:
+      businessError,
+  } =
+    useCurrentBusiness();
+
+
   return (
     <AppLayout title="Settings">
 
       <div className="grid gap-6 md:grid-cols-4">
 
         {/* ====================================================
-            SETTINGS NAVIGATION
+            NAVIGATION
         ===================================================== */}
 
         <div className="space-y-2 md:col-span-1">
 
           {SECTIONS.map(
-            (section) => (
-
+            (
+              section,
+            ) => (
               <button
                 key={
                   section
@@ -104,13 +188,8 @@ export default function SettingsPage() {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-
-                {
-                  section
-                }
-
+                {section}
               </button>
-
             ),
           )}
 
@@ -118,7 +197,7 @@ export default function SettingsPage() {
 
 
         {/* ====================================================
-            SETTINGS CONTENT
+            CONTENT
         ===================================================== */}
 
         <div className="space-y-6 md:col-span-3">
@@ -140,58 +219,107 @@ export default function SettingsPage() {
                     Business Information
                   </CardTitle>
 
+                  <p className="text-sm text-muted-foreground">
+                    Current NOVA workspace information.
+                  </p>
+
                 </CardHeader>
 
 
-                <CardContent className="space-y-4">
+                <CardContent>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  {businessLoading ? (
 
-                    <div className="space-y-2">
+                    <div className="rounded-[18px] border bg-muted/20 p-6 text-sm text-muted-foreground">
+                      Loading business information…
+                    </div>
 
-                      <label className="text-sm font-medium">
-                        Business Name
-                      </label>
+                  ) : businessError ? (
+
+                    <div className="rounded-[18px] border border-destructive/30 bg-destructive/5 p-5 text-sm text-destructive">
+                      {businessError}
+                    </div>
+
+                  ) : !business ? (
+
+                    <div className="rounded-[18px] border border-dashed p-6 text-sm text-muted-foreground">
+                      No active NOVA business workspace was found.
+                    </div>
+
+                  ) : (
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+
+                      <div className="rounded-[18px] border bg-muted/20 p-5 sm:col-span-2">
+
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+
+                          <Building2 className="h-4 w-4" />
+
+                          Business
+
+                        </div>
 
 
-                      <input
-                        className="w-full rounded-[12px] border bg-muted/50 p-2.5 outline-none focus:border-primary"
-                        defaultValue="Nova Cafe & Roastery"
-                      />
+                        <p className="mt-2 text-lg font-semibold">
+                          {business.name}
+                        </p>
+
+                      </div>
+
+
+                      <div className="rounded-[18px] border bg-muted/20 p-5">
+
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+
+                          <CircleDollarSign className="h-4 w-4" />
+
+                          Currency
+
+                        </div>
+
+
+                        <p className="mt-2 font-semibold">
+                          {business.currency_code}
+                        </p>
+
+                      </div>
+
+
+                      <div className="rounded-[18px] border bg-muted/20 p-5">
+
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+
+                          <Clock3 className="h-4 w-4" />
+
+                          Timezone
+
+                        </div>
+
+
+                        <p className="mt-2 font-semibold">
+                          {business.timezone}
+                        </p>
+
+                      </div>
+
+
+                      <div className="rounded-[18px] border bg-muted/20 p-5 sm:col-span-2">
+
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Signed-in account
+                        </p>
+
+
+                        <p className="mt-2 break-all font-semibold">
+                          {email}
+                        </p>
+
+                      </div>
 
                     </div>
 
-
-                    <div className="space-y-2">
-
-                      <label className="text-sm font-medium">
-                        Phone
-                      </label>
-
-
-                      <input
-                        className="w-full rounded-[12px] border bg-muted/50 p-2.5 outline-none focus:border-primary"
-                        defaultValue="011-555-0199"
-                      />
-
-                    </div>
-
-
-                    <div className="space-y-2 sm:col-span-2">
-
-                      <label className="text-sm font-medium">
-                        Address
-                      </label>
-
-
-                      <input
-                        className="w-full rounded-[12px] border bg-muted/50 p-2.5 outline-none focus:border-primary"
-                        defaultValue="42 Roasters Avenue, Colombo"
-                      />
-
-                    </div>
-
-                  </div>
+                  )}
 
                 </CardContent>
 
@@ -214,8 +342,8 @@ export default function SettingsPage() {
                   <ThemeToggle />
 
 
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Your appearance preference is stored on this device.
+                  <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                    Your theme preference is stored on this device.
                   </p>
 
                 </CardContent>
@@ -228,7 +356,7 @@ export default function SettingsPage() {
           "Receipts" ? (
 
             /* ================================================
-               RECEIPT SETTINGS
+               RECEIPTS
             ================================================= */
 
             <ReceiptSettingsClient
@@ -236,19 +364,10 @@ export default function SettingsPage() {
             />
 
           ) : active ===
-          "Emails" ? (
-
-            /* ================================================
-               EMAIL SETTINGS
-            ================================================= */
-
-            <EmailSettingsCard />
-
-          ) : active ===
           "Loyalty" ? (
 
             /* ================================================
-               CUSTOMER + LOYALTY SETTINGS
+               LOYALTY
             ================================================= */
 
             <LoyaltySettingsCard />
@@ -257,7 +376,7 @@ export default function SettingsPage() {
           "Reports" ? (
 
             /* ================================================
-               PRINTED REPORT SETTINGS
+               REPORTS
             ================================================= */
 
             <ReportSettingsCard />
@@ -266,51 +385,54 @@ export default function SettingsPage() {
           "Staff" ? (
 
             /* ================================================
-               STAFF SETTINGS
+               STAFF
             ================================================= */
 
             <StaffSettingsCard />
 
+          ) : active ===
+          "POS & Checkout" ? (
+
+            /* ================================================
+               POS
+            ================================================= */
+
+            <FutureSettingsCard
+              title="POS & Checkout"
+              icon={
+                <ShoppingCart className="h-5 w-5" />
+              }
+              description="Checkout behaviour currently uses NOVA's production defaults. Additional business-level checkout preferences can be added later without changing the existing checkout engine."
+            />
+
+          ) : active ===
+          "Inventory" ? (
+
+            /* ================================================
+               INVENTORY
+            ================================================= */
+
+            <FutureSettingsCard
+              title="Inventory"
+              icon={
+                <PackageSearch className="h-5 w-5" />
+              }
+              description="Inventory tracking is already handled by NOVA's stock movement and inventory system. There are currently no extra workspace preferences to configure here."
+            />
+
           ) : (
 
             /* ================================================
-               REMAINING SETTINGS
+               QR
             ================================================= */
 
-            <Card className="rounded-[24px]">
-
-              <CardHeader>
-
-                <CardTitle>
-                  {
-                    active
-                  }
-                </CardTitle>
-
-              </CardHeader>
-
-
-              <CardContent>
-
-                <div className="rounded-[16px] border border-dashed bg-muted/20 p-8 text-center">
-
-                  <p className="font-medium">
-                    {
-                      active
-                    }{" "}
-                    settings are prepared for the backend phase.
-                  </p>
-
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    We will connect these controls to persistent business settings instead of saving fake values.
-                  </p>
-
-                </div>
-
-              </CardContent>
-
-            </Card>
+            <FutureSettingsCard
+              title="QR Codes"
+              icon={
+                <QrCode className="h-5 w-5" />
+              }
+              description="Product QR identifiers are generated and stored permanently by NOVA. Additional QR formatting preferences can be introduced later if required."
+            />
 
           )}
 

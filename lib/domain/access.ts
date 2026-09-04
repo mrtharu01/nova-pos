@@ -14,6 +14,13 @@ export type StaffStatus =
   | "disabled";
 
 
+export type StaffInvitationStatus =
+  | "pending"
+  | "accepted"
+  | "revoked"
+  | "expired";
+
+
 export type BusinessPermissions = {
   checkout: boolean;
 
@@ -69,4 +76,35 @@ export type BusinessStaffMember = {
   isOwner: boolean;
 
   createdAt: string;
+};
+
+
+export type StaffInvitation = {
+  id: string;
+
+  email: string;
+
+  role:
+    StaffRole;
+
+  status:
+    StaffInvitationStatus;
+
+  expiresAt: string;
+
+  createdAt: string;
+};
+
+
+export type StaffInvitationActionResult = {
+  ok: true;
+
+  status:
+    | "invited"
+    | "existing_user_added";
+
+  message: string;
+
+  invitationId?:
+    string;
 };

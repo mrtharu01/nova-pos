@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
+
 import Link from "next/link";
+
 import {
   Eye,
   EyeOff,
@@ -10,46 +12,100 @@ import {
   Mail,
   UserPlus,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/client";
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  createClient,
+} from "@/lib/supabase/client";
+
 
 export default function SignupPage() {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const [email, setEmail] =
-    React.useState("");
 
-  const [password, setPassword] =
-    React.useState("");
+  const [
+    email,
+    setEmail,
+  ] =
+    React.useState(
+      "",
+    );
 
-  const [confirmPassword, setConfirmPassword] =
-    React.useState("");
 
-  const [showPassword, setShowPassword] =
-    React.useState(false);
+  const [
+    password,
+    setPassword,
+  ] =
+    React.useState(
+      "",
+    );
 
-  const [loading, setLoading] =
-    React.useState(false);
 
-  const [error, setError] =
-    React.useState<string | null>(
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] =
+    React.useState(
+      "",
+    );
+
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const [
+    error,
+    setError,
+  ] =
+    React.useState<
+      string | null
+    >(
       null,
     );
 
+
   async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
+    event:
+      React.FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
-    if (loading) {
+
+    if (
+      loading
+    ) {
       return;
     }
 
-    const normalizedEmail =
-      email.trim().toLowerCase();
 
-    if (!normalizedEmail) {
+    const normalizedEmail =
+      email
+        .trim()
+        .toLowerCase();
+
+
+    if (
+      !normalizedEmail
+    ) {
       setError(
         "Enter your email address.",
       );
@@ -57,13 +113,18 @@ export default function SignupPage() {
       return;
     }
 
-    if (password.length < 8) {
+
+    if (
+      password.length <
+      8
+    ) {
       setError(
         "Password must contain at least 8 characters.",
       );
 
       return;
     }
+
 
     if (
       password !==
@@ -76,43 +137,73 @@ export default function SignupPage() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+
+    setLoading(
+      true,
+    );
+
+    setError(
+      null,
+    );
+
 
     try {
       const supabase =
         createClient();
 
+
       const origin =
         window.location.origin;
 
+
+      /*
+       * Confirmed signup always goes through
+       * /auth/continue.
+       *
+       * That route decides whether the account is:
+       *
+       * - an existing business member
+       * - a pending invited staff account
+       * - a genuinely new owner account
+       */
+
       const {
         data,
-        error: signupError,
+
+        error:
+          signupError,
       } =
-        await supabase.auth.signUp({
-          email:
-            normalizedEmail,
+        await supabase.auth
+          .signUp({
+            email:
+              normalizedEmail,
 
-          password,
+            password,
 
-          options: {
-            emailRedirectTo:
-              `${origin}/onboarding`,
-          },
-        });
+            options: {
+              emailRedirectTo:
+                `${origin}/auth/continue`,
+            },
+          });
 
-      if (signupError) {
+
+      if (
+        signupError
+      ) {
         throw new Error(
           signupError.message,
         );
       }
 
+
       /*
-       * Email confirmation normally means
-       * there is no authenticated session yet.
+       * With email confirmation enabled there
+       * will normally be no session yet.
        */
-      if (!data.session) {
+
+      if (
+        !data.session
+      ) {
         router.push(
           `/check-email?purpose=signup&email=${encodeURIComponent(
             normalizedEmail,
@@ -122,12 +213,14 @@ export default function SignupPage() {
         return;
       }
 
+
       /*
-       * If confirmation happens to be disabled,
-       * continue into business setup.
+       * If email confirmation is disabled,
+       * still use the same central routing.
        */
+
       router.replace(
-        "/onboarding",
+        "/auth/continue",
       );
 
       router.refresh();
@@ -138,40 +231,55 @@ export default function SignupPage() {
           : "Account creation failed.",
       );
     } finally {
-      setLoading(false);
+      setLoading(
+        false,
+      );
     }
   }
 
+
   return (
     <main className="flex min-h-dvh items-center justify-center bg-[#020817] px-5 py-10 text-white">
+
       <div className="w-full max-w-[500px] rounded-[32px] border border-white/10 bg-[#121a2e] p-8 shadow-2xl sm:p-10">
+
         <div className="flex items-center gap-4">
+
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
             N
           </div>
 
+
           <div>
+
             <p className="text-xl font-black">
               NOVA POS
             </p>
 
+
             <p className="text-sm text-slate-400">
               Secure account access
             </p>
+
           </div>
+
         </div>
 
+
         <div className="mt-9">
+
           <h1 className="text-2xl font-black">
             Create your account
           </h1>
 
+
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Create a NOVA account to
-            set up and manage your
-            business.
+            Create your NOVA account.
+            After verification, NOVA will automatically determine the correct workspace setup.
           </p>
+
         </div>
+
 
         <form
           onSubmit={
@@ -179,18 +287,27 @@ export default function SignupPage() {
           }
           className="mt-7 space-y-5"
         >
+
           <div>
+
             <label className="text-sm font-semibold">
               Email
             </label>
 
+
             <div className="relative mt-2">
+
               <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+
 
               <input
                 type="email"
-                value={email}
-                onChange={(event) =>
+                value={
+                  email
+                }
+                onChange={(
+                  event,
+                ) =>
                   setEmail(
                     event.target.value,
                   )
@@ -200,16 +317,23 @@ export default function SignupPage() {
                 placeholder="you@gmail.com"
                 className="h-12 w-full rounded-[14px] border border-white/10 bg-[#0a1224] pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-600 focus:border-indigo-500"
               />
+
             </div>
+
           </div>
 
+
           <div>
+
             <label className="text-sm font-semibold">
               Password
             </label>
 
+
             <div className="relative mt-2">
+
               <LockKeyhole className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+
 
               <input
                 type={
@@ -217,8 +341,12 @@ export default function SignupPage() {
                     ? "text"
                     : "password"
                 }
-                value={password}
-                onChange={(event) =>
+                value={
+                  password
+                }
+                onChange={(
+                  event,
+                ) =>
                   setPassword(
                     event.target.value,
                   )
@@ -229,29 +357,44 @@ export default function SignupPage() {
                 className="h-12 w-full rounded-[14px] border border-white/10 bg-[#0a1224] pl-11 pr-12 text-sm outline-none transition placeholder:text-slate-600 focus:border-indigo-500"
               />
 
+
               <button
                 type="button"
                 onClick={() =>
                   setShowPassword(
-                    (current) =>
+                    (
+                      current,
+                    ) =>
                       !current,
                   )
                 }
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-white"
+                aria-label={
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
+                }
               >
+
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
+
               </button>
+
             </div>
+
           </div>
 
+
           <div>
+
             <label className="text-sm font-semibold">
               Confirm password
             </label>
+
 
             <input
               type={
@@ -262,7 +405,9 @@ export default function SignupPage() {
               value={
                 confirmPassword
               }
-              onChange={(event) =>
+              onChange={(
+                event,
+              ) =>
                 setConfirmPassword(
                   event.target.value,
                 )
@@ -272,19 +417,27 @@ export default function SignupPage() {
               placeholder="Repeat password"
               className="mt-2 h-12 w-full rounded-[14px] border border-white/10 bg-[#0a1224] px-4 text-sm outline-none transition placeholder:text-slate-600 focus:border-indigo-500"
             />
+
           </div>
 
+
           {error && (
+
             <div className="rounded-[16px] border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
               {error}
             </div>
+
           )}
+
 
           <button
             type="submit"
-            disabled={loading}
-            className="flex h-13 w-full items-center justify-center rounded-[15px] bg-indigo-500 px-5 font-bold transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={
+              loading
+            }
+            className="flex h-[52px] w-full items-center justify-center rounded-[15px] bg-indigo-500 px-5 font-bold transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
+
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -296,19 +449,27 @@ export default function SignupPage() {
                 Create account
               </>
             )}
+
           </button>
+
         </form>
 
+
         <p className="mt-7 text-center text-sm text-slate-400">
+
           Already have an account?{" "}
+
           <Link
             href="/login"
             className="font-semibold text-indigo-400 hover:text-indigo-300"
           >
             Sign in
           </Link>
+
         </p>
+
       </div>
+
     </main>
   );
 }

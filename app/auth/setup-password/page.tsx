@@ -3,11 +3,13 @@
 import * as React from "react";
 
 import {
+  Building2,
   CheckCircle2,
   Eye,
   EyeOff,
   Loader2,
   LockKeyhole,
+  ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
 
@@ -20,37 +22,76 @@ import {
 } from "@/lib/supabase/client";
 
 
+type PendingInvitation = {
+  id: string;
+
+  business_id: string;
+
+  business_name: string;
+
+  email: string;
+
+  role:
+    | "manager"
+    | "cashier";
+
+  expires_at: string;
+};
+
+
+function roleLabel(
+  role:
+    | "manager"
+    | "cashier",
+) {
+  return role ===
+    "manager"
+    ? "Manager"
+    : "Cashier";
+}
+
+
 export default function StaffSetupPasswordPage() {
   const router =
     useRouter();
 
 
   const [
-    invitationId,
-    setInvitationId,
+    invitation,
+    setInvitation,
   ] =
-    React.useState("");
+    React.useState<
+      PendingInvitation | null
+    >(
+      null,
+    );
 
 
   const [
     email,
     setEmail,
   ] =
-    React.useState("");
+    React.useState(
+      "",
+    );
 
 
   const [
     password,
     setPassword,
   ] =
-    React.useState("");
+    React.useState(
+      "",
+    );
 
 
   const [
     confirmPassword,
     setConfirmPassword,
   ] =
-    React.useState("");
+    React.useState(
+      "",
+    );
 
 
   const [
@@ -86,82 +127,178 @@ export default function StaffSetupPasswordPage() {
   ] =
     React.useState<
       string | null
-    >(null);
+    >(
+      null,
+    );
 
 
   React.useEffect(() => {
     async function initialize() {
-      const params =
-        new URLSearchParams(
-          window.location.search,
+      try {
+        const params =
+          new URLSearchParams(
+            window.location.search,
+          );
+
+
+        const invitationId =
+          params.get(
+            "invitation",
+          ) ??
+          "";
+
+
+        if (
+          !invitationId
+        ) {
+          setError(
+            "Invitation information is missing.",
+          );
+
+          return;
+        }
+
+
+        const supabase =
+          createClient();
+
+
+        const {
+          data: {
+            user,
+          },
+
+          error:
+            userError,
+        } =
+          await supabase.auth
+            .getUser();
+
+
+        if (
+          userError ||
+          !user
+        ) {
+          setError(
+            "Your invitation session is not active. Open the secure invitation link from your email again.",
+          );
+
+          return;
+        }
+
+
+        setEmail(
+          user.email ??
+            "",
         );
 
 
-      const invitation =
-        params.get(
-          "invitation",
-        ) ??
-        "";
+        const {
+          data:
+            pendingRows,
+
+          error:
+            pendingError,
+        } =
+          await supabase.rpc(
+            "get_my_pending_staff_invitations",
+          );
 
 
-      setInvitationId(
-        invitation,
-      );
+        if (
+          pendingError
+        ) {
+          throw new Error(
+            pendingError.message,
+          );
+        }
 
 
-      if (!invitation) {
+        const invitations =
+          (
+            pendingRows ??
+            []
+          ) as PendingInvitation[];
+
+
+        const matchingInvitation =
+          invitations.find(
+            (
+              item,
+            ) =>
+              item.id ===
+              invitationId,
+          );
+
+
+        if (
+          !matchingInvitation
+        ) {
+          /*
+           * If access already exists, the invitation may have
+           * already been accepted.
+           */
+
+          const {
+            data:
+              businessRows,
+          } =
+            await supabase
+              .from(
+                "businesses",
+              )
+              .select(
+                "id",
+              )
+              .limit(
+                1,
+              );
+
+
+          if (
+            businessRows &&
+            businessRows.length >
+              0
+          ) {
+            router.replace(
+              "/",
+            );
+
+            router.refresh();
+
+            return;
+          }
+
+
+          setError(
+            "This invitation is expired, revoked, already used, or does not belong to this account.",
+          );
+
+          return;
+        }
+
+
+        setInvitation(
+          matchingInvitation,
+        );
+      } catch (cause) {
         setError(
-          "Invitation information is missing.",
+          cause instanceof Error
+            ? cause.message
+            : "NOVA could not prepare this staff invitation.",
         );
-
+      } finally {
         setLoading(
           false,
         );
-
-        return;
       }
-
-
-      const supabase =
-        createClient();
-
-
-      const {
-        data: {
-          user,
-        },
-      } =
-        await supabase.auth
-          .getUser();
-
-
-      if (!user) {
-        setError(
-          "Your invitation session is not active. Open the invitation link from your email again.",
-        );
-
-        setLoading(
-          false,
-        );
-
-        return;
-      }
-
-
-      setEmail(
-        user.email ??
-          "",
-      );
-
-
-      setLoading(
-        false,
-      );
     }
 
 
     void initialize();
-  }, []);
+  }, [
+    router,
+  ]);
 
 
   async function handleSubmit(
@@ -171,7 +308,10 @@ export default function StaffSetupPasswordPage() {
     event.preventDefault();
 
 
-    if (saving) {
+    if (
+      saving ||
+      !invitation
+    ) {
       return;
     }
 
@@ -200,19 +340,9 @@ export default function StaffSetupPasswordPage() {
     }
 
 
-    if (!invitationId) {
-      setError(
-        "Invitation information is missing.",
-      );
-
-      return;
-    }
-
-
     setSaving(
       true,
     );
-
 
     setError(
       null,
@@ -223,6 +353,11 @@ export default function StaffSetupPasswordPage() {
       const supabase =
         createClient();
 
+
+      /*
+       * First create the staff member's permanent NOVA
+       * password.
+       */
 
       const {
         error:
@@ -243,6 +378,14 @@ export default function StaffSetupPasswordPage() {
       }
 
 
+      /*
+       * Then activate business access.
+       *
+       * If this fails, the invitation remains pending and the
+       * page can be retried without accidentally creating an
+       * Owner workspace.
+       */
+
       const {
         error:
           acceptanceError,
@@ -251,7 +394,7 @@ export default function StaffSetupPasswordPage() {
           "accept_staff_invitation",
           {
             p_invitation_id:
-              invitationId,
+              invitation.id,
           },
         );
 
@@ -266,15 +409,13 @@ export default function StaffSetupPasswordPage() {
 
 
       router.replace(
-        "/",
+        "/auth/continue",
       );
-
 
       router.refresh();
     } catch (cause) {
       setError(
-        cause instanceof
-        Error
+        cause instanceof Error
           ? cause.message
           : "Account setup failed.",
       );
@@ -286,7 +427,9 @@ export default function StaffSetupPasswordPage() {
   }
 
 
-  if (loading) {
+  if (
+    loading
+  ) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-[#020817] px-5 text-white">
 
@@ -334,8 +477,7 @@ export default function StaffSetupPasswordPage() {
         </div>
 
 
-        {error &&
-        !email ? (
+        {!invitation ? (
 
           <div className="mt-8 rounded-[18px] border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
 
@@ -345,9 +487,8 @@ export default function StaffSetupPasswordPage() {
 
 
               <span>
-                {
-                  error
-                }
+                {error ??
+                  "This invitation is not available."}
               </span>
 
             </div>
@@ -366,24 +507,68 @@ export default function StaffSetupPasswordPage() {
 
 
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Your email invitation has been verified. Set a password to finish joining NOVA.
+                Your invitation has been verified. Create your password to finish joining this NOVA workspace.
               </p>
 
             </div>
 
 
-            <div className="mt-6 rounded-[16px] border border-white/10 bg-white/[0.03] p-4">
+            <div className="mt-6 space-y-2">
 
-              <p className="text-xs text-slate-500">
-                Account
-              </p>
+              <div className="rounded-[16px] border border-white/10 bg-white/[0.03] p-4">
+
+                <p className="text-xs text-slate-500">
+                  Account
+                </p>
 
 
-              <p className="mt-1 font-semibold">
-                {
-                  email
-                }
-              </p>
+                <p className="mt-1 font-semibold">
+                  {email}
+                </p>
+
+              </div>
+
+
+              <div className="grid gap-2 sm:grid-cols-2">
+
+                <div className="rounded-[16px] border border-white/10 bg-white/[0.03] p-4">
+
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+
+                    <Building2 className="h-3.5 w-3.5" />
+
+                    Business
+
+                  </div>
+
+
+                  <p className="mt-1 font-semibold">
+                    {invitation.business_name}
+                  </p>
+
+                </div>
+
+
+                <div className="rounded-[16px] border border-white/10 bg-white/[0.03] p-4">
+
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+
+                    <ShieldCheck className="h-3.5 w-3.5" />
+
+                    Access role
+
+                  </div>
+
+
+                  <p className="mt-1 font-semibold">
+                    {roleLabel(
+                      invitation.role,
+                    )}
+                  </p>
+
+                </div>
+
+              </div>
 
             </div>
 
@@ -424,6 +609,7 @@ export default function StaffSetupPasswordPage() {
                       )
                     }
                     autoComplete="new-password"
+                    required
                     placeholder="At least 8 characters"
                     className="h-12 w-full rounded-[14px] border border-white/10 bg-[#0a1224] pl-11 pr-12 text-sm outline-none transition focus:border-indigo-500"
                   />
@@ -433,7 +619,9 @@ export default function StaffSetupPasswordPage() {
                     type="button"
                     onClick={() =>
                       setShowPassword(
-                        (value) =>
+                        (
+                          value,
+                        ) =>
                           !value,
                       )
                     }
@@ -477,6 +665,7 @@ export default function StaffSetupPasswordPage() {
                     )
                   }
                   autoComplete="new-password"
+                  required
                   placeholder="Repeat password"
                   className="mt-2 h-12 w-full rounded-[14px] border border-white/10 bg-[#0a1224] px-4 text-sm outline-none transition focus:border-indigo-500"
                 />
@@ -490,10 +679,9 @@ export default function StaffSetupPasswordPage() {
 
                   <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
-
-                  {
-                    error
-                  }
+                  <span>
+                    {error}
+                  </span>
 
                 </div>
 
@@ -505,23 +693,19 @@ export default function StaffSetupPasswordPage() {
                 disabled={
                   saving
                 }
-                className="flex h-13 w-full items-center justify-center rounded-[15px] bg-indigo-500 px-5 font-bold transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-[52px] w-full items-center justify-center rounded-[15px] bg-indigo-500 px-5 font-bold transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
 
                 {saving ? (
-
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Finishing setup…
                   </>
-
                 ) : (
-
                   <>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     Complete account setup
                   </>
-
                 )}
 
               </button>
