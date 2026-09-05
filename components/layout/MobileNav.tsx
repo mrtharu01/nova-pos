@@ -81,12 +81,6 @@ const MOBILE_NAV_ITEMS:
       icon: ReceiptText,
     },
 
-    /*
-     * More is available to every active business member.
-     *
-     * The /more page filters its own links, so Cashiers can
-     * reach Customers without seeing management-only pages.
-     */
     {
       href: "/more",
       label: "More",
@@ -110,19 +104,11 @@ export function MobileNav({
 
   const visibleItems =
     React.useMemo(() => {
-      /*
-       * Demo mode keeps the full interface.
-       */
       if (demo) {
         return MOBILE_NAV_ITEMS;
       }
 
 
-      /*
-       * Once permissions are known,
-       * filter using the same rules
-       * as the desktop sidebar.
-       */
       if (access) {
         return MOBILE_NAV_ITEMS.filter(
           (item) =>
@@ -134,10 +120,6 @@ export function MobileNav({
       }
 
 
-      /*
-       * While access is loading,
-       * only show universally available items.
-       */
       return MOBILE_NAV_ITEMS.filter(
         (item) =>
           !item.requirement,
@@ -149,7 +131,19 @@ export function MobileNav({
 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/80 pb-safe backdrop-blur-md md:hidden">
+    <div
+      className="
+        fixed
+        inset-x-0
+        bottom-0
+        z-40
+        border-t
+        bg-background/90
+        pb-[env(safe-area-inset-bottom)]
+        backdrop-blur-md
+        md:hidden
+      "
+    >
 
       <div className="flex h-16 items-center justify-around px-2">
 
@@ -175,7 +169,19 @@ export function MobileNav({
 
                   <div
                     className={cn(
-                      "flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform",
+                      `
+                        flex
+                        h-14
+                        w-14
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-primary
+                        text-primary-foreground
+                        shadow-lg
+                        shadow-primary/30
+                        transition-transform
+                      `,
                       isActive &&
                         "scale-105",
                     )}
@@ -194,7 +200,9 @@ export function MobileNav({
                         : "text-foreground",
                     )}
                   >
+
                     {item.label}
+
                   </span>
 
                 </Link>
@@ -207,7 +215,16 @@ export function MobileNav({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex h-full w-16 flex-col items-center justify-center space-y-1 transition-colors",
+                  `
+                    flex
+                    h-full
+                    w-16
+                    flex-col
+                    items-center
+                    justify-center
+                    space-y-1
+                    transition-colors
+                  `,
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground",

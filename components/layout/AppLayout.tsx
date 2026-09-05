@@ -137,11 +137,6 @@ export function AppLayout({
         pathname,
       )
     ) {
-      /*
-       * Cashiers are sent to POS because
-       * it is their primary operational screen.
-       */
-
       router.replace(
         "/pos",
       );
@@ -156,7 +151,7 @@ export function AppLayout({
 
 
   /* ==========================================================
-     ACCESS ERROR / DISABLED USER
+     ACCESS ERROR
   ========================================================== */
 
   if (
@@ -164,7 +159,7 @@ export function AppLayout({
     accessError
   ) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background p-6">
+      <div className="flex min-h-[100dvh] w-full items-center justify-center bg-background p-6">
 
         <div className="w-full max-w-md rounded-[24px] border bg-card p-6 shadow-sm">
 
@@ -182,7 +177,8 @@ export function AppLayout({
 
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             NOVA could not verify your access to this business.
-            Your account may have been disabled, or the permission check may have failed.
+            Your account may have been disabled, or the permission
+            check may have failed.
           </p>
 
 
@@ -250,7 +246,7 @@ export function AppLayout({
     !access
   ) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+      <div className="flex min-h-[100dvh] w-full items-center justify-center bg-background">
 
         <div className="text-center">
 
@@ -283,7 +279,7 @@ export function AppLayout({
     !allowed
   ) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+      <div className="flex min-h-[100dvh] w-full items-center justify-center bg-background">
 
         <div className="text-center">
 
@@ -311,7 +307,7 @@ export function AppLayout({
   ========================================================== */
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden bg-background">
 
       {/* ======================================================
           DESKTOP SIDEBAR
@@ -332,7 +328,7 @@ export function AppLayout({
           MAIN AREA
       ======================================================= */}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 
         <Topbar
           title={
@@ -343,7 +339,15 @@ export function AppLayout({
 
         <main
           className={cn(
-            "flex-1 overflow-y-auto pb-16 md:pb-0",
+            `
+              min-h-0
+              flex-1
+              overflow-y-auto
+              overscroll-y-contain
+              pb-[calc(6.5rem+env(safe-area-inset-bottom))]
+              [-webkit-overflow-scrolling:touch]
+              md:pb-0
+            `,
             !noPadding &&
               "p-4 sm:p-6",
           )}
