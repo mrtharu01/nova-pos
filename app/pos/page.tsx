@@ -258,8 +258,7 @@ export default function POSPage() {
                 .toLowerCase()
                 .includes(
                   query,
-                )
-              ||
+                ) ||
               product.variants.some(
                 (variant) =>
                   variant.sku
@@ -422,6 +421,10 @@ export default function POSPage() {
 
   /* ==========================================================
      CHECKOUT
+
+     Important mobile behavior:
+     close the cart sheet first so the payment dialog
+     doesn't stack on top of it.
   ========================================================== */
 
   function handleCheckout() {
@@ -432,6 +435,11 @@ export default function POSPage() {
     ) {
       return;
     }
+
+
+    setMobileCartOpen(
+      false,
+    );
 
 
     setCheckoutOpen(
@@ -651,10 +659,10 @@ export default function POSPage() {
               PRODUCT GRID
 
               Mobile:
-              no inner vertical scrollbar — AppLayout scrolls.
+              AppLayout scrolls the whole page.
 
               Desktop:
-              independently scrollable product catalog.
+              catalog gets its own scrollbar.
           =================================================== */}
 
           <div
@@ -942,9 +950,6 @@ export default function POSPage() {
 
         {/* ====================================================
             MOBILE CART BUTTON
-
-            Positioned ABOVE the mobile navigation
-            and iPhone safe area.
         ===================================================== */}
 
         <div
@@ -1005,6 +1010,10 @@ export default function POSPage() {
 
         {/* ====================================================
             MOBILE CART SHEET
+
+            Important:
+            Sheet now ends ABOVE the fixed bottom navigation.
+            The totals and CHARGE button are no longer hidden.
         ===================================================== */}
 
         <AnimatePresence>
@@ -1068,18 +1077,17 @@ export default function POSPage() {
                 }}
                 className="
                   fixed
-                  bottom-0
+                  bottom-[calc(4rem+env(safe-area-inset-bottom))]
                   left-0
                   right-0
-                  z-50
+                  z-[60]
                   flex
-                  h-[85dvh]
+                  h-[calc(100dvh-5rem)]
                   max-h-[85dvh]
                   flex-col
                   overflow-hidden
                   rounded-t-[32px]
                   bg-background
-                  pb-[env(safe-area-inset-bottom)]
                   shadow-2xl
 
                   md:hidden
@@ -1492,7 +1500,6 @@ function CartContent({
 
                       {formatMoney(
                         item.variant.price,
-
                         currencyCode,
                       )}
 
@@ -1513,7 +1520,6 @@ function CartContent({
                           1
                             ? cart.updateQuantity(
                                 item.id,
-
                                 item.quantity -
                                   1,
                               )
@@ -1548,7 +1554,6 @@ function CartContent({
                         onClick={() =>
                           cart.updateQuantity(
                             item.id,
-
                             item.quantity +
                               1,
                           )
@@ -1577,7 +1582,7 @@ function CartContent({
 
 
       {/* ======================================================
-          TOTALS
+          TOTALS + CHECKOUT
       ======================================================= */}
 
       <div className="shrink-0 border-t bg-muted/30 p-4 sm:p-6">
@@ -1595,7 +1600,6 @@ function CartContent({
 
               {formatMoney(
                 cart.getSubtotal(),
-
                 currencyCode,
               )}
 
@@ -1620,7 +1624,6 @@ function CartContent({
 
                 {formatMoney(
                   cart.discount,
-
                   currencyCode,
                 )}
 
@@ -1642,7 +1645,6 @@ function CartContent({
 
               {formatMoney(
                 cart.getTotal(),
-
                 currencyCode,
               )}
 
@@ -1670,7 +1672,6 @@ function CartContent({
 
           {formatMoney(
             cart.getTotal(),
-
             currencyCode,
           )}
 
