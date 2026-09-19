@@ -637,7 +637,7 @@ export function ReceiptSettingsClient({
           ...nextSettings,
 
           logoUrl:
-            uploadedLogo.publicUrl,
+            uploadedLogo.signedUrl,
 
           logoPath:
             uploadedLogo.path,
