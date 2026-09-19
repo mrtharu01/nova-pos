@@ -6,7 +6,6 @@ import type {
   ProductStatus,
   PromotionType,
 } from "@/lib/domain/catalog";
-import { getConfiguredBusinessId } from "@/lib/supabase/config";
 
 type CatalogVariantRow = {
   business_id: string;
@@ -43,16 +42,27 @@ function mapStatus(status: CatalogVariantRow["product_status"]): ProductStatus {
 
 export async function fetchCatalogProducts(): Promise<Product[]> {
   const supabase = createClient();
-  let query = supabase
+
+  const {
+    data: currentBusinesses,
+    error: businessError,
+  } = await supabase.rpc(
+    "get_my_current_business",
+  );
+
+  if (businessError) throw businessError;
+
+  const businessId =
+    currentBusinesses?.[0]?.id;
+
+  if (!businessId) return [];
+
+  const { data, error } = await supabase
     .from("catalog_variant_inventory")
     .select("*")
+    .eq("business_id", businessId)
     .order("product_name", { ascending: true })
     .order("variant_name", { ascending: true });
-
-  const businessId = getConfiguredBusinessId();
-  if (businessId) query = query.eq("business_id", businessId);
-
-  const { data, error } = await query;
 
   if (error) throw error;
 

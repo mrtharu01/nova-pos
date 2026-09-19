@@ -20,10 +20,3 @@ export function isDemoMode() {
     "true"
   );
 }
-
-export function getConfiguredBusinessId() {
-  return (
-    process.env.NEXT_PUBLIC_NOVA_BUSINESS_ID?.trim() ||
-    null
-  );
-}
