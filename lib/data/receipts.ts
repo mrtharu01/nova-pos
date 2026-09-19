@@ -174,6 +174,14 @@ type ItemRow = {
   unit_price:
     | number
     | string;
+
+  regular_unit_price:
+    | number
+    | string;
+
+  product_discount_total:
+    | number
+    | string;
 
   line_subtotal:
     | number
@@ -479,6 +487,8 @@ export async function fetchSaleReceipt(
           sku,
           quantity,
           unit_price,
+          regular_unit_price,
+          product_discount_total,
           line_subtotal,
           discount_total,
           tax_total,
@@ -816,6 +826,17 @@ export async function fetchSaleReceipt(
           unitPrice:
             numberValue(
               item.unit_price,
+            ),
+
+
+          regularUnitPrice:
+            numberValue(
+              item.regular_unit_price,
+            ),
+
+          productDiscountTotal:
+            numberValue(
+              item.product_discount_total,
             ),
 
           lineSubtotal:
