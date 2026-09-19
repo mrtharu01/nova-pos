@@ -290,9 +290,10 @@ end;
 $$;
 
 
-do $
+
+do $$
 begin
   raise notice
     'NOVA SaaS single-tenant guardrails verified.';
 end;
-$;
+$$;
