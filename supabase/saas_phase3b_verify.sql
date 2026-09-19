@@ -186,8 +186,9 @@ $$;
 
 
 -- ============================================================
--- 3. MEMBERSHIP HELPERS MUST REMAIN SECURITY DEFINER AND
---    UNAVAILABLE TO CLIENT ROLES DIRECTLY.
+-- 3. MEMBERSHIP HELPERS MUST REMAIN SECURITY DEFINER.
+--    Anonymous execution is forbidden; authenticated execution
+--    remains required because RLS policies call these helpers.
 -- ============================================================
 
 do $$
