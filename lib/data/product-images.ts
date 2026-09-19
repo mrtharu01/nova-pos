@@ -15,7 +15,7 @@ const PRODUCT_IMAGE_BUCKET =
 
 export type ProductImageUploadResult = {
 
-  publicUrl: string;
+  signedUrl: string;
 
   path: string;
 
@@ -166,24 +166,37 @@ export async function uploadProductImage(
 
   const {
     data,
+    error:
+      signedUrlError,
   } =
-    supabase.storage
+    await supabase.storage
 
       .from(
         PRODUCT_IMAGE_BUCKET,
       )
 
-      .getPublicUrl(
+      .createSignedUrl(
         path,
+        60 * 60 * 8,
       );
 
 
   if (
-    !data.publicUrl
+    signedUrlError ||
+    !data?.signedUrl
   ) {
+    await supabase.storage
+      .from(
+        PRODUCT_IMAGE_BUCKET,
+      )
+      .remove([
+        path,
+      ]);
+
 
     throw new Error(
-      "The image was uploaded but its public URL could not be created.",
+      signedUrlError?.message ??
+      "The image was uploaded but a secure preview URL could not be created.",
     );
 
   }
@@ -191,8 +204,8 @@ export async function uploadProductImage(
 
   return {
 
-    publicUrl:
-      data.publicUrl,
+    signedUrl:
+      data.signedUrl,
 
     path,
 
