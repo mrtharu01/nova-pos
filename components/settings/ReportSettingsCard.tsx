@@ -200,11 +200,16 @@ export function ReportSettingsCard() {
 
   async function handleSave() {
     if (
+      saveLockRef.current ||
       !settings ||
       saving
     ) {
       return;
     }
+
+
+    saveLockRef.current =
+      true;
 
 
     setSaving(
@@ -241,6 +246,10 @@ export function ReportSettingsCard() {
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(
         false,
       );
@@ -739,7 +748,12 @@ export function ReportSettingsCard() {
 
         {error && (
 
-          <div className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          <div
+            ref={
+              feedbackRef
+            }
+            className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+          >
 
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
@@ -754,7 +768,12 @@ export function ReportSettingsCard() {
 
         {saved && (
 
-          <div className="flex items-center gap-2 rounded-[16px] border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-emerald-700 dark:text-emerald-400">
+          <div
+            ref={
+              feedbackRef
+            }
+            className="flex items-center gap-2 rounded-[16px] border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-emerald-700 dark:text-emerald-400"
+          >
 
             <Check className="h-4 w-4" />
 
