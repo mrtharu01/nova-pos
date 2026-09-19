@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 
 import {
-  Button,
-} from "@/components/ui/button";
+  OnboardingSubmitButton,
+} from "@/components/auth/OnboardingSubmitButton";
 
 import {
   Input,
@@ -298,13 +298,7 @@ export default async function OnboardingPage({
             </div>
 
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-            >
-              Create business workspace
-            </Button>
+            <OnboardingSubmitButton />
 
           </form>
 
