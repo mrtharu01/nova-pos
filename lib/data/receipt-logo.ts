@@ -61,6 +61,16 @@ export async function uploadReceiptLogo({
     );
 
 
+  if (
+    converted.outputBytes >
+    2 * 1024 * 1024
+  ) {
+    throw new Error(
+      "The optimized receipt logo is still larger than 2 MB. Choose a simpler or smaller image.",
+    );
+  }
+
+
   const path =
     `${businessId}/logo-${crypto.randomUUID()}.webp`;
 
