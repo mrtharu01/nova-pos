@@ -223,6 +223,12 @@ export function StaffSettingsCard() {
     );
 
 
+  const actionLocksRef =
+    React.useRef(
+      new Set<string>(),
+    );
+
+
   /* ==========================================================
      LOAD STAFF + INVITATIONS
   ========================================================== */
@@ -309,6 +315,9 @@ export function StaffSettingsCard() {
 
   async function handleInvite() {
     if (
+      actionLocksRef.current.has(
+        "invite",
+      ) ||
       !business?.id ||
       inviting
     ) {
@@ -334,6 +343,11 @@ export function StaffSettingsCard() {
 
       return;
     }
+
+
+    actionLocksRef.current.add(
+      "invite",
+    );
 
 
     setInviting(
@@ -389,6 +403,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        "invite",
+      );
+
+
       setInviting(
         false,
       );
@@ -413,6 +432,20 @@ export function StaffSettingsCard() {
 
     const busyKey =
       `resend-${invitation.id}`;
+
+
+    if (
+      actionLocksRef.current.has(
+        busyKey,
+      )
+    ) {
+      return;
+    }
+
+
+    actionLocksRef.current.add(
+      busyKey,
+    );
 
 
     setBusyId(
@@ -464,6 +497,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        busyKey,
+      );
+
+
       setBusyId(
         null,
       );
@@ -481,6 +519,20 @@ export function StaffSettingsCard() {
   ) {
     const busyKey =
       `revoke-${invitation.id}`;
+
+
+    if (
+      actionLocksRef.current.has(
+        busyKey,
+      )
+    ) {
+      return;
+    }
+
+
+    actionLocksRef.current.add(
+      busyKey,
+    );
 
 
     setBusyId(
@@ -515,6 +567,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        busyKey,
+      );
+
+
       setBusyId(
         null,
       );
@@ -540,10 +597,18 @@ export function StaffSettingsCard() {
   ) {
     if (
       !business?.id ||
-      !member.staffId
+      !member.staffId ||
+      actionLocksRef.current.has(
+        member.staffId,
+      )
     ) {
       return;
     }
+
+
+    actionLocksRef.current.add(
+      member.staffId,
+    );
 
 
     setBusyId(
@@ -596,6 +661,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        member.staffId,
+      );
+
+
       setBusyId(
         null,
       );
