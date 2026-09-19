@@ -52,6 +52,8 @@ export type Product = {
 
   image: string;
 
+  imagePath?: string;
+
   variants: ProductVariant[];
 
   status: ProductStatus;
