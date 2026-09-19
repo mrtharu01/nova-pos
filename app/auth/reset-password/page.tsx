@@ -90,6 +90,12 @@ export default function ResetPasswordPage() {
     );
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     async function checkSession() {
       try {
@@ -159,6 +165,7 @@ export default function ResetPasswordPage() {
 
 
     if (
+      requestLockRef.current ||
       loading ||
       !validSession
     ) {
@@ -188,6 +195,10 @@ export default function ResetPasswordPage() {
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setLoading(
@@ -253,14 +264,19 @@ export default function ResetPasswordPage() {
 
       router.refresh();
     } catch (cause) {
+      requestLockRef.current =
+        false;
+
+
+      setLoading(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Password could not be changed.",
-      );
-    } finally {
-      setLoading(
-        false,
       );
     }
   }
