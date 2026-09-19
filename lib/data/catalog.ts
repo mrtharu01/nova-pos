@@ -1,7 +1,11 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import type { Product, ProductStatus } from "@/lib/domain/catalog";
+import type {
+  Product,
+  ProductStatus,
+  PromotionType,
+} from "@/lib/domain/catalog";
 import { getConfiguredBusinessId } from "@/lib/supabase/config";
 
 type CatalogVariantRow = {
@@ -18,10 +22,14 @@ type CatalogVariantRow = {
   sku: string;
   qr_token: string;
   price: number | string;
+  regular_price: number | string;
   cost: number | string;
   is_active: boolean;
   stock: number | null;
   low_stock_threshold: number | null;
+  promotion_enabled: boolean;
+  promotion_type: PromotionType;
+  promotion_value: number | string;
 };
 
 function mapStatus(status: CatalogVariantRow["product_status"]): ProductStatus {
@@ -55,6 +63,7 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       name: row.variant_name,
       sku: row.sku,
       price: Number(row.price),
+      regularPrice: Number(row.regular_price),
       cost: Number(row.cost),
       stock: row.stock ?? 0,
       active: row.is_active,
@@ -75,6 +84,9 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       description: row.description ?? "",
       image: row.image_url ?? "/placeholder-product.svg",
       status: mapStatus(row.product_status),
+      promotionEnabled: row.promotion_enabled,
+      promotionType: row.promotion_type,
+      promotionValue: Number(row.promotion_value),
       variants: [variant],
     });
   }
