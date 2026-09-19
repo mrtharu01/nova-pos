@@ -28,8 +28,11 @@ type CatalogVariantRow = {
   stock: number | null;
   low_stock_threshold: number | null;
   promotion_enabled: boolean;
+  promotion_active: boolean;
   promotion_type: PromotionType;
   promotion_value: number | string;
+  promotion_starts_at: string | null;
+  promotion_ends_at: string | null;
 };
 
 function mapStatus(status: CatalogVariantRow["product_status"]): ProductStatus {
@@ -85,8 +88,11 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       image: row.image_url ?? "/placeholder-product.svg",
       status: mapStatus(row.product_status),
       promotionEnabled: row.promotion_enabled,
+      promotionActive: row.promotion_active,
       promotionType: row.promotion_type,
       promotionValue: Number(row.promotion_value),
+      promotionStartsAt: row.promotion_starts_at ?? undefined,
+      promotionEndsAt: row.promotion_ends_at ?? undefined,
       variants: [variant],
     });
   }
