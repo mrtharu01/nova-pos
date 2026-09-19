@@ -500,6 +500,18 @@ export default function ProductsPage() {
                             )
                           : 0;
 
+                      const regularStartingPrice =
+                        product.variants.length >
+                        0
+                          ? Math.min(
+                              ...product.variants.map(
+                                (variant) =>
+                                  variant.regularPrice ??
+                                  variant.price,
+                              ),
+                            )
+                          : 0;
+
 
                       return (
                         <TableRow
@@ -575,9 +587,33 @@ export default function ProductsPage() {
 
                           <TableCell>
 
-                            {formatMoney(
-                              startingPrice,
-                            )}
+                            <div className="flex flex-col gap-1">
+
+                              <span
+                                className={
+                                  product.promotionEnabled
+                                    ? "font-semibold text-primary"
+                                    : ""
+                                }
+                              >
+                                {formatMoney(
+                                  startingPrice,
+                                )}
+                              </span>
+
+                              {product.promotionEnabled &&
+                                regularStartingPrice >
+                                  startingPrice && (
+
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {formatMoney(
+                                    regularStartingPrice,
+                                  )}
+                                </span>
+
+                              )}
+
+                            </div>
 
                           </TableCell>
 
@@ -610,21 +646,41 @@ export default function ProductsPage() {
 
                           <TableCell>
 
-                            <Badge
-                              variant={
-                                product.status ===
-                                "Active"
-                                  ? "success"
-                                  : product.status ===
-                                      "Archived"
-                                    ? "secondary"
-                                    : "warning"
-                              }
-                            >
-                              {
-                                product.status
-                              }
-                            </Badge>
+                            <div className="flex flex-wrap items-center gap-2">
+
+                              <Badge
+                                variant={
+                                  product.status ===
+                                  "Active"
+                                    ? "success"
+                                    : product.status ===
+                                        "Archived"
+                                      ? "secondary"
+                                      : "warning"
+                                }
+                              >
+                                {
+                                  product.status
+                                }
+                              </Badge>
+
+                              {product.promotionEnabled && (
+
+                                <Badge variant="secondary">
+                                  {product.promotionType ===
+                                  "percentage"
+                                    ? `${product.promotionValue ?? 0}% off`
+                                    : `LKR ${Number(
+                                        product.promotionValue ??
+                                        0,
+                                      ).toFixed(
+                                        2,
+                                      )} off`}
+                                </Badge>
+
+                              )}
+
+                            </div>
 
                           </TableCell>
 
