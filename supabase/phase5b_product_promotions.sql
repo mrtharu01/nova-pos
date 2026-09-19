@@ -309,7 +309,92 @@ to authenticated;
 
 
 -- ============================================================
--- 5. SNAPSHOT PROMOTION INTO SALE ITEMS
+-- 5. ATOMIC PRODUCT + PROMOTION SAVE
+-- ============================================================
+
+create or replace function public.save_product_with_promotion(
+  p_product_id uuid,
+  p_name text,
+  p_description text,
+  p_category_id uuid,
+  p_image_url text,
+  p_status public.nova_product_status,
+  p_variants jsonb,
+  p_promotion_enabled boolean default false,
+  p_promotion_type text default 'percentage',
+  p_promotion_value numeric default 0,
+  p_promotion_starts_at timestamptz default null,
+  p_promotion_ends_at timestamptz default null
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = ''
+as $
+declare
+  v_product_id uuid;
+begin
+  v_product_id :=
+    public.save_product(
+      p_product_id,
+      p_name,
+      p_description,
+      p_category_id,
+      p_image_url,
+      p_status,
+      p_variants
+    );
+
+  perform public.set_product_promotion(
+    v_product_id,
+    p_promotion_enabled,
+    p_promotion_type,
+    p_promotion_value,
+    p_promotion_starts_at,
+    p_promotion_ends_at
+  );
+
+  return v_product_id;
+end;
+$;
+
+revoke all
+on function public.save_product_with_promotion(
+  uuid,
+  text,
+  text,
+  uuid,
+  text,
+  public.nova_product_status,
+  jsonb,
+  boolean,
+  text,
+  numeric,
+  timestamptz,
+  timestamptz
+)
+from public, anon;
+
+grant execute
+on function public.save_product_with_promotion(
+  uuid,
+  text,
+  text,
+  uuid,
+  text,
+  public.nova_product_status,
+  jsonb,
+  boolean,
+  text,
+  numeric,
+  timestamptz,
+  timestamptz
+)
+to authenticated;
+
+
+-- ============================================================
+-- 6. SNAPSHOT PROMOTION INTO SALE ITEMS
 -- ============================================================
 
 create or replace function private.snapshot_sale_item_product_promotion()
@@ -395,7 +480,7 @@ execute function private.refresh_sale_product_discount_total();
 
 
 -- ============================================================
--- 6. CATALOG VIEW
+-- 7. CATALOG VIEW
 -- Keep all existing view columns in their original order.
 -- New promotion columns are appended so CREATE OR REPLACE is safe.
 -- ============================================================
@@ -470,11 +555,11 @@ grant select on public.catalog_variant_inventory to authenticated;
 
 
 -- ============================================================
--- 7. AUTHORITATIVE CHECKOUT
+-- 8. AUTHORITATIVE CHECKOUT
 -- Same checkout contract; only variant price resolution changes.
 -- ============================================================
 
-create function
+create or replace function
 public.complete_sale(
 
   p_business_id uuid,
@@ -2963,7 +3048,7 @@ is
 
 
 -- ============================================================
--- 8. POSTGREST REFRESH
+-- 9. POSTGREST REFRESH
 -- ============================================================
 
 notify pgrst, 'reload schema';
