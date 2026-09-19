@@ -83,6 +83,12 @@ export default function SignupPage() {
     );
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   async function handleSubmit(
     event:
       React.FormEvent<HTMLFormElement>,
@@ -91,6 +97,7 @@ export default function SignupPage() {
 
 
     if (
+      requestLockRef.current ||
       loading
     ) {
       return;
@@ -136,6 +143,10 @@ export default function SignupPage() {
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setLoading(
@@ -225,14 +236,19 @@ export default function SignupPage() {
 
       router.refresh();
     } catch (cause) {
+      requestLockRef.current =
+        false;
+
+
+      setLoading(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Account creation failed.",
-      );
-    } finally {
-      setLoading(
-        false,
       );
     }
   }
