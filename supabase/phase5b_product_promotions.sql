@@ -543,15 +543,15 @@ select
   pv.sku,
   pv.qr_token,
   pv.price,
-  pv.regular_price,
   pv.cost,
   pv.is_active,
-  p.promotion_enabled,
-  p.promotion_type,
-  p.promotion_value,
   loc.id as location_id,
   coalesce(level.on_hand, 0) as stock,
-  coalesce(level.low_stock_threshold, 5) as low_stock_threshold
+  coalesce(level.low_stock_threshold, 5) as low_stock_threshold,
+  pv.regular_price,
+  p.promotion_enabled,
+  p.promotion_type,
+  p.promotion_value
 from public.products p
 join public.product_variants pv
   on pv.product_id = p.id
