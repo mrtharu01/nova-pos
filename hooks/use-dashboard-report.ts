@@ -377,7 +377,8 @@ export function useDashboardReport(
 
     channel.subscribe(
       (
-        status,
+        status:
+          string,
       ) => {
         if (
           status ===
