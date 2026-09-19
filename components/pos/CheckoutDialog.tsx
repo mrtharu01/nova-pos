@@ -1253,16 +1253,16 @@ export function CheckoutDialog({
         }}
         title="Payment"
         description="NOVA verifies live price, stock, customer discounts and loyalty inside PostgreSQL before committing the sale."
-        className="w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] max-w-2xl overflow-hidden sm:w-full"
+        className="max-w-2xl"
       >
 
-        <div className="flex min-h-0 max-h-[calc(100dvh-9rem)] flex-col">
+        <div className="flex h-full min-h-0 flex-col">
 
           {/* ==================================================
               SCROLLABLE CONTENT
           =================================================== */}
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 sm:pr-2 [scrollbar-gutter:stable]">
 
             <div className="space-y-5 pb-6">
 
@@ -2259,16 +2259,16 @@ export function CheckoutDialog({
               FIXED CHECKOUT FOOTER
           =================================================== */}
 
-          <div className="relative z-10 shrink-0 border-t bg-background pt-4">
+          <div className="relative z-10 mt-1 shrink-0 border-t bg-card pt-4">
 
-            <div className="mb-3 flex items-center justify-between gap-4">
+            <div className="mb-3 flex min-w-0 items-center justify-between gap-4">
 
               <span className="text-sm text-muted-foreground">
                 Payable
               </span>
 
 
-              <span className="text-xl font-bold text-primary sm:text-2xl">
+              <span className="shrink-0 text-xl font-bold text-primary sm:text-2xl">
 
                 {formatSaleMoney(
                   estimatedFinalTotal,
