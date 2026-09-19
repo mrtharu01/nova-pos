@@ -78,7 +78,11 @@ type ReportPreset =
 
 
 const PRESETS: {
-  id: ReportPreset;
+  id:
+    Exclude<
+      ReportPreset,
+      "custom"
+    >;
   label: string;
 }[] = [
   {
