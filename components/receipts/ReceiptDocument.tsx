@@ -273,6 +273,18 @@ export function ReceiptDocument({
 
         <header className="text-center">
 
+          {settings.logoUrl && (
+
+            <img
+              src={
+                settings.logoUrl
+              }
+              alt=""
+              className="mx-auto mb-2 max-h-[18mm] max-w-[80%] object-contain"
+            />
+
+          )}
+
           <h1 className="text-[16px] font-black uppercase leading-tight">
             {displayName}
           </h1>
