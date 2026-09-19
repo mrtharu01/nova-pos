@@ -221,33 +221,6 @@ export function ProductEditor({
       null,
     );
 
-  React.useEffect(() => {
-    if (
-      !error &&
-      !success
-    ) {
-      return;
-    }
-
-
-    window.requestAnimationFrame(
-      () => {
-        feedbackRef.current
-          ?.scrollIntoView({
-            behavior:
-              "smooth",
-
-            block:
-              "center",
-          });
-      },
-    );
-  }, [
-    error,
-    success,
-  ]);
-
-
   const [name, setName] = React.useState(
     product?.name ?? "",
   );
@@ -367,6 +340,34 @@ export function ProductEditor({
     React.useState<string | null>(
       null,
     );
+
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !success
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    success,
+  ]);
+
 
   const [copiedQr, setCopiedQr] =
     React.useState<string | null>(
