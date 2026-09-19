@@ -500,11 +500,11 @@ export default function POSPage() {
           w-full
           bg-muted/30
 
-          md:flex
-          md:h-full
-          md:min-h-0
-          md:flex-row
-          md:overflow-hidden
+          lg:flex
+          lg:h-full
+          lg:min-h-0
+          lg:flex-row
+          lg:overflow-hidden
         "
       >
 
@@ -522,11 +522,11 @@ export default function POSPage() {
 
             sm:p-6
 
-            md:h-full
-            md:min-h-0
-            md:flex-1
-            md:overflow-hidden
-            md:pb-6
+            lg:h-full
+            lg:min-h-0
+            lg:flex-1
+            lg:overflow-hidden
+            lg:pb-6
           "
         >
 
@@ -670,11 +670,11 @@ export default function POSPage() {
               mt-2
               min-w-0
 
-              md:min-h-0
-              md:flex-1
-              md:overflow-y-auto
-              md:overscroll-contain
-              md:pr-2
+              lg:min-h-0
+              lg:flex-1
+              lg:overflow-y-auto
+              lg:overscroll-contain
+              lg:pr-2
             "
           >
 
@@ -704,7 +704,7 @@ export default function POSPage() {
             {catalogLoading ? (
 
               <div
-                className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4"
+                className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4"
                 aria-label="Loading products"
               >
 
@@ -744,7 +744,7 @@ export default function POSPage() {
                  PRODUCTS
               =============================================== */
 
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
 
                 <AnimatePresence mode="popLayout">
 
@@ -785,7 +785,11 @@ export default function POSPage() {
                         }
                         className="
                           group
+                          flex
+                          h-full
+                          min-w-0
                           cursor-pointer
+                          flex-col
                           rounded-[16px]
                           border
                           bg-background
@@ -873,9 +877,9 @@ export default function POSPage() {
                             PRODUCT INFO
                         ===================================== */}
 
-                        <div className="px-2 pb-2">
+                        <div className="flex min-w-0 flex-1 flex-col px-2 pb-2">
 
-                          <p className="line-clamp-2 text-sm font-semibold leading-tight">
+                          <p className="min-h-[2.25rem] line-clamp-2 break-words text-sm font-semibold leading-[1.125rem]">
 
                             {
                               product.name
@@ -884,7 +888,7 @@ export default function POSPage() {
                           </p>
 
 
-                          <p className="mt-1 text-xs font-medium text-muted-foreground">
+                          <p className="mt-auto pt-1 text-xs font-medium text-muted-foreground">
 
                             {
                               product
@@ -958,7 +962,7 @@ export default function POSPage() {
             shadow-xl
             shadow-slate-200/50
 
-            md:flex
+            lg:flex
           "
         >
 
@@ -996,7 +1000,7 @@ export default function POSPage() {
             z-30
             p-4
 
-            md:hidden
+            lg:hidden
           "
         >
 
@@ -1073,7 +1077,7 @@ export default function POSPage() {
                   opacity:
                     0,
                 }}
-                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
                 onClick={() =>
                   setMobileCartOpen(
                     false,
@@ -1124,7 +1128,7 @@ export default function POSPage() {
                   bg-background
                   shadow-2xl
 
-                  md:hidden
+                  lg:hidden
                 "
               >
 
@@ -1446,7 +1450,7 @@ function CartContent({
               onClick={
                 onClose
               }
-              className="md:hidden"
+              className="lg:hidden"
             >
 
               <X className="h-5 w-5" />
