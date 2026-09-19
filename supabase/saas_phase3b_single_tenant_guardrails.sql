@@ -194,16 +194,31 @@ revoke all
 on function
 private.is_business_member(uuid)
 from public,
-anon,
-authenticated;
+anon;
 
 
 revoke all
 on function
 private.is_business_manager(uuid)
 from public,
-anon,
-authenticated;
+anon;
+
+
+grant usage
+on schema private
+to authenticated;
+
+
+grant execute
+on function
+private.is_business_member(uuid)
+to authenticated;
+
+
+grant execute
+on function
+private.is_business_manager(uuid)
+to authenticated;
 
 
 
