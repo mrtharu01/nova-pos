@@ -326,6 +326,12 @@ export function CheckoutDialog({
     );
 
 
+  const submitLockRef =
+    React.useRef(
+      false,
+    );
+
+
   /* ==========================================================
      LOYALTY SETTINGS
   ========================================================== */
@@ -657,6 +663,15 @@ export function CheckoutDialog({
 
     checkoutKeyRef.current =
       crypto.randomUUID();
+
+
+    submitLockRef.current =
+      false;
+
+
+    setSubmitting(
+      false,
+    );
 
 
     setPaymentMethod(
@@ -1030,6 +1045,7 @@ export function CheckoutDialog({
 
   async function handleCompleteSale() {
     if (
+      submitLockRef.current ||
       submitting ||
       customerBusy ||
       items.length ===
@@ -1084,6 +1100,10 @@ export function CheckoutDialog({
 
       return;
     }
+
+
+    submitLockRef.current =
+      true;
 
 
     setSubmitting(
@@ -1167,6 +1187,10 @@ export function CheckoutDialog({
         ),
       );
     } finally {
+      submitLockRef.current =
+        false;
+
+
       setSubmitting(
         false,
       );
