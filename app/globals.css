@@ -87,24 +87,8 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html,
-  body {
-    min-width: 0;
-    max-width: 100%;
-    min-height: 100%;
-    overflow-x: hidden;
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
-    min-height: 100dvh;
-  }
-
-  img,
-  video,
-  canvas,
-  svg {
-    max-width: 100%;
   }
 }
 
