@@ -238,6 +238,12 @@ export function ProductEditor({
         : product?.image ?? "",
     );
 
+  const [imagePath, setImagePath] =
+    React.useState(
+      product?.imagePath ??
+      "",
+    );
+
   const [status, setStatus] =
     React.useState<ProductStatus>(
       product?.status ?? "Active",
@@ -491,7 +497,11 @@ export function ProductEditor({
         );
 
       setImageUrl(
-        result.publicUrl,
+        result.signedUrl,
+      );
+
+      setImagePath(
+        result.path,
       );
 
       setImageConversion({
@@ -708,7 +718,7 @@ export function ProductEditor({
           description,
           categoryId:
             categoryId || null,
-          imageUrl,
+          imagePath,
           status,
           promotionEnabled,
           promotionType,
@@ -953,6 +963,7 @@ export function ProductEditor({
                         variant="ghost"
                         onClick={() => {
                           setImageUrl("");
+                          setImagePath("");
                           setImageConversion(
                             null,
                           );
