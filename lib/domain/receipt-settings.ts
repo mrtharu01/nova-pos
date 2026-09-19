@@ -6,6 +6,10 @@ export type ReceiptSettingsForm = {
   paperWidth: ReceiptPaperWidth;
 
   autoPrint: boolean;
+
+  logoUrl: string;
+
+  logoPath: string;
 
   displayName: string;
 
@@ -35,6 +39,13 @@ export const DEFAULT_RECEIPT_SETTINGS:
 
     autoPrint:
       false,
+
+
+    logoUrl:
+      "",
+
+    logoPath:
+      "",
 
     displayName:
       "",
