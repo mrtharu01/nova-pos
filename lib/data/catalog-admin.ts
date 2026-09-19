@@ -6,6 +6,7 @@ import {
 
 import type {
   ProductStatus,
+  PromotionType,
 } from "@/lib/domain/catalog";
 
 
@@ -61,6 +62,17 @@ export type SaveProductInput = {
 export type RemoveProductResult =
   | "deleted"
   | "archived";
+
+
+export type ProductPromotionInput = {
+  productId: string;
+
+  enabled: boolean;
+
+  type: PromotionType;
+
+  value: number;
+};
 
 
 export type InventoryMovementType =
@@ -317,6 +329,47 @@ export async function saveProduct(
   return String(
     data,
   );
+}
+
+
+/* ============================================================
+   PRODUCT PROMOTION
+============================================================ */
+
+export async function setProductPromotion(
+  input:
+    ProductPromotionInput,
+): Promise<void> {
+  const supabase =
+    createClient();
+
+
+  const {
+    error,
+  } =
+    await supabase.rpc(
+      "set_product_promotion",
+      {
+        p_product_id:
+          input.productId,
+
+        p_enabled:
+          input.enabled,
+
+        p_type:
+          input.type,
+
+        p_value:
+          Number(
+            input.value,
+          ),
+      },
+    );
+
+
+  if (error) {
+    throw error;
+  }
 }
 
 
