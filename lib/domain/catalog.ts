@@ -58,9 +58,15 @@ export type Product = {
 
   promotionEnabled?: boolean;
 
+  promotionActive?: boolean;
+
   promotionType?: PromotionType;
 
   promotionValue?: number;
+
+  promotionStartsAt?: string;
+
+  promotionEndsAt?: string;
 
 };
 
