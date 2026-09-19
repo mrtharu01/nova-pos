@@ -13,6 +13,7 @@ type CatalogVariantRow = {
   product_name: string;
   description: string | null;
   image_url: string | null;
+  image_path: string | null;
   product_status: "active" | "draft" | "archived";
   category_id: string | null;
   category_name: string | null;
@@ -67,6 +68,60 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
   if (error) throw error;
 
   const rows = (data ?? []) as CatalogVariantRow[];
+
+  const imagePaths =
+    Array.from(
+      new Set(
+        rows
+          .map(
+            (row) =>
+              row.image_path,
+          )
+          .filter(
+            (
+              path,
+            ): path is string =>
+              Boolean(path),
+          ),
+      ),
+    );
+
+  const signedImages =
+    new Map<string, string>();
+
+  await Promise.all(
+    imagePaths.map(
+      async (
+        path,
+      ) => {
+        const {
+          data:
+            signedData,
+          error:
+            signedError,
+        } =
+          await supabase.storage
+            .from(
+              "product-images",
+            )
+            .createSignedUrl(
+              path,
+              60 * 60 * 8,
+            );
+
+        if (
+          !signedError &&
+          signedData?.signedUrl
+        ) {
+          signedImages.set(
+            path,
+            signedData.signedUrl,
+          );
+        }
+      },
+    ),
+  );
+
   const products = new Map<string, Product>();
 
   for (const row of rows) {
@@ -95,7 +150,19 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       category: row.category_name ?? "Uncategorized",
       categoryId: row.category_id ?? undefined,
       description: row.description ?? "",
-      image: row.image_url ?? "/placeholder-product.svg",
+      image:
+        (
+          row.image_path
+            ? signedImages.get(
+                row.image_path,
+              )
+            : null
+        ) ??
+        row.image_url ??
+        "/placeholder-product.svg",
+      imagePath:
+        row.image_path ??
+        undefined,
       status: mapStatus(row.product_status),
       promotionEnabled: row.promotion_enabled,
       promotionActive: row.promotion_active,
