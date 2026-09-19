@@ -54,6 +54,23 @@ export type SaveProductInput = {
   status:
     ProductStatus;
 
+  promotionEnabled:
+    boolean;
+
+  promotionType:
+    PromotionType;
+
+  promotionValue:
+    number;
+
+  promotionStartsAt?:
+    | string
+    | null;
+
+  promotionEndsAt?:
+    | string
+    | null;
+
   variants:
     ProductVariantInput[];
 };
@@ -290,7 +307,7 @@ export async function saveProduct(
     error,
   } =
     await supabase.rpc(
-      "save_product",
+      "save_product_with_promotion",
       {
         p_product_id:
           input.id ??
@@ -318,6 +335,25 @@ export async function saveProduct(
 
         p_variants:
           payload,
+
+        p_promotion_enabled:
+          input.promotionEnabled,
+
+        p_promotion_type:
+          input.promotionType,
+
+        p_promotion_value:
+          Number(
+            input.promotionValue,
+          ),
+
+        p_promotion_starts_at:
+          input.promotionStartsAt ??
+          null,
+
+        p_promotion_ends_at:
+          input.promotionEndsAt ??
+          null,
       },
     );
 
