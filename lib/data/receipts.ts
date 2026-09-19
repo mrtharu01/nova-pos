@@ -4,6 +4,10 @@ import {
   createClient,
 } from "@/lib/supabase/client";
 
+import {
+  createReceiptLogoSignedUrl,
+} from "@/lib/data/receipt-logo";
+
 import type {
   ReceiptItem,
   ReceiptPayment,
@@ -759,6 +763,21 @@ export async function fetchSaleReceipt(
      SETTINGS
   ========================================================== */
 
+  let resolvedReceiptLogoUrl =
+    settingsRow?.logo_url ??
+    undefined;
+
+
+  if (
+    settingsRow?.logo_path
+  ) {
+    resolvedReceiptLogoUrl =
+      await createReceiptLogoSignedUrl(
+        settingsRow.logo_path,
+      );
+  }
+
+
   const settings:
     ReceiptSettings =
       settingsRow
@@ -771,8 +790,7 @@ export async function fetchSaleReceipt(
 
 
             logoUrl:
-              settingsRow.logo_url ??
-              undefined,
+              resolvedReceiptLogoUrl,
 
             logoPath:
               settingsRow.logo_path ??
