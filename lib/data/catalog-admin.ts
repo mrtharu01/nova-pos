@@ -49,7 +49,7 @@ export type SaveProductInput = {
     | string
     | null;
 
-  imageUrl: string;
+  imagePath: string;
 
   status:
     ProductStatus;
@@ -307,7 +307,7 @@ export async function saveProduct(
     error,
   } =
     await supabase.rpc(
-      "save_product_with_promotion",
+      "save_product_with_promotion_v2",
       {
         p_product_id:
           input.id ??
@@ -324,8 +324,8 @@ export async function saveProduct(
         p_category_id:
           input.categoryId,
 
-        p_image_url:
-          input.imageUrl
+        p_image_path:
+          input.imagePath
             .trim(),
 
         p_status:
