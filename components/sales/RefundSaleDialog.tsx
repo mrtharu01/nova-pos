@@ -167,6 +167,12 @@ export function RefundSaleDialog({
     >(null);
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   /* ==========================================================
      PREVIOUS REFUNDS
   ========================================================== */
@@ -521,6 +527,7 @@ export function RefundSaleDialog({
 
   async function handleRefund() {
     if (
+      requestLockRef.current ||
       processing
     ) {
       return;
@@ -555,6 +562,10 @@ export function RefundSaleDialog({
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setProcessing(true);
@@ -607,6 +618,10 @@ export function RefundSaleDialog({
         ),
       );
     } finally {
+      requestLockRef.current =
+        false;
+
+
       setProcessing(false);
     }
   }
