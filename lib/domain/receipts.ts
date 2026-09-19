@@ -46,6 +46,10 @@ export type ReceiptItem = {
   quantity: number;
 
   unitPrice: number;
+
+  regularUnitPrice: number;
+
+  productDiscountTotal: number;
 
   lineSubtotal: number;
 
