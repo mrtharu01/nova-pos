@@ -103,6 +103,47 @@ export function ReportSettingsCard() {
     >(null);
 
 
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
+  const feedbackRef =
+    React.useRef<
+      HTMLDivElement | null
+    >(
+      null,
+    );
+
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !saved
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    saved,
+  ]);
+
+
   React.useEffect(() => {
     if (
       !businessId
