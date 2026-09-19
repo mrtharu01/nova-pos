@@ -615,116 +615,37 @@ export function RemoteScannerControl({
 
     try {
       const {
-        data: userData,
-        error: userError,
-      } =
-        await supabase.auth.getUser();
-
-
-      if (
-        userError ||
-        !userData.user
-      ) {
-        throw new Error(
-          "You must be signed in to connect a phone scanner.",
-        );
-      }
-
-
-      /* ========================================================
-         CLOSE EXISTING ACTIVE SESSIONS
-      ======================================================== */
-
-      const now =
-        new Date().toISOString();
-
-      const {
-        error:
-          closeExistingError,
-      } =
-        await supabase
-          .from(
-            "remote_scanner_sessions",
-          )
-          .update({
-            status:
-              "closed",
-
-            closed_at:
-              now,
-          })
-          .eq(
-            "created_by",
-            userData.user.id,
-          )
-          .eq(
-            "status",
-            "active",
-          );
-
-
-      if (
-        closeExistingError
-      ) {
-        console.warn(
-          "Could not automatically close previous scanner sessions:",
-          closeExistingError,
-        );
-      }
-
-
-      /* ========================================================
-         CREATE NEW SESSION
-      ======================================================== */
-
-      const expiresAt =
-        new Date(
-          Date.now() +
-            8 *
-              60 *
-              60 *
-              1000,
-        ).toISOString();
-
-
-      const {
         data,
         error:
-          insertError,
+          createError,
       } =
-        await supabase
-          .from(
-            "remote_scanner_sessions",
-          )
-          .insert({
-            business_id:
-              business.id,
-
-            expires_at:
-              expiresAt,
-          })
-          .select(
-            "id,pair_token,expires_at",
-          )
-          .single();
+        await supabase.rpc(
+          "create_remote_scanner_session",
+        );
 
 
       if (
-        insertError
+        createError
       ) {
-        throw insertError;
-      }
-
-
-      if (!data) {
-        throw new Error(
-          "NOVA could not create the scanner session.",
-        );
+        throw createError;
       }
 
 
       const nextSession =
-        data as ScannerSession;
+        (
+          data as
+            | ScannerSession[]
+            | null
+        )?.[0];
+
+
+      if (
+        !nextSession
+      ) {
+        throw new Error(
+          "NOVA could not create the scanner session.",
+        );
+      }
 
 
       setSession(
@@ -809,31 +730,23 @@ export function RemoteScannerControl({
 
     const {
       error:
-        updateError,
+        closeError,
     } =
-      await supabase
-        .from(
-          "remote_scanner_sessions",
-        )
-        .update({
-          status:
-            "closed",
-
-          closed_at:
-            new Date().toISOString(),
-        })
-        .eq(
-          "id",
-          activeSession.id,
-        );
+      await supabase.rpc(
+        "close_remote_scanner_session",
+        {
+          p_session_id:
+            activeSession.id,
+        },
+      );
 
 
     if (
-      updateError
+      closeError
     ) {
       console.error(
         "Unable to close remote scanner session:",
-        updateError,
+        closeError,
       );
     }
   }
