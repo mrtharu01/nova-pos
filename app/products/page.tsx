@@ -667,15 +667,19 @@ export default function ProductsPage() {
                               {product.promotionEnabled && (
 
                                 <Badge variant="secondary">
-                                  {product.promotionType ===
-                                  "percentage"
-                                    ? `${product.promotionValue ?? 0}% off`
-                                    : `LKR ${Number(
-                                        product.promotionValue ??
-                                        0,
-                                      ).toFixed(
-                                        2,
-                                      )} off`}
+                                  {product.promotionActive
+                                    ? (
+                                        product.promotionType ===
+                                        "percentage"
+                                          ? `${product.promotionValue ?? 0}% off`
+                                          : `LKR ${Number(
+                                              product.promotionValue ??
+                                              0,
+                                            ).toFixed(
+                                              2,
+                                            )} off`
+                                      )
+                                    : "Scheduled"}
                                 </Badge>
 
                               )}
