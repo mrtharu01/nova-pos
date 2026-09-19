@@ -102,6 +102,63 @@ function FieldLabel({
   );
 }
 
+function toLocalDateTimeInput(
+  value?: string,
+) {
+  if (!value) {
+    return "";
+  }
+
+  const date =
+    new Date(
+      value,
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return "";
+  }
+
+  const offset =
+    date.getTimezoneOffset() *
+    60 *
+    1000;
+
+  return new Date(
+    date.getTime() -
+      offset,
+  )
+    .toISOString()
+    .slice(
+      0,
+      16,
+    );
+}
+
+
+function toIsoOrNull(
+  value: string,
+) {
+  if (!value) {
+    return null;
+  }
+
+  const date =
+    new Date(
+      value,
+    );
+
+  return Number.isNaN(
+    date.getTime(),
+  )
+    ? null
+    : date.toISOString();
+}
+
+
 function formatBytes(bytes: number) {
   if (bytes < 1024) {
     return `${bytes} B`;
@@ -205,6 +262,26 @@ export function ProductEditor({
     React.useState(
       product?.promotionValue ??
       0,
+    );
+
+  const [
+    promotionStartsAt,
+    setPromotionStartsAt,
+  ] =
+    React.useState(
+      toLocalDateTimeInput(
+        product?.promotionStartsAt,
+      ),
+    );
+
+  const [
+    promotionEndsAt,
+    setPromotionEndsAt,
+  ] =
+    React.useState(
+      toLocalDateTimeInput(
+        product?.promotionEndsAt,
+      ),
     );
 
   const [categories, setCategories] =
@@ -531,6 +608,52 @@ export function ProductEditor({
       return;
     }
 
+    const promotionStartIso =
+      toIsoOrNull(
+        promotionStartsAt,
+      );
+
+    const promotionEndIso =
+      toIsoOrNull(
+        promotionEndsAt,
+      );
+
+    if (
+      promotionStartsAt &&
+      !promotionStartIso
+    ) {
+      setError(
+        "Promotion start date is invalid.",
+      );
+      return;
+    }
+
+    if (
+      promotionEndsAt &&
+      !promotionEndIso
+    ) {
+      setError(
+        "Promotion end date is invalid.",
+      );
+      return;
+    }
+
+    if (
+      promotionStartIso &&
+      promotionEndIso &&
+      new Date(
+        promotionStartIso,
+      ).getTime() >=
+        new Date(
+          promotionEndIso,
+        ).getTime()
+    ) {
+      setError(
+        "Promotion end must be after the start.",
+      );
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -554,6 +677,10 @@ export function ProductEditor({
           promotionType,
         value:
           promotionValue,
+        startsAt:
+          promotionStartIso,
+        endsAt:
+          promotionEndIso,
       });
 
       setSuccess(
@@ -992,6 +1119,48 @@ export function ProductEditor({
                 }
               />
             </div>
+
+            <div>
+              <FieldLabel>
+                Starts at (optional)
+              </FieldLabel>
+
+              <Input
+                type="datetime-local"
+                disabled={
+                  !promotionEnabled
+                }
+                value={
+                  promotionStartsAt
+                }
+                onChange={(event) =>
+                  setPromotionStartsAt(
+                    event.target.value,
+                  )
+                }
+              />
+            </div>
+
+            <div>
+              <FieldLabel>
+                Ends at (optional)
+              </FieldLabel>
+
+              <Input
+                type="datetime-local"
+                disabled={
+                  !promotionEnabled
+                }
+                value={
+                  promotionEndsAt
+                }
+                onChange={(event) =>
+                  setPromotionEndsAt(
+                    event.target.value,
+                  )
+                }
+              />
+            </div>
           </div>
 
           {promotionEnabled && (
@@ -1005,6 +1174,22 @@ export function ProductEditor({
                 "percentage"
                   ? `${promotionValue}% off the normal selling price`
                   : `LKR ${promotionValue.toFixed(2)} off each unit`}
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                {promotionStartsAt
+                  ? `Starts ${new Date(
+                      promotionStartsAt,
+                    ).toLocaleString()}`
+                  : "Starts immediately"}
+
+                {" · "}
+
+                {promotionEndsAt
+                  ? `Ends ${new Date(
+                      promotionEndsAt,
+                    ).toLocaleString()}`
+                  : "No end date"}
               </p>
             </div>
           )}
