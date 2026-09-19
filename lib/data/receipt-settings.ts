@@ -15,6 +15,14 @@ type ReceiptSettingsRow = {
 
   auto_print:
     boolean;
+
+  logo_url:
+    | string
+    | null;
+
+  logo_path:
+    | string
+    | null;
 
   display_name:
     | string
@@ -63,6 +71,15 @@ function mapRow(
 
     autoPrint:
       row.auto_print,
+
+
+    logoUrl:
+      row.logo_url ??
+      "",
+
+    logoPath:
+      row.logo_path ??
+      "",
 
     displayName:
       row.display_name ??
@@ -120,6 +137,8 @@ export async function fetchReceiptSettings(
       .select(`
         paper_width,
         auto_print,
+        logo_url,
+        logo_path,
         display_name,
         address_line_1,
         address_line_2,
@@ -186,6 +205,17 @@ export async function saveReceiptSettings(
 
         auto_print:
           settings.autoPrint,
+
+
+        logo_url:
+          settings.logoUrl
+            .trim() ||
+          null,
+
+        logo_path:
+          settings.logoPath
+            .trim() ||
+          null,
 
         display_name:
           settings.displayName
@@ -238,6 +268,8 @@ export async function saveReceiptSettings(
       .select(`
         paper_width,
         auto_print,
+        logo_url,
+        logo_path,
         display_name,
         address_line_1,
         address_line_2,
