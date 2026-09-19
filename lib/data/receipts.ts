@@ -237,6 +237,14 @@ type SettingsRow = {
 
   auto_print:
     boolean;
+
+  logo_url:
+    | string
+    | null;
+
+  logo_path:
+    | string
+    | null;
 
   display_name:
     | string
@@ -544,6 +552,8 @@ export async function fetchSaleReceipt(
           `
           paper_width,
           auto_print,
+          logo_url,
+          logo_path,
           display_name,
           address_line_1,
           address_line_2,
@@ -758,6 +768,15 @@ export async function fetchSaleReceipt(
 
             autoPrint:
               settingsRow.auto_print,
+
+
+            logoUrl:
+              settingsRow.logo_url ??
+              undefined,
+
+            logoPath:
+              settingsRow.logo_path ??
+              undefined,
 
             displayName:
               settingsRow.display_name ??
