@@ -8,6 +8,11 @@ export type Category =
   string;
 
 
+export type PromotionType =
+  | "percentage"
+  | "fixed";
+
+
 export type ProductVariant = {
 
   id: string;
@@ -17,6 +22,8 @@ export type ProductVariant = {
   sku: string;
 
   price: number;
+
+  regularPrice?: number;
 
   cost: number;
 
@@ -48,6 +55,12 @@ export type Product = {
   variants: ProductVariant[];
 
   status: ProductStatus;
+
+  promotionEnabled?: boolean;
+
+  promotionType?: PromotionType;
+
+  promotionValue?: number;
 
 };
 
