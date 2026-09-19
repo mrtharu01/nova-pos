@@ -38,6 +38,8 @@ declare
 
   v_business_id uuid;
 
+  v_business_ids uuid[];
+
   v_business_count integer := 0;
 
 begin
@@ -84,14 +86,23 @@ begin
   )
 
   select
-    count(*)::integer,
-    min(id)
+    array_agg(
+      id
+    )
 
   into
-    v_business_count,
-    v_business_id
+    v_business_ids
 
   from accessible_businesses;
+
+
+  v_business_count :=
+    coalesce(
+      cardinality(
+        v_business_ids
+      ),
+      0
+    );
 
 
   if
@@ -108,6 +119,10 @@ begin
       'This account is linked to multiple active businesses. Business switching is not enabled yet.'
       using errcode = '42501';
   end if;
+
+
+  v_business_id :=
+    v_business_ids[1];
 
 
   return
