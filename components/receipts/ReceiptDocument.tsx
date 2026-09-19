@@ -560,7 +560,22 @@ export function ReceiptDocument({
                           item.unitPrice,
                         )
                       }
+
 
+                      {item.productDiscountTotal >
+                        0 && (
+
+                        <span className="ml-1 text-[9px] line-through">
+
+                          {
+                            amount(
+                              item.regularUnitPrice,
+                            )
+                          }
+
+                        </span>
+
+                      )}
                     </span>
 
 
@@ -576,6 +591,29 @@ export function ReceiptDocument({
 
                   </div>
 
+                  {item.productDiscountTotal >
+                    0 && (
+
+                    <div className="flex justify-between text-[9px]">
+
+                      <span>
+                        Product promotion
+                      </span>
+
+
+                      <span>
+                        -
+                        {
+                          amount(
+                            item.productDiscountTotal,
+                          )
+                        }
+                      </span>
+
+                    </div>
+
+                  )}
+
 
                   {item.discountTotal >
                     0 && (
@@ -583,7 +621,7 @@ export function ReceiptDocument({
                     <div className="flex justify-between text-[9px]">
 
                       <span>
-                        Item discount
+                        Other discount
                       </span>
 
 
