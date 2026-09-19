@@ -48,24 +48,17 @@ export async function uploadProductImage(
    */
 
   const {
-    data: business,
+    data: businesses,
     error: businessError,
   } =
-    await supabase
+    await supabase.rpc(
+      "get_my_current_business",
+    );
 
-      .from(
-        "businesses",
-      )
 
-      .select(
-        "id",
-      )
-
-      .limit(
-        1,
-      )
-
-      .maybeSingle();
+  const business =
+    businesses?.[0] ??
+    null;
 
 
   if (
