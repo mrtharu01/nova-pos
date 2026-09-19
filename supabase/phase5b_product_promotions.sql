@@ -416,14 +416,25 @@ select
   pv.name as variant_name,
   pv.sku,
   pv.qr_token,
-  private.nova_effective_product_price(
-    pv.price,
-    p.promotion_enabled,
-    p.promotion_type,
-    p.promotion_value,
-    p.promotion_starts_at,
-    p.promotion_ends_at
-  ) as price,
+  case
+    when p.promotion_enabled
+      and (p.promotion_starts_at is null or p.promotion_starts_at <= now())
+      and (p.promotion_ends_at is null or p.promotion_ends_at > now())
+    then round(
+      greatest(
+        0,
+        case
+          when p.promotion_type = 'percentage'
+            then pv.price * (100 - p.promotion_value) / 100
+          when p.promotion_type = 'fixed'
+            then pv.price - p.promotion_value
+          else pv.price
+        end
+      ),
+      2
+    )
+    else pv.price
+  end as price,
   pv.cost,
   pv.is_active,
   loc.id as location_id,
@@ -431,10 +442,10 @@ select
   coalesce(level.low_stock_threshold, 5) as low_stock_threshold,
   pv.price as regular_price,
   p.promotion_enabled,
-  private.nova_promotion_is_active(
-    p.promotion_enabled,
-    p.promotion_starts_at,
-    p.promotion_ends_at
+  (
+    p.promotion_enabled
+    and (p.promotion_starts_at is null or p.promotion_starts_at <= now())
+    and (p.promotion_ends_at is null or p.promotion_ends_at > now())
   ) as promotion_active,
   p.promotion_type,
   p.promotion_value,
