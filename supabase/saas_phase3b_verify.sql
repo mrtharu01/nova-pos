@@ -251,20 +251,26 @@ begin
     or
 
     has_function_privilege(
+      'anon',
+      'private.is_business_manager(uuid)',
+      'EXECUTE'
+    )
+  then
+
+    raise exception
+      'Anonymous users must not execute private tenant helpers';
+
+  end if;
+
+
+  if not
+    has_function_privilege(
       'authenticated',
       'private.is_business_member(uuid)',
       'EXECUTE'
     )
 
-    or
-
-    has_function_privilege(
-      'anon',
-      'private.is_business_manager(uuid)',
-      'EXECUTE'
-    )
-
-    or
+    or not
 
     has_function_privilege(
       'authenticated',
@@ -274,7 +280,7 @@ begin
   then
 
     raise exception
-      'Client roles must not execute private tenant helpers directly';
+      'Authenticated RLS evaluation requires tenant helper EXECUTE privileges';
 
   end if;
 
@@ -283,5 +289,9 @@ end;
 $$;
 
 
-raise notice
-  'NOVA SaaS single-tenant guardrails verified.';
+do $
+begin
+  raise notice
+    'NOVA SaaS single-tenant guardrails verified.';
+end;
+$;
