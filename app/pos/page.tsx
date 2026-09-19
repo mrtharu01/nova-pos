@@ -820,14 +820,48 @@ export default function POSPage() {
                           />
 
 
-                          <div className="absolute right-2 top-2 rounded-[8px] bg-background/90 px-2 py-1 text-xs font-bold shadow-sm backdrop-blur-sm">
+                          <div className="absolute right-2 top-2 rounded-[8px] bg-background/90 px-2 py-1 text-right shadow-sm backdrop-blur-sm">
 
-                            {formatMoney(
-                              product
-                                .variants[0]
-                                .price,
+                            <div className="text-xs font-bold text-primary">
 
-                              currencyCode,
+                              {formatMoney(
+                                product
+                                  .variants[0]
+                                  .price,
+
+                                currencyCode,
+                              )}
+
+                            </div>
+
+                            {product.promotionEnabled &&
+                              (
+                                product
+                                  .variants[0]
+                                  .regularPrice ??
+                                product
+                                  .variants[0]
+                                  .price
+                              ) >
+                                product
+                                  .variants[0]
+                                  .price && (
+
+                              <div className="text-[10px] text-muted-foreground line-through">
+
+                                {formatMoney(
+                                  product
+                                    .variants[0]
+                                    .regularPrice ??
+                                    product
+                                      .variants[0]
+                                      .price,
+
+                                  currencyCode,
+                                )}
+
+                              </div>
+
                             )}
 
                           </div>
@@ -1246,14 +1280,37 @@ export default function POSPage() {
 
                 <div className="text-right">
 
-                  <p className="font-bold text-primary">
+                  <div>
 
-                    {formatMoney(
-                      variant.price,
-                      currencyCode,
+                    <p className="font-bold text-primary">
+
+                      {formatMoney(
+                        variant.price,
+                        currencyCode,
+                      )}
+
+                    </p>
+
+                    {selectedProduct?.promotionEnabled &&
+                      (
+                        variant.regularPrice ??
+                        variant.price
+                      ) >
+                        variant.price && (
+
+                      <p className="mt-0.5 text-xs text-muted-foreground line-through">
+
+                        {formatMoney(
+                          variant.regularPrice ??
+                          variant.price,
+                          currencyCode,
+                        )}
+
+                      </p>
+
                     )}
 
-                  </p>
+                  </div>
 
 
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -1496,14 +1553,42 @@ function CartContent({
                     </p>
 
 
-                    <p className="mt-1 text-sm font-medium text-primary">
+                    <div className="mt-1 flex items-center gap-2">
 
-                      {formatMoney(
-                        item.variant.price,
-                        currencyCode,
+                      <p className="text-sm font-medium text-primary">
+
+                        {formatMoney(
+                          item.variant.price,
+                          currencyCode,
+                        )}
+
+                      </p>
+
+                      {item.product.promotionEnabled &&
+                        (
+                          item.variant
+                            .regularPrice ??
+                          item.variant
+                            .price
+                        ) >
+                          item.variant
+                            .price && (
+
+                        <p className="text-xs text-muted-foreground line-through">
+
+                          {formatMoney(
+                            item.variant
+                              .regularPrice ??
+                            item.variant
+                              .price,
+                            currencyCode,
+                          )}
+
+                        </p>
+
                       )}
 
-                    </p>
+                    </div>
 
                   </div>
 
