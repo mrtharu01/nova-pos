@@ -121,6 +121,12 @@ export function ProfileDialog({
     );
 
 
+  const actionLockRef =
+    React.useRef(
+      false,
+    );
+
+
   const [
     profile,
     setProfile,
@@ -285,6 +291,7 @@ export function ProfileDialog({
 
   async function handleSave() {
     if (
+      actionLockRef.current ||
       saving ||
       uploading ||
       removing
@@ -302,6 +309,10 @@ export function ProfileDialog({
 
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setSaving(true);
@@ -339,6 +350,10 @@ export function ProfileDialog({
         ),
       );
     } finally {
+      actionLockRef.current =
+        false;
+
+
       setSaving(false);
     }
   }
@@ -355,12 +370,17 @@ export function ProfileDialog({
   ) {
     if (
       !file ||
+      actionLockRef.current ||
       uploading ||
       saving ||
       removing
     ) {
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setUploading(true);
@@ -385,6 +405,10 @@ export function ProfileDialog({
         ),
       );
     } finally {
+      actionLockRef.current =
+        false;
+
+
       setUploading(false);
 
 
@@ -404,12 +428,17 @@ export function ProfileDialog({
 
   async function handleRemovePhoto() {
     if (
+      actionLockRef.current ||
       removing ||
       uploading ||
       saving
     ) {
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setRemoving(true);
@@ -432,6 +461,10 @@ export function ProfileDialog({
         ),
       );
     } finally {
+      actionLockRef.current =
+        false;
+
+
       setRemoving(false);
     }
   }
