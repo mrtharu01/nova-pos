@@ -39,7 +39,6 @@ import {
   createCategory,
   fetchCategories,
   saveProduct,
-  setProductPromotion,
   type CategoryRecord,
   type ProductVariantInput,
 } from "@/lib/data/catalog-admin";
@@ -666,22 +665,15 @@ export function ProductEditor({
             categoryId || null,
           imageUrl,
           status,
+          promotionEnabled,
+          promotionType,
+          promotionValue,
+          promotionStartsAt:
+            promotionStartIso,
+          promotionEndsAt:
+            promotionEndIso,
           variants,
         });
-
-      await setProductPromotion({
-        productId,
-        enabled:
-          promotionEnabled,
-        type:
-          promotionType,
-        value:
-          promotionValue,
-        startsAt:
-          promotionStartIso,
-        endsAt:
-          promotionEndIso,
-      });
 
       setSuccess(
         product
