@@ -229,6 +229,41 @@ export function StaffSettingsCard() {
     );
 
 
+  const feedbackRef =
+    React.useRef<
+      HTMLDivElement | null
+    >(
+      null,
+    );
+
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !success
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    success,
+  ]);
+
+
   /* ==========================================================
      LOAD STAFF + INVITATIONS
   ========================================================== */
@@ -874,7 +909,12 @@ export function StaffSettingsCard() {
       ====================================================== */}
 
       {error && (
-        <div className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <div
+          ref={
+            feedbackRef
+          }
+          className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+        >
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
           <span>
@@ -885,7 +925,12 @@ export function StaffSettingsCard() {
 
 
       {success && (
-        <div className="flex items-start gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300">
+        <div
+          ref={
+            feedbackRef
+          }
+          className="flex items-start gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300"
+        >
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
 
           <span>
