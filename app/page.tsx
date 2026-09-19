@@ -12,7 +12,7 @@ import {
   Landmark,
   PackageSearch,
   ReceiptText,
-  RefreshCw,
+  Radio,
   ShoppingBag,
   TrendingUp,
   TriangleAlert,
@@ -22,10 +22,6 @@ import {
 import {
   AppLayout,
 } from "@/components/layout/AppLayout";
-
-import {
-  Button,
-} from "@/components/ui/button";
 
 import {
   Card,
@@ -335,8 +331,10 @@ export default function DashboardPage() {
   const {
     report,
     loading,
+    syncing,
     error,
-    refresh,
+    liveStatus,
+    lastUpdatedAt,
   } =
     useDashboardReport(
       business?.id,
@@ -502,29 +500,50 @@ export default function DashboardPage() {
           </div>
 
 
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 rounded-[14px]"
-            disabled={
-              loading
-            }
-            onClick={
-              refresh
+          <div
+            className={`flex h-11 items-center gap-2 rounded-[14px] border px-3 text-sm font-semibold ${
+              liveStatus ===
+              "live"
+                ? "border-emerald-500/25 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300"
+                : liveStatus ===
+                    "connecting"
+                  ? "border-amber-500/25 bg-amber-500/5 text-amber-700 dark:text-amber-300"
+                  : "border-muted bg-muted/30 text-muted-foreground"
+            }`}
+            title={
+              lastUpdatedAt
+                ? `Last updated ${new Date(
+                    lastUpdatedAt,
+                  ).toLocaleTimeString()}`
+                : "Dashboard live connection"
             }
           >
 
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${
-                loading
-                  ? "animate-spin"
+            <Radio
+              className={`h-4 w-4 ${
+                liveStatus ===
+                "live" &&
+                syncing
+                  ? "animate-pulse"
                   : ""
               }`}
             />
 
-            Refresh
+            <span>
 
-          </Button>
+              {liveStatus ===
+              "live"
+                ? syncing
+                  ? "Updating…"
+                  : "Live"
+                : liveStatus ===
+                    "connecting"
+                  ? "Connecting…"
+                  : "Live unavailable"}
+
+            </span>
+
+          </div>
 
         </div>
 
