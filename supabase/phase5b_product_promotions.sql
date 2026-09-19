@@ -330,7 +330,7 @@ returns uuid
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $$
 declare
   v_product_id uuid;
 begin
@@ -356,7 +356,7 @@ begin
 
   return v_product_id;
 end;
-$;
+$$;
 
 revoke all
 on function public.save_product_with_promotion(
