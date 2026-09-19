@@ -632,7 +632,7 @@ export default function ExpensesPage() {
   return (
     <AppLayout title="Expenses">
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
 
         {/* ====================================================
             HEADER
@@ -1126,9 +1126,9 @@ export default function ExpensesPage() {
             {filteredExpenses.length >
             0 ? (
 
-              <div className="overflow-x-auto">
+              <div className="max-w-full overflow-x-auto overscroll-x-contain">
 
-                <table className="w-full min-w-[850px] text-sm">
+                <table className="w-full min-w-[760px] text-sm">
 
                   <thead>
 
