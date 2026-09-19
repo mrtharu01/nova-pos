@@ -159,13 +159,13 @@ export default function SettingsPage() {
   return (
     <AppLayout title="Settings">
 
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
 
         {/* ====================================================
             NAVIGATION
         ===================================================== */}
 
-        <div className="space-y-2 md:col-span-1">
+        <div className="min-w-0 space-y-2">
 
           {SECTIONS.map(
             (
@@ -200,7 +200,7 @@ export default function SettingsPage() {
             CONTENT
         ===================================================== */}
 
-        <div className="space-y-6 md:col-span-3">
+        <div className="min-w-0 space-y-6">
 
           {/* ==================================================
               GENERAL
