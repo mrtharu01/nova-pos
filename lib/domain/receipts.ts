@@ -12,6 +12,10 @@ export type ReceiptSettings = {
   paperWidth: ReceiptPaperWidth;
 
   autoPrint: boolean;
+
+  logoUrl?: string;
+
+  logoPath?: string;
 
   displayName?: string;
 
