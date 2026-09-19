@@ -930,6 +930,12 @@ function CustomerFormDialog({
     >(null);
 
 
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     if (!isOpen) {
       return;
@@ -988,6 +994,10 @@ function CustomerFormDialog({
 
 
     setError(null);
+
+
+    saveLockRef.current =
+      false;
   }, [
     detail,
     isOpen,
@@ -997,6 +1007,7 @@ function CustomerFormDialog({
 
   async function handleSave() {
     if (
+      saveLockRef.current ||
       !businessId ||
       saving
     ) {
@@ -1064,6 +1075,10 @@ function CustomerFormDialog({
     }
 
 
+    saveLockRef.current =
+      true;
+
+
     setSaving(true);
 
     setError(null);
@@ -1109,6 +1124,10 @@ function CustomerFormDialog({
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(false);
     }
   }
