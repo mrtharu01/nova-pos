@@ -501,25 +501,27 @@ select
   pv.name as variant_name,
   pv.sku,
   pv.qr_token,
-  case
-    when p.promotion_enabled
-      and (p.promotion_starts_at is null or p.promotion_starts_at <= now())
-      and (p.promotion_ends_at is null or p.promotion_ends_at > now())
-    then round(
-      greatest(
-        0,
-        case
-          when p.promotion_type = 'percentage'
-            then pv.price * (100 - p.promotion_value) / 100
-          when p.promotion_type = 'fixed'
-            then pv.price - p.promotion_value
-          else pv.price
-        end
-      ),
-      2
-    )
-    else pv.price
-  end as price,
+  (
+    case
+      when p.promotion_enabled
+        and (p.promotion_starts_at is null or p.promotion_starts_at <= now())
+        and (p.promotion_ends_at is null or p.promotion_ends_at > now())
+      then round(
+        greatest(
+          0,
+          case
+            when p.promotion_type = 'percentage'
+              then pv.price * (100 - p.promotion_value) / 100
+            when p.promotion_type = 'fixed'
+              then pv.price - p.promotion_value
+            else pv.price
+          end
+        ),
+        2
+      )
+      else pv.price
+    end
+  )::numeric(12,2) as price,
   pv.cost,
   pv.is_active,
   loc.id as location_id,
