@@ -14,7 +14,7 @@ const RECEIPT_ASSET_BUCKET =
 
 
 export type ReceiptLogoUploadResult = {
-  publicUrl:
+  signedUrl:
     string;
 
   path:
@@ -110,18 +110,22 @@ export async function uploadReceiptLogo({
 
   const {
     data,
+    error:
+      signedUrlError,
   } =
-    supabase.storage
+    await supabase.storage
       .from(
         RECEIPT_ASSET_BUCKET,
       )
-      .getPublicUrl(
+      .createSignedUrl(
         path,
+        60 * 60 * 8,
       );
 
 
   if (
-    !data.publicUrl
+    signedUrlError ||
+    !data?.signedUrl
   ) {
     await supabase.storage
       .from(
@@ -133,14 +137,15 @@ export async function uploadReceiptLogo({
 
 
     throw new Error(
-      "The receipt logo was uploaded but its public URL could not be created.",
+      signedUrlError?.message ??
+      "The receipt logo was uploaded but a secure preview URL could not be created.",
     );
   }
 
 
   return {
-    publicUrl:
-      data.publicUrl,
+    signedUrl:
+      data.signedUrl,
 
     path,
 
@@ -156,6 +161,50 @@ export async function uploadReceiptLogo({
     outputBytes:
       converted.outputBytes,
   };
+}
+
+
+export async function createReceiptLogoSignedUrl(
+  path:
+    string,
+): Promise<string> {
+  if (
+    !path
+  ) {
+    return "";
+  }
+
+
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.storage
+      .from(
+        RECEIPT_ASSET_BUCKET,
+      )
+      .createSignedUrl(
+        path,
+        60 * 60 * 8,
+      );
+
+
+  if (
+    error ||
+    !data?.signedUrl
+  ) {
+    throw new Error(
+      error?.message ??
+      "A secure receipt logo URL could not be created.",
+    );
+  }
+
+
+  return data.signedUrl;
 }
 
 
