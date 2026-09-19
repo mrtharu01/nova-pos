@@ -307,7 +307,7 @@ export function AppLayout({
   ========================================================== */
 
   return (
-    <div className="flex h-[100dvh] min-h-0 w-full min-w-0 overflow-hidden bg-background">
+    <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden bg-background">
 
       {/* ======================================================
           DESKTOP SIDEBAR
@@ -328,7 +328,7 @@ export function AppLayout({
           MAIN AREA
       ======================================================= */}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 
         <Topbar
           title={
@@ -341,10 +341,7 @@ export function AppLayout({
           className={cn(
             `
               min-h-0
-              min-w-0
-              w-full
               flex-1
-              overflow-x-hidden
               overflow-y-auto
               overscroll-y-contain
               pb-[calc(6.5rem+env(safe-area-inset-bottom))]
