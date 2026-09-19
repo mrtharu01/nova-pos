@@ -209,6 +209,45 @@ export function ProductEditor({
       null,
     );
 
+
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
+  const feedbackRef =
+    React.useRef<HTMLDivElement | null>(
+      null,
+    );
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !success
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    success,
+  ]);
+
+
   const [name, setName] = React.useState(
     product?.name ?? "",
   );
@@ -505,6 +544,7 @@ export function ProductEditor({
     event.preventDefault();
 
     if (
+      saveLockRef.current ||
       saving ||
       uploadingImage
     ) {
@@ -653,6 +693,10 @@ export function ProductEditor({
       return;
     }
 
+    saveLockRef.current =
+      true;
+
+
     setSaving(true);
 
     try {
@@ -675,26 +719,31 @@ export function ProductEditor({
           variants,
         });
 
-      setSuccess(
-        product
-          ? "Product updated."
-          : "Product created successfully.",
+      void productId;
+
+
+      router.replace(
+        "/products",
       );
 
-      router.push(
-        `/products/${productId}`,
-      );
 
       router.refresh();
     } catch (cause) {
+      saveLockRef.current =
+        false;
+
+
+      setSaving(
+        false,
+      );
+
+
       setError(
         errorMessage(
           cause,
           "Unable to save product.",
         ),
       );
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -704,13 +753,19 @@ export function ProductEditor({
       className="space-y-6"
     >
       {error && (
-        <div className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <div
+          ref={feedbackRef}
+          className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+        >
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300">
+        <div
+          ref={feedbackRef}
+          className="rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300"
+        >
           {success}
         </div>
       )}
