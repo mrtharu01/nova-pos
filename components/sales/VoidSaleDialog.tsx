@@ -113,6 +113,12 @@ export function VoidSaleDialog({
     >(null);
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     if (!isOpen) {
       return;
@@ -127,6 +133,10 @@ export function VoidSaleDialog({
     setNote("");
 
     setError(null);
+
+
+    requestLockRef.current =
+      false;
   }, [
     isOpen,
   ]);
@@ -134,6 +144,7 @@ export function VoidSaleDialog({
 
   async function handleVoid() {
     if (
+      requestLockRef.current ||
       processing
     ) {
       return;
@@ -156,6 +167,10 @@ export function VoidSaleDialog({
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setProcessing(true);
@@ -189,6 +204,10 @@ export function VoidSaleDialog({
         ),
       );
     } finally {
+      requestLockRef.current =
+        false;
+
+
       setProcessing(false);
     }
   }
