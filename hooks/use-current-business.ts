@@ -95,19 +95,9 @@ async function loadCurrentBusinessSnapshot() {
         await Promise.all([
           supabase.auth.getUser(),
 
-          supabase
-            .from(
-              "businesses",
-            )
-            .select(
-              `
-              id,
-              name,
-              currency_code,
-              timezone
-              `,
-            )
-            .limit(1),
+          supabase.rpc(
+            "get_my_current_business",
+          ),
         ]);
 
 
