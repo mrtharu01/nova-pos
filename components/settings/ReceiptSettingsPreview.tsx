@@ -14,7 +14,10 @@ type ReceiptSettingsPreviewProps = {
     string;
 
   currencyCode:
+    string;
+  logoPreviewUrl?:
     string;
+
 };
 
 function money(
@@ -36,11 +39,17 @@ export function ReceiptSettingsPreview({
   settings,
   businessName,
   currencyCode,
+  logoPreviewUrl,
 }: ReceiptSettingsPreviewProps) {
   const displayName =
     settings.displayName
       .trim() ||
     businessName;
+
+
+  const logoUrl =
+    logoPreviewUrl ??
+    settings.logoUrl;
 
   return (
     <>
@@ -100,6 +109,19 @@ export function ReceiptSettingsPreview({
         {/* HEADER */}
 
         <header className="text-center">
+
+          {logoUrl && (
+
+            <img
+              src={
+                logoUrl
+              }
+              alt=""
+              className="mx-auto mb-2 max-h-[18mm] max-w-[80%] object-contain"
+            />
+
+          )}
+
           <h1 className="text-[16px] font-black uppercase leading-tight">
             {displayName}
           </h1>
