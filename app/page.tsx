@@ -12,7 +12,6 @@ import {
   Landmark,
   PackageSearch,
   ReceiptText,
-  Radio,
   ShoppingBag,
   TrendingUp,
   TriangleAlert,
@@ -331,10 +330,8 @@ export default function DashboardPage() {
   const {
     report,
     loading,
-    syncing,
     error,
     liveStatus,
-    lastUpdatedAt,
   } =
     useDashboardReport(
       business?.id,
@@ -500,49 +497,20 @@ export default function DashboardPage() {
           </div>
 
 
-          <div
-            className={`flex h-11 items-center gap-2 rounded-[14px] border px-3 text-sm font-semibold ${
-              liveStatus ===
-              "live"
-                ? "border-emerald-500/25 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300"
-                : liveStatus ===
-                    "connecting"
-                  ? "border-amber-500/25 bg-amber-500/5 text-amber-700 dark:text-amber-300"
-                  : "border-muted bg-muted/30 text-muted-foreground"
-            }`}
-            title={
-              lastUpdatedAt
-                ? `Last updated ${new Date(
-                    lastUpdatedAt,
-                  ).toLocaleTimeString()}`
-                : "Dashboard live connection"
-            }
-          >
+          {liveStatus ===
+          "offline" && (
 
-            <Radio
-              className={`h-4 w-4 ${
-                liveStatus ===
-                "live" &&
-                syncing
-                  ? "animate-pulse"
-                  : ""
-              }`}
-            />
+            <div className="flex items-center gap-1.5 px-1 text-xs font-medium text-amber-700 dark:text-amber-300">
 
-            <span>
+              <TriangleAlert className="h-3.5 w-3.5" />
 
-              {liveStatus ===
-              "live"
-                ? syncing
-                  ? "Updating…"
-                  : "Live"
-                : liveStatus ===
-                    "connecting"
-                  ? "Connecting…"
-                  : "Live unavailable"}
+              <span>
+                Live updates unavailable
+              </span>
 
-            </span>
+            </div>
 
+          )}
           </div>
 
         </div>
