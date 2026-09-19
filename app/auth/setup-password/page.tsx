@@ -132,6 +132,12 @@ export default function StaffSetupPasswordPage() {
     );
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     async function initialize() {
       try {
@@ -309,6 +315,7 @@ export default function StaffSetupPasswordPage() {
 
 
     if (
+      requestLockRef.current ||
       saving ||
       !invitation
     ) {
@@ -338,6 +345,10 @@ export default function StaffSetupPasswordPage() {
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setSaving(
@@ -414,14 +425,19 @@ export default function StaffSetupPasswordPage() {
 
       router.refresh();
     } catch (cause) {
+      requestLockRef.current =
+        false;
+
+
+      setSaving(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Account setup failed.",
-      );
-    } finally {
-      setSaving(
-        false,
       );
     }
   }
