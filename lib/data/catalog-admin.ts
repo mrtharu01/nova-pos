@@ -546,16 +546,15 @@ export async function adjustInventory(
 }
 
 
-export async function fetchDefaultInventoryLocation(): Promise<string> {
+export async function fetchDefaultInventoryLocation(
+  businessId?: string,
+): Promise<string> {
   const supabase =
     createClient();
 
 
-  const {
-    data,
-    error,
-  } =
-    await supabase
+  let query =
+    supabase
       .from(
         "inventory_locations",
       )
@@ -569,7 +568,25 @@ export async function fetchDefaultInventoryLocation(): Promise<string> {
       .eq(
         "is_active",
         true,
-      )
+      );
+
+
+  if (
+    businessId
+  ) {
+    query =
+      query.eq(
+        "business_id",
+        businessId,
+      );
+  }
+
+
+  const {
+    data,
+    error,
+  } =
+    await query
       .limit(
         1,
       )

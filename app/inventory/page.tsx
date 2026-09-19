@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useCurrentBusiness } from "@/hooks/use-current-business";
 import { flattenInventory, type InventoryItem } from "@/lib/domain/catalog";
 import { useCatalog } from "@/hooks/use-catalog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -31,7 +32,19 @@ function resolveAdjustment(action: AdjustmentAction, quantity: number): { type: 
   }
 }
 
+function getInventoryErrorMessage(cause: unknown) {
+  if (cause instanceof Error) return cause.message;
+
+  if (cause && typeof cause === "object" && "message" in cause) {
+    const message = (cause as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+
+  return "Unable to adjust inventory.";
+}
+
 export default function InventoryPage() {
+  const { business } = useCurrentBusiness();
   const [search, setSearch] = React.useState("");
   const { products, loading, error, refresh } = useCatalog();
   const [selected, setSelected] = React.useState<InventoryItem | null>(null);
@@ -72,7 +85,7 @@ export default function InventoryPage() {
     setSaving(true);
     setAdjustError(null);
     try {
-      const locationId = await fetchDefaultInventoryLocation();
+      const locationId = await fetchDefaultInventoryLocation(business?.id);
       await adjustInventory({
         variantId: selected.variantId,
         locationId,
@@ -84,7 +97,7 @@ export default function InventoryPage() {
       setSelected(null);
       await refresh();
     } catch (cause) {
-      setAdjustError(cause instanceof Error ? cause.message : "Unable to adjust inventory.");
+      setAdjustError(getInventoryErrorMessage(cause));
     } finally {
       setSaving(false);
     }
