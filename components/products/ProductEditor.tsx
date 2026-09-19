@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
+  BadgePercent,
   Check,
   Copy,
   ImagePlus,
@@ -31,12 +32,14 @@ import {
   buildVariantQrPayload,
   type Product,
   type ProductStatus,
+  type PromotionType,
 } from "@/lib/domain/catalog";
 
 import {
   createCategory,
   fetchCategories,
   saveProduct,
+  setProductPromotion,
   type CategoryRecord,
   type ProductVariantInput,
 } from "@/lib/data/catalog-admin";
@@ -75,7 +78,9 @@ function mapProductVariants(product: Product): EditorVariant[] {
     id: variant.id,
     name: variant.name,
     sku: variant.sku,
-    price: variant.price,
+    price:
+      variant.regularPrice ??
+      variant.price,
     cost: variant.cost,
     initialStock: 0,
     lowStockThreshold: variant.lowStockThreshold ?? 5,
@@ -173,6 +178,33 @@ export function ProductEditor({
   const [categoryId, setCategoryId] =
     React.useState(
       product?.categoryId ?? "",
+    );
+
+  const [
+    promotionEnabled,
+    setPromotionEnabled,
+  ] =
+    React.useState(
+      product?.promotionEnabled ??
+      false,
+    );
+
+  const [
+    promotionType,
+    setPromotionType,
+  ] =
+    React.useState<PromotionType>(
+      product?.promotionType ??
+      "percentage",
+    );
+
+  const [
+    promotionValue,
+    setPromotionValue,
+  ] =
+    React.useState(
+      product?.promotionValue ??
+      0,
     );
 
   const [categories, setCategories] =
@@ -461,6 +493,44 @@ export function ProductEditor({
       return;
     }
 
+    if (
+      promotionEnabled &&
+      promotionValue <= 0
+    ) {
+      setError(
+        "Enter a promotion value greater than zero.",
+      );
+      return;
+    }
+
+    if (
+      promotionEnabled &&
+      promotionType ===
+        "percentage" &&
+      promotionValue >= 100
+    ) {
+      setError(
+        "Percentage promotion must be less than 100%.",
+      );
+      return;
+    }
+
+    if (
+      promotionEnabled &&
+      promotionType ===
+        "fixed" &&
+      variants.some(
+        (variant) =>
+          promotionValue >=
+          variant.price,
+      )
+    ) {
+      setError(
+        "Fixed promotion must be lower than every variant selling price.",
+      );
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -475,6 +545,16 @@ export function ProductEditor({
           status,
           variants,
         });
+
+      await setProductPromotion({
+        productId,
+        enabled:
+          promotionEnabled,
+        type:
+          promotionType,
+        value:
+          promotionValue,
+      });
 
       setSuccess(
         product
@@ -799,6 +879,138 @@ export function ProductEditor({
           </div>
         </CardContent>
       </Card>
+
+      {/* =========================
+          PRODUCT PROMOTION
+      ========================== */}
+
+      <Card className="rounded-[24px]">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            <div className="rounded-[14px] bg-primary/10 p-2 text-primary">
+              <BadgePercent className="h-5 w-5" />
+            </div>
+
+            <div>
+              <CardTitle>
+                Product promotion
+              </CardTitle>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Apply a temporary percentage or fixed-value discount. NOVA keeps the normal selling price and uses the discounted price automatically in POS and checkout.
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <label className="flex items-center justify-between gap-4 rounded-[18px] border bg-muted/20 p-4">
+            <div>
+              <p className="text-sm font-semibold">
+                Enable promotion
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Disable this anytime to restore the normal selling price.
+              </p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={
+                promotionEnabled
+              }
+              onChange={(event) =>
+                setPromotionEnabled(
+                  event.target.checked,
+                )
+              }
+              className="h-5 w-5 accent-primary"
+            />
+          </label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <FieldLabel>
+                Discount type
+              </FieldLabel>
+
+              <Select
+                value={
+                  promotionType
+                }
+                disabled={
+                  !promotionEnabled
+                }
+                onChange={(event) =>
+                  setPromotionType(
+                    event.target
+                      .value as PromotionType,
+                  )
+                }
+              >
+                <option value="percentage">
+                  Percentage (%)
+                </option>
+
+                <option value="fixed">
+                  Fixed amount (LKR)
+                </option>
+              </Select>
+            </div>
+
+            <div>
+              <FieldLabel>
+                {promotionType ===
+                "percentage"
+                  ? "Discount percentage"
+                  : "Discount amount (LKR)"}
+              </FieldLabel>
+
+              <Input
+                type="number"
+                min="0"
+                max={
+                  promotionType ===
+                  "percentage"
+                    ? "99.99"
+                    : undefined
+                }
+                step="0.01"
+                disabled={
+                  !promotionEnabled
+                }
+                value={
+                  promotionValue
+                }
+                onChange={(event) =>
+                  setPromotionValue(
+                    Number(
+                      event.target.value,
+                    ),
+                  )
+                }
+              />
+            </div>
+          </div>
+
+          {promotionEnabled && (
+            <div className="rounded-[16px] border border-primary/20 bg-primary/5 p-4 text-sm">
+              <p className="font-semibold text-primary">
+                Promotion active
+              </p>
+
+              <p className="mt-1 text-muted-foreground">
+                {promotionType ===
+                "percentage"
+                  ? `${promotionValue}% off the normal selling price`
+                  : `LKR ${promotionValue.toFixed(2)} off each unit`}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       {/* =========================
           VARIANTS
