@@ -72,6 +72,14 @@ export type ProductPromotionInput = {
   type: PromotionType;
 
   value: number;
+
+  startsAt?:
+    | string
+    | null;
+
+  endsAt?:
+    | string
+    | null;
 };
 
 
@@ -363,6 +371,14 @@ export async function setProductPromotion(
           Number(
             input.value,
           ),
+
+        p_starts_at:
+          input.startsAt ??
+          null,
+
+        p_ends_at:
+          input.endsAt ??
+          null,
       },
     );
 
