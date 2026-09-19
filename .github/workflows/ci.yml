@@ -1,5 +1,7 @@
 name: NOVA CI
 
+# Branch safety check: keep development buildable before merging to main.
+
 on:
   push:
     branches:
