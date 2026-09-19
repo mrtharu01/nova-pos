@@ -9,6 +9,10 @@ import {
   type ReceiptSettingsForm,
 } from "@/lib/domain/receipt-settings";
 
+import {
+  createReceiptLogoSignedUrl,
+} from "@/lib/data/receipt-logo";
+
 type ReceiptSettingsRow = {
   paper_width:
     "58mm" | "80mm";
@@ -64,6 +68,7 @@ type ReceiptSettingsRow = {
 
 function mapRow(
   row: ReceiptSettingsRow,
+  resolvedLogoUrl?: string,
 ): ReceiptSettingsForm {
   return {
     paperWidth:
@@ -74,6 +79,7 @@ function mapRow(
 
 
     logoUrl:
+      resolvedLogoUrl ??
       row.logo_url ??
       "",
 
@@ -179,8 +185,21 @@ export async function fetchReceiptSettings(
     };
   }
 
+  const row =
+    data as ReceiptSettingsRow;
+
+
+  const resolvedLogoUrl =
+    row.logo_path
+      ? await createReceiptLogoSignedUrl(
+          row.logo_path,
+        )
+      : undefined;
+
+
   return mapRow(
-    data as ReceiptSettingsRow,
+    row,
+    resolvedLogoUrl,
   );
 }
 
@@ -208,9 +227,12 @@ export async function saveReceiptSettings(
 
 
         logo_url:
-          settings.logoUrl
-            .trim() ||
-          null,
+          settings.logoPath
+            .trim()
+            ? null
+            : settings.logoUrl
+                .trim() ||
+              null,
 
         logo_path:
           settings.logoPath
@@ -289,7 +311,20 @@ export async function saveReceiptSettings(
     );
   }
 
+  const row =
+    data as ReceiptSettingsRow;
+
+
+  const resolvedLogoUrl =
+    row.logo_path
+      ? await createReceiptLogoSignedUrl(
+          row.logo_path,
+        )
+      : undefined;
+
+
   return mapRow(
-    data as ReceiptSettingsRow,
+    row,
+    resolvedLogoUrl,
   );
 }
