@@ -192,6 +192,12 @@ export function ExpenseDialog({
     >(null);
 
 
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     if (!isOpen) {
       return;
@@ -250,6 +256,10 @@ export function ExpenseDialog({
     setError(
       null,
     );
+
+
+    saveLockRef.current =
+      false;
   }, [
     expense,
     isOpen,
@@ -263,7 +273,10 @@ export function ExpenseDialog({
     event.preventDefault();
 
 
-    if (saving) {
+    if (
+      saveLockRef.current ||
+      saving
+    ) {
       return;
     }
 
@@ -296,6 +309,10 @@ export function ExpenseDialog({
 
       return;
     }
+
+
+    saveLockRef.current =
+      true;
 
 
     setSaving(
@@ -348,6 +365,10 @@ export function ExpenseDialog({
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(
         false,
       );
