@@ -44,9 +44,17 @@ function humanize(value: string) {
 
 export function PlatformBackupsClient({
   basePath,
+  currentRole,
 }: {
   basePath: string;
+  currentRole: PlatformAdminRole;
 }) {
+  const canManage =
+    currentRole === "owner" ||
+    currentRole === "admin";
+
+  const [recordOpen, setRecordOpen] =
+    React.useState(false);
   const [overview, setOverview] =
     React.useState<PlatformBackupOverview | null>(null);
 
