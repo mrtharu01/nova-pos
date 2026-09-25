@@ -1,9 +1,3 @@
-"use client";
-
-import {
-  useSearchParams,
-} from "next/navigation";
-
 import {
   AppLayout,
 } from "@/components/layout/AppLayout";
@@ -13,16 +7,32 @@ import {
 } from "@/components/products/ProductEditor";
 
 
-export default function NewProductPage() {
-  const searchParams =
-    useSearchParams();
+export default async function NewProductPage({
+  searchParams,
+}: {
+  searchParams:
+    Promise<{
+      barcode?:
+        string |
+        string[];
+    }>;
+}) {
+  const resolved =
+    await searchParams;
+
+
+  const rawBarcode =
+    resolved.barcode;
 
 
   const initialBarcode =
-    searchParams.get(
-      "barcode",
-    ) ??
-    "";
+    Array.isArray(
+      rawBarcode,
+    )
+      ? rawBarcode[0] ??
+        ""
+      : rawBarcode ??
+        "";
 
 
   return (
