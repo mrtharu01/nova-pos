@@ -86,3 +86,45 @@ export type PlatformAdminMember = {
     | string
     | null;
 };
+
+
+export type PlatformSubscriptionPlanCode =
+  | "starter"
+  | "pro"
+  | "business";
+
+
+export type PlatformSubscriptionPlan = {
+  id: string;
+
+  code: PlatformSubscriptionPlanCode;
+
+  name: string;
+
+  description: string;
+
+  isPublic: boolean;
+
+  isActive: boolean;
+
+  monthlyPriceLkr:
+    | number
+    | null;
+
+  yearlyPriceLkr:
+    | number
+    | null;
+
+  entitlements:
+    Record<string, boolean>;
+
+  usageLimits:
+    Record<
+      string,
+      number | null
+    >;
+
+  sortOrder: number;
+
+  updatedAt: string;
+};
