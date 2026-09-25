@@ -14,7 +14,7 @@ import {
 
 import {
   PLATFORM_AUTH_COOKIE,
-} from "@/lib/supabase/platform-client";
+} from "@/lib/supabase/platform-auth-config";
 
 
 export async function createPlatformServerClient() {
