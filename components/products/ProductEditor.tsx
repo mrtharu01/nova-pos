@@ -12,6 +12,7 @@ import {
   Loader2,
   Plus,
   Save,
+  ScanLine,
   Trash2,
   Upload,
   X,
@@ -25,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Scanner } from "@/components/ui/scanner";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -58,12 +60,20 @@ type ImageConversionInfo = {
   height: number;
 };
 
-function newVariant(): EditorVariant {
+function newVariant(
+  initialBarcode = "",
+): EditorVariant {
+  const barcode =
+    initialBarcode.trim();
+
   return {
     clientId: crypto.randomUUID(),
     name: "Standard",
-    sku: "",
-    barcode: "",
+    sku:
+      barcode
+        ? `BC-${barcode}`.toUpperCase()
+        : "",
+    barcode,
     price: 0,
     cost: 0,
     initialStock: 0,
@@ -201,8 +211,10 @@ function errorMessage(
 
 export function ProductEditor({
   product,
+  initialBarcode = "",
 }: {
   product?: Product;
+  initialBarcode?: string;
 }) {
   const router = useRouter();
 
@@ -310,7 +322,7 @@ export function ProductEditor({
     React.useState<EditorVariant[]>(
       product
         ? mapProductVariants(product)
-        : [newVariant()],
+        : [newVariant(initialBarcode)],
     );
 
   const [
@@ -379,6 +391,17 @@ export function ProductEditor({
 
   const [copiedQr, setCopiedQr] =
     React.useState<string | null>(
+      null,
+    );
+
+
+  const [
+    barcodeScannerTarget,
+    setBarcodeScannerTarget,
+  ] =
+    React.useState<
+      string | null
+    >(
       null,
     );
 
