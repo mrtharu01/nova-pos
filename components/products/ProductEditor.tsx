@@ -27,6 +27,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Scanner } from "@/components/ui/scanner";
+
+import {
+  RemoteScannerControl,
+} from "@/components/pos/RemoteScannerControl";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -46,6 +50,10 @@ import {
 } from "@/lib/data/catalog-admin";
 
 import { uploadProductImage } from "@/lib/data/product-images";
+
+import {
+  parseNovaQrValue,
+} from "@/lib/qr/qr-value";
 
 type EditorVariant = ProductVariantInput & {
   clientId: string;
