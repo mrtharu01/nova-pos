@@ -8,9 +8,9 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/config";
 
-
-export const PLATFORM_AUTH_COOKIE =
-  "nova-platform-auth";
+import {
+  PLATFORM_AUTH_COOKIE,
+} from "@/lib/supabase/platform-auth-config";
 
 
 export function createPlatformClient() {
