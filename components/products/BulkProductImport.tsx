@@ -8,6 +8,7 @@ import {
   Download,
   FileSpreadsheet,
   Loader2,
+  ScanLine,
   Upload,
 } from "lucide-react";
 
@@ -972,7 +973,7 @@ export function BulkProductImport() {
 
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                If SKU is blank but Barcode exists, NOVA automatically creates a SKU from the barcode.
+                Upload the sheet first, then pair a phone and scan printed barcodes directly into the rows. If SKU is blank, NOVA creates one from the barcode.
               </p>
 
             </div>
@@ -1095,7 +1096,7 @@ export function BulkProductImport() {
 
 
             <p className="mt-2 text-xs leading-6 text-muted-foreground">
-              Product Name and Price are required. Add either SKU or Barcode. Optional columns: Product Key, Category, Description, Variant Name, Cost, Stock, Low Stock Threshold and Status.
+              Product Name and Price are required. SKU and Barcode can be left blank while preparing the sheet, then filled by barcode capture before import. Optional columns: Product Key, Category, Description, Variant Name, Cost, Stock, Low Stock Threshold and Status.
             </p>
 
 
@@ -1213,6 +1214,98 @@ export function BulkProductImport() {
 
           <CardContent className="space-y-4">
 
+            <div className="rounded-[18px] border bg-muted/10 p-4">
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                <div>
+
+                  <div className="flex items-center gap-2">
+
+                    <ScanLine className="h-4 w-4" />
+
+
+                    <p className="text-sm font-semibold">
+                      Bulk Barcode Capture
+                    </p>
+
+                  </div>
+
+
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    Pair your phone once, then scan the physical products in spreadsheet order. Each accepted scan fills the selected row and automatically advances to the next row without a barcode.
+                  </p>
+
+                </div>
+
+
+                <div className="flex flex-wrap gap-2">
+
+                  <RemoteScannerControl
+                    onScan={
+                      captureBarcode
+                    }
+                  />
+
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={
+                      downloadWorkingCopy
+                    }
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+
+                    Download Updated CSV
+                  </Button>
+
+                </div>
+
+              </div>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+                <div className="rounded-[14px] border bg-background/70 p-3">
+
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Captured
+                  </p>
+
+
+                  <p className="mt-1 text-lg font-bold">
+                    {capturedBarcodeCount}/{preview.rows.length}
+                  </p>
+
+                </div>
+
+
+                <div className="rounded-[14px] border bg-background/70 p-3 sm:col-span-2">
+
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Next phone scan
+                  </p>
+
+
+                  <p className="mt-1 text-sm font-semibold">
+                    {activeCaptureRow
+                      ? `Row ${activeCaptureRow.sourceRow} · ${activeCaptureRow.data.product_name}`
+                      : "All rows already have barcodes"}
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+                Products without a manufacturer barcode can keep a normal SKU instead. Click “Scan here” on any visible row if the physical product order does not match the spreadsheet.
+              </p>
+
+            </div>
+
+
             {preview.ignoredColumns.length >
             0 ? (
 
@@ -1231,7 +1324,7 @@ export function BulkProductImport() {
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
 
 
-                Fix the rows marked below and upload the sheet again. NOVA will not partially import a file with validation errors.
+                NOVA will not partially import a file with validation errors. Missing SKU/barcode rows can be fixed with phone capture above; other data errors should be corrected in the spreadsheet and re-uploaded.
 
               </div>
 
@@ -1267,6 +1360,10 @@ export function BulkProductImport() {
                     </th>
 
                     <th className="px-3 py-3">
+                      Capture
+                    </th>
+
+                    <th className="px-3 py-3">
                       Price
                     </th>
 
@@ -1298,7 +1395,12 @@ export function BulkProductImport() {
                         key={
                           row.sourceRow
                         }
-                        className="border-b last:border-0"
+                        className={
+                          row.sourceRow ===
+                            captureTargetSourceRow
+                            ? "border-b bg-primary/5 last:border-0"
+                            : "border-b last:border-0"
+                        }
                       >
 
                         <td className="px-3 py-3 font-mono text-xs">
@@ -1337,6 +1439,31 @@ export function BulkProductImport() {
                         <td className="px-3 py-3 font-mono text-xs">
                           {row.data.barcode ||
                             "—"}
+                        </td>
+
+
+                        <td className="px-3 py-3">
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={
+                              row.sourceRow ===
+                                captureTargetSourceRow
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              setCaptureTargetSourceRow(
+                                row.sourceRow,
+                              )
+                            }
+                          >
+                            <ScanLine className="mr-2 h-3.5 w-3.5" />
+
+                            Scan here
+                          </Button>
+
                         </td>
 
 
