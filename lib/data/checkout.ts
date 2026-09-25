@@ -284,7 +284,7 @@ export async function completeSale(
 
   if (!row) {
     throw new Error(
-      "NOVA did not return a completed sale.",
+      "ARC did not return a completed sale.",
     );
   }
 
