@@ -90,7 +90,7 @@ export function defaultReportSettings(
       "Sales Report",
 
     footerMessage:
-      "Thank you for using NOVA POS.",
+      "Thank you for using ARC.",
 
     paperSize:
       "a4",
