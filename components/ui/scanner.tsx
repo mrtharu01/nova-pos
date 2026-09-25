@@ -4,7 +4,7 @@ import * as React from "react";
 
 import {
   BrowserCodeReader,
-  BrowserQRCodeReader,
+  BrowserMultiFormatReader,
   type IScannerControls,
 } from "@zxing/browser";
 
@@ -298,7 +298,7 @@ export function Scanner({
 
         /*
          * Avoid repeatedly adding the
-         * same physical QR while it
+         * same physical QR / barcode while it
          * remains visible to the camera.
          */
         if (
@@ -332,7 +332,7 @@ export function Scanner({
           accepted === false
         ) {
           setScanError(
-            "QR code or SKU was not found in the current catalog.",
+            "QR code / barcode, barcode, or SKU was not found in the current catalog.",
           );
 
           return;
@@ -467,7 +467,7 @@ export function Scanner({
 
         try {
           const reader =
-            new BrowserQRCodeReader();
+            new BrowserMultiFormatReader();
 
 
           const controls =
