@@ -71,3 +71,18 @@ export type PlatformAuditEntry = {
 
   createdAt: string;
 };
+
+
+export type PlatformAdminMember = {
+  userId: string;
+
+  email: string;
+
+  role: PlatformAdminRole;
+
+  createdAt: string;
+
+  createdByUserId:
+    | string
+    | null;
+};
