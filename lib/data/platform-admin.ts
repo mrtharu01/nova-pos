@@ -493,3 +493,33 @@ Promise<PlatformBackupOverview> {
   return data as
     PlatformBackupOverview;
 }
+
+
+export async function fetchPlatformBackupEvents():
+Promise<PlatformBackupEvent[]> {
+  const supabase =
+    createPlatformClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "list_platform_backup_events",
+      {
+        p_limit:
+          100,
+      },
+    );
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+  return (
+    data ??
+    []
+  ) as PlatformBackupEvent[];
+}
