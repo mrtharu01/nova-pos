@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  createClient,
-} from "@/lib/supabase/client";
+  createPlatformClient,
+} from "@/lib/supabase/platform-client";
 
 import type {
   PlatformAdminOverview,
@@ -14,7 +14,7 @@ import type {
 export async function fetchPlatformOverview():
 Promise<PlatformAdminOverview> {
   const supabase =
-    createClient();
+    createPlatformClient();
 
 
   const {
@@ -42,7 +42,7 @@ export async function fetchPlatformBusinesses(
   search = "",
 ): Promise<PlatformBusiness[]> {
   const supabase =
-    createClient();
+    createPlatformClient();
 
 
   const {
@@ -78,7 +78,7 @@ export async function fetchPlatformBusinesses(
 export async function fetchPlatformAudit():
 Promise<PlatformAuditEntry[]> {
   const supabase =
-    createClient();
+    createPlatformClient();
 
 
   const {
