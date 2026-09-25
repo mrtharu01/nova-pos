@@ -10,6 +10,7 @@ import {
 
 import {
   Archive,
+  BadgeDollarSign,
   BarChart3,
   ChevronRight,
   CreditCard,
@@ -198,6 +199,17 @@ const NAV_ITEMS:
 
       requirement:
         "manager",
+    },
+
+    {
+      href:
+        "/billing",
+
+      label:
+        "Plan & Billing",
+
+      icon:
+        BadgeDollarSign,
     },
 
     {
