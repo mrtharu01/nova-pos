@@ -5,7 +5,9 @@ import {
 } from "@/lib/supabase/platform-client";
 
 import type {
+  PlatformAdminMember,
   PlatformAdminOverview,
+  PlatformAdminRole,
   PlatformAuditEntry,
   PlatformBusiness,
 } from "@/lib/domain/platform-admin";
@@ -105,4 +107,134 @@ Promise<PlatformAuditEntry[]> {
     data ??
     []
   ) as PlatformAuditEntry[];
+}
+
+
+export async function fetchPlatformAdmins():
+Promise<PlatformAdminMember[]> {
+  const supabase =
+    createPlatformClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "list_platform_admins",
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+
+  return (
+    data ??
+    []
+  ) as PlatformAdminMember[];
+}
+
+
+export async function addPlatformAdmin(
+  email: string,
+  role: PlatformAdminRole,
+) {
+  const supabase =
+    createPlatformClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "add_platform_admin",
+      {
+        p_email:
+          email.trim(),
+
+        p_role:
+          role,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+
+  return data;
+}
+
+
+export async function setPlatformAdminRole(
+  userId: string,
+  role: PlatformAdminRole,
+) {
+  const supabase =
+    createPlatformClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "set_platform_admin_role",
+      {
+        p_user_id:
+          userId,
+
+        p_role:
+          role,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+
+  return data;
+}
+
+
+export async function removePlatformAdmin(
+  userId: string,
+) {
+  const supabase =
+    createPlatformClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "remove_platform_admin",
+      {
+        p_user_id:
+          userId,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+
+  return data;
 }
