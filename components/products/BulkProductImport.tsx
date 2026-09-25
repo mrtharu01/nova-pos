@@ -61,6 +61,9 @@ const IDENTITY_ERROR =
   "Provide a SKU or barcode.";
 
 
+// Phone capture fills spreadsheet rows without manual barcode typing.
+
+
 function refreshIdentityValidation(
   rows:
     CatalogImportPreviewRow[],
