@@ -476,7 +476,7 @@ export async function removeProduct(
       "archived"
   ) {
     throw new Error(
-      "NOVA could not confirm how the product was removed.",
+      "ARC could not confirm how the product was removed.",
     );
   }
 
@@ -823,7 +823,7 @@ export async function bulkImportProducts(
       "object"
   ) {
     throw new Error(
-      "NOVA did not return a valid bulk import result.",
+      "ARC did not return a valid bulk import result.",
     );
   }
 
