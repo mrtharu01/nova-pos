@@ -9,9 +9,13 @@ import type {
   PlatformAdminOverview,
   PlatformAdminRole,
   PlatformAuditEntry,
+  PlatformBillingInterval,
   PlatformBusiness,
+  PlatformBusinessSubscription,
+  PlatformComplimentaryMode,
   PlatformSubscriptionPlan,
   PlatformSubscriptionPlanCode,
+  PlatformSubscriptionStatus,
 } from "@/lib/domain/platform-admin";
 
 
@@ -341,6 +345,113 @@ export async function savePlatformSubscriptionPlan(
 
         p_usage_limits:
           input.usageLimits,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+
+  return data;
+}
+
+
+export async function fetchPlatformBusinessSubscriptions(
+  search = "",
+): Promise<PlatformBusinessSubscription[]> {
+  const supabase =
+    createPlatformClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "list_platform_business_subscriptions",
+      {
+        p_search:
+          search,
+
+        p_limit:
+          500,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+
+  return (
+    data ??
+    []
+  ) as PlatformBusinessSubscription[];
+}
+
+
+export async function savePlatformBusinessSubscription(
+  input: {
+    businessId:
+      string;
+
+    planCode:
+      PlatformSubscriptionPlanCode;
+
+    status:
+      PlatformSubscriptionStatus;
+
+    billingInterval:
+      PlatformBillingInterval;
+
+    complimentaryMode:
+      PlatformComplimentaryMode;
+
+    complimentaryUntil:
+      string | null;
+
+    cancelAtPeriodEnd:
+      boolean;
+  },
+) {
+  const supabase =
+    createPlatformClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "save_platform_business_subscription",
+      {
+        p_business_id:
+          input.businessId,
+
+        p_plan_code:
+          input.planCode,
+
+        p_status:
+          input.status,
+
+        p_billing_interval:
+          input.billingInterval,
+
+        p_complimentary_mode:
+          input.complimentaryMode,
+
+        p_complimentary_until:
+          input.complimentaryUntil,
+
+        p_cancel_at_period_end:
+          input.cancelAtPeriodEnd,
       },
     );
 
