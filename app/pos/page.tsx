@@ -3,6 +3,10 @@
 import * as React from "react";
 
 import {
+  useRouter,
+} from "next/navigation";
+
+import {
   Minus,
   PackageOpen,
   Plus,
@@ -44,6 +48,10 @@ import {
 import {
   Scanner,
 } from "@/components/ui/scanner";
+
+import {
+  useBusinessAccess,
+} from "@/hooks/use-business-access";
 
 import {
   useCatalog,
@@ -106,6 +114,17 @@ export default function POSPage() {
 
 
   const [
+    unknownScanValue,
+    setUnknownScanValue,
+  ] =
+    React.useState<
+      string | null
+    >(
+      null,
+    );
+
+
+  const [
     mobileCartOpen,
     setMobileCartOpen,
   ] =
@@ -132,6 +151,10 @@ export default function POSPage() {
     useCart();
 
 
+  const router =
+    useRouter();
+
+
   const {
     business,
   } =
@@ -151,6 +174,20 @@ export default function POSPage() {
       refreshCatalog,
   } =
     useCatalog();
+
+
+  const {
+    access,
+  } =
+    useBusinessAccess(
+      business?.id,
+    );
+
+
+  const canManageCatalog =
+    access?.permissions
+      .manageCatalog ??
+    false;
 
 
   const currencyCode =
@@ -345,12 +382,28 @@ export default function POSPage() {
 
 
         if (!match) {
+          if (
+            canManageCatalog
+          ) {
+            setUnknownScanValue(
+              value.trim(),
+            );
+
+
+            setScannerOpen(
+              false,
+            );
+          }
+
+
           return {
             accepted:
               false,
 
             message:
-              "Product was not found.",
+              canManageCatalog
+                ? "Product was not found. You can add this scanned code as a new product."
+                : "Product was not found.",
           };
         }
 
@@ -388,6 +441,7 @@ export default function POSPage() {
       },
 
       [
+        canManageCatalog,
         cart,
         products,
       ],
@@ -1191,6 +1245,98 @@ export default function POSPage() {
         }
         continuous
       />
+
+
+      <Dialog
+        isOpen={
+          Boolean(
+            unknownScanValue,
+          )
+        }
+        onClose={() =>
+          setUnknownScanValue(
+            null,
+          )
+        }
+        title="Product Not Found"
+        description="This scanned barcode or code is not assigned to a NOVA product yet."
+      >
+
+        <div className="space-y-5">
+
+          <div className="rounded-[16px] border bg-muted/20 p-4">
+
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Scanned value
+            </p>
+
+
+            <p className="mt-2 break-all font-mono text-sm font-semibold">
+              {unknownScanValue}
+            </p>
+
+          </div>
+
+
+          <p className="text-sm leading-6 text-muted-foreground">
+            Add a new product with this value pre-filled as its manufacturer barcode. NOVA will keep its generated QR identity separately.
+          </p>
+
+
+          <div className="flex flex-wrap justify-end gap-2">
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setUnknownScanValue(
+                  null,
+                );
+
+
+                setScannerOpen(
+                  true,
+                );
+              }}
+            >
+              Keep Scanning
+            </Button>
+
+
+            <Button
+              type="button"
+              onClick={() => {
+                const value =
+                  unknownScanValue;
+
+
+                if (
+                  !value
+                ) {
+                  return;
+                }
+
+
+                setUnknownScanValue(
+                  null,
+                );
+
+
+                router.push(
+                  `/products/new?barcode=${encodeURIComponent(
+                    value,
+                  )}`,
+                );
+              }}
+            >
+              Add New Product
+            </Button>
+
+          </div>
+
+        </div>
+
+      </Dialog>
 
 
       {/* ======================================================
