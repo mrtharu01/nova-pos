@@ -312,7 +312,7 @@ export default function ProductDetailPage() {
 
                 <p className="text-sm leading-6 text-muted-foreground">
 
-                  NOVA permanently deletes products only when they have no stock or transaction history.
+                  ARC permanently deletes products only when they have no stock or transaction history.
 
                   Products that must remain for sales or inventory records are safely archived instead.
 
@@ -379,7 +379,7 @@ export default function ProductDetailPage() {
           }
         }}
         title="Delete this product?"
-        description="NOVA will decide whether it can be permanently deleted safely or must be archived to preserve business history."
+        description="ARC will decide whether it can be permanently deleted safely or must be archived to preserve business history."
         className="max-w-lg"
       >
 
@@ -403,7 +403,7 @@ export default function ProductDetailPage() {
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
 
-                If this product has stock, inventory movements, or has appeared in a sale, NOVA will archive it instead.
+                If this product has stock, inventory movements, or has appeared in a sale, ARC will archive it instead.
 
                 Archived products disappear from the POS but remain available in historical records.
 
@@ -456,7 +456,7 @@ export default function ProductDetailPage() {
                 {removeResult ===
                 "deleted"
                   ? "Product permanently deleted."
-                  : "Product has business history, so NOVA archived it safely."}
+                  : "Product has business history, so ARC archived it safely."}
 
               </span>
 
