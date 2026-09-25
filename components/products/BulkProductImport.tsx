@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/button";
 
 import {
+  RemoteScannerControl,
+} from "@/components/pos/RemoteScannerControl";
+
+import {
   Card,
   CardContent,
   CardHeader,
@@ -28,18 +32,190 @@ import {
 } from "@/lib/data/catalog-admin";
 
 import {
+  buildCatalogCsvFromImportRows,
   buildCatalogCsvTemplate,
   buildCatalogImportPreview,
   type CatalogImportPreview,
+  type CatalogImportPreviewRow,
 } from "@/lib/import/catalog-import";
 
 import {
   parseSpreadsheetFile,
 } from "@/lib/import/spreadsheet";
 
+import {
+  parseNovaQrValue,
+} from "@/lib/qr/qr-value";
+
+import type {
+  RemoteScanResult,
+} from "@/lib/remote-scanner/protocol";
+
 
 const MAX_ROWS =
   2000;
+
+
+const IDENTITY_ERROR =
+  "Provide a SKU or barcode.";
+
+
+function refreshIdentityValidation(
+  rows:
+    CatalogImportPreviewRow[],
+) {
+  const seenSkus =
+    new Map<
+      string,
+      number
+    >();
+
+
+  const seenBarcodes =
+    new Map<
+      string,
+      number
+    >();
+
+
+  const nextRows =
+    rows.map(
+      (
+        row,
+      ) => {
+        const sku =
+          row.data.sku
+            ?.trim()
+            .toUpperCase() ??
+          "";
+
+
+        const barcode =
+          row.data.barcode
+            ?.trim() ??
+          "";
+
+
+        const errors =
+          row.errors.filter(
+            (
+              message,
+            ) =>
+              message !==
+                IDENTITY_ERROR &&
+              !message.startsWith(
+                "SKU duplicates row ",
+              ) &&
+              !message.startsWith(
+                "Barcode duplicates row ",
+              ),
+          );
+
+
+        if (
+          !sku &&
+          !barcode
+        ) {
+          errors.push(
+            IDENTITY_ERROR,
+          );
+        }
+
+
+        if (
+          sku
+        ) {
+          const key =
+            sku.toLowerCase();
+
+
+          const duplicateRow =
+            seenSkus.get(
+              key,
+            );
+
+
+          if (
+            duplicateRow
+          ) {
+            errors.push(
+              `SKU duplicates row ${duplicateRow}.`,
+            );
+          } else {
+            seenSkus.set(
+              key,
+              row.sourceRow,
+            );
+          }
+        }
+
+
+        if (
+          barcode
+        ) {
+          const duplicateRow =
+            seenBarcodes.get(
+              barcode,
+            );
+
+
+          if (
+            duplicateRow
+          ) {
+            errors.push(
+              `Barcode duplicates row ${duplicateRow}.`,
+            );
+          } else {
+            seenBarcodes.set(
+              barcode,
+              row.sourceRow,
+            );
+          }
+        }
+
+
+        return {
+          ...row,
+
+          data: {
+            ...row.data,
+
+            sku,
+
+            barcode:
+              barcode ||
+              undefined,
+          },
+
+          errors,
+        };
+      },
+    );
+
+
+  return {
+    rows:
+      nextRows,
+
+    validRows:
+      nextRows.filter(
+        (
+          row,
+        ) =>
+          row.errors.length ===
+            0,
+      ).length,
+
+    invalidRows:
+      nextRows.filter(
+        (
+          row,
+        ) =>
+          row.errors.length >
+            0,
+      ).length,
+  };
+}
 
 
 export function BulkProductImport() {
