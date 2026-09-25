@@ -62,6 +62,7 @@ const IDENTITY_ERROR =
 
 
 // Phone capture fills spreadsheet rows without manual barcode typing.
+// Deployment retry marker for the barcode-capture preview.
 
 
 function refreshIdentityValidation(
