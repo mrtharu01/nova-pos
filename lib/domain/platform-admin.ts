@@ -273,3 +273,80 @@ export type PlatformBackupEvent = {
 
   createdAt: string;
 };
+
+
+export type PlatformBusinessProductionReadiness = {
+  business: {
+    id: string;
+    name: string;
+    ownerUserId: string;
+    ownerEmail: string;
+    currencyCode: string;
+    timezone: string;
+    createdAt: string;
+  };
+
+  subscription:
+    | {
+        subscriptionId: string;
+        status: PlatformSubscriptionStatus;
+        billingInterval: PlatformBillingInterval;
+        complimentaryMode: PlatformComplimentaryMode;
+        complimentaryUntil:
+          | string
+          | null;
+        planCode: PlatformSubscriptionPlanCode;
+        planName: string;
+      }
+    | null;
+
+  counts: {
+    activeProducts: number;
+    activeVariants: number;
+    activeLocations: number;
+    inventoryLevels: number;
+    activeStaff: number;
+    completedSales: number;
+  };
+
+  automaticChecks: {
+    ownerConfirmed: boolean;
+    catalogConfigured: boolean;
+    inventoryConfigured: boolean;
+    receiptConfigured: boolean;
+    subscriptionActive: boolean;
+    lifetimeComplimentary: boolean;
+    realTransactionCompleted: boolean;
+    tenantExportCompleted: boolean;
+    databaseBackupRecorded: boolean;
+    storageSnapshotRecorded: boolean;
+    restoreTestRecorded: boolean;
+  };
+
+  latestSaleAt:
+    | string
+    | null;
+
+  manualChecks: {
+    businessDetailsVerified: boolean;
+    staffAccessVerified: boolean;
+    scannerVerified: boolean;
+    receiptPrintVerified: boolean;
+    backupFilesVerified: boolean;
+    trainingCompleted: boolean;
+    notes: string;
+  };
+
+  automaticReady: boolean;
+  manualReady: boolean;
+  readyToHandoff: boolean;
+  handoffApproved: boolean;
+
+  approvedAt:
+    | string
+    | null;
+
+  approvedByUserId:
+    | string
+    | null;
+};
