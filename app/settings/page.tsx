@@ -34,10 +34,15 @@ import {
 } from "@/components/settings/StaffSettingsCard";
 
 import {
+  SubscriptionSettingsCard,
+} from "@/components/settings/SubscriptionSettingsCard";
+
+import {
   useCurrentBusiness,
 } from "@/hooks/use-current-business";
 
 import {
+  BadgeDollarSign,
   Building2,
   CircleDollarSign,
   Clock3,
@@ -49,6 +54,7 @@ import {
 
 const SECTIONS = [
   "General",
+  "Plan & Billing",
   "POS & Checkout",
   "Receipts",
   "Inventory",
@@ -351,6 +357,11 @@ export default function SettingsPage() {
               </Card>
 
             </>
+
+          ) : active ===
+          "Plan & Billing" ? (
+
+            <SubscriptionSettingsCard />
 
           ) : active ===
           "Receipts" ? (
