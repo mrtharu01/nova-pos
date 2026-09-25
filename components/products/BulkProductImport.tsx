@@ -384,6 +384,303 @@ export function BulkProductImport() {
   }
 
 
+  function downloadWorkingCopy() {
+    if (
+      !preview
+    ) {
+      return;
+    }
+
+
+    const blob =
+      new Blob(
+        [
+          buildCatalogCsvFromImportRows(
+            preview.rows.map(
+              (
+                row,
+              ) =>
+                row.data,
+            ),
+          ),
+        ],
+        {
+          type:
+            "text/csv;charset=utf-8",
+        },
+      );
+
+
+    const url =
+      URL.createObjectURL(
+        blob,
+      );
+
+
+    const anchor =
+      document.createElement(
+        "a",
+      );
+
+
+    const baseName =
+      (
+        fileName ||
+        "nova-products"
+      )
+        .replace(
+          /\.[^.]+$/,
+          "",
+        )
+        .replace(
+          /[^a-z0-9-_]+/gi,
+          "-",
+        );
+
+
+    anchor.href =
+      url;
+
+    anchor.download =
+      `${baseName}-with-barcodes.csv`;
+
+
+    document.body
+      .appendChild(
+        anchor,
+      );
+
+
+    anchor.click();
+
+    anchor.remove();
+
+
+    URL.revokeObjectURL(
+      url,
+    );
+  }
+
+
+  function captureBarcode(
+    value:
+      string,
+  ): RemoteScanResult {
+    if (
+      !preview
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "Upload a spreadsheet before scanning barcodes.",
+      };
+    }
+
+
+    const barcode =
+      value.trim();
+
+
+    if (
+      !barcode
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "No barcode value was detected.",
+      };
+    }
+
+
+    if (
+      parseNovaQrValue(
+        barcode,
+      )
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "That is a NOVA QR code. Scan the manufacturer barcode printed on the product.",
+      };
+    }
+
+
+    const targetSourceRow =
+      captureTargetSourceRow ??
+      preview.rows.find(
+        (
+          row,
+        ) =>
+          !row.data.barcode,
+      )?.sourceRow;
+
+
+    if (
+      !targetSourceRow
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "Every spreadsheet row already has a barcode.",
+      };
+    }
+
+
+    const target =
+      preview.rows.find(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+          targetSourceRow,
+      );
+
+
+    if (
+      !target
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "The selected spreadsheet row could not be found.",
+      };
+    }
+
+
+    const duplicate =
+      preview.rows.find(
+        (
+          row,
+        ) =>
+          row.sourceRow !==
+            targetSourceRow &&
+          row.data.barcode
+            ?.trim() ===
+            barcode,
+      );
+
+
+    if (
+      duplicate
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          `That barcode is already assigned to row ${duplicate.sourceRow}: ${duplicate.data.product_name}.`,
+      };
+    }
+
+
+    const changedRows =
+      preview.rows.map(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+            targetSourceRow
+            ? {
+                ...row,
+
+                data: {
+                  ...row.data,
+
+                  barcode,
+
+                  sku:
+                    row.data.sku
+                      ?.trim()
+                      .toUpperCase() ||
+                    `BC-${barcode}`
+                      .toUpperCase(),
+                },
+              }
+            : row,
+      );
+
+
+    const refreshed =
+      refreshIdentityValidation(
+        changedRows,
+      );
+
+
+    const currentIndex =
+      refreshed.rows.findIndex(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+          targetSourceRow,
+      );
+
+
+    const nextTarget =
+      refreshed.rows
+        .slice(
+          currentIndex +
+            1,
+        )
+        .find(
+          (
+            row,
+          ) =>
+            !row.data.barcode,
+        ) ??
+      refreshed.rows.find(
+        (
+          row,
+        ) =>
+          !row.data.barcode,
+      );
+
+
+    setPreview({
+      ...preview,
+
+      rows:
+        refreshed.rows,
+
+      validRows:
+        refreshed.validRows,
+
+      invalidRows:
+        refreshed.invalidRows,
+    });
+
+
+    setCaptureTargetSourceRow(
+      nextTarget?.sourceRow ??
+      null,
+    );
+
+
+    return {
+      accepted:
+        true,
+
+      label:
+        target.data.product_name,
+
+      message:
+        nextTarget
+          ? `Barcode saved for ${target.data.product_name}. Next: row ${nextTarget.sourceRow} · ${nextTarget.data.product_name}.`
+          : `Barcode saved for ${target.data.product_name}. All spreadsheet rows now have barcodes.`,
+    };
+  }
+
+
   async function chooseFile(
     file?:
       File,
@@ -591,6 +888,29 @@ export function BulkProductImport() {
       30,
     ) ??
     [];
+
+
+  const capturedBarcodeCount =
+    preview?.rows.filter(
+      (
+        row,
+      ) =>
+        Boolean(
+          row.data.barcode,
+        ),
+    ).length ??
+    0;
+
+
+  const activeCaptureRow =
+    preview?.rows.find(
+      (
+        row,
+      ) =>
+        row.sourceRow ===
+        captureTargetSourceRow,
+    ) ??
+    null;
 
 
   return (
