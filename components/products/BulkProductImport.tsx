@@ -511,7 +511,7 @@ export function BulkProductImport() {
           false,
 
         message:
-          "That is a ARC QR code. Scan the manufacturer barcode printed on the product.",
+          "That is an ARC QR code. Scan the manufacturer barcode printed on the product.",
       };
     }
 
