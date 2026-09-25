@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import Link from "next/link";
+
 import {
   RefreshCw,
   Search,
@@ -52,7 +54,11 @@ function formatDate(
 }
 
 
-export function PlatformBusinessesClient() {
+export function PlatformBusinessesClient({
+  basePath,
+}: {
+  basePath: string;
+}) {
   const [
     businesses,
     setBusinesses,
@@ -321,7 +327,7 @@ export function PlatformBusinessesClient() {
                     key={
                       business.id
                     }
-                    className="grid gap-4 rounded-[18px] border bg-muted/10 p-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_0.7fr_0.8fr]"
+                    className="grid gap-4 rounded-[18px] border bg-muted/10 p-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_0.7fr_0.8fr_auto]"
                   >
 
                     <div className="min-w-0">
@@ -378,6 +384,25 @@ export function PlatformBusinessesClient() {
                           business.createdAt,
                         )}
                       </p>
+
+                    </div>
+
+
+                    <div className="flex items-center justify-end">
+
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Link
+                          href={
+                            `${basePath}/businesses/${business.id}`
+                          }
+                        >
+                          Open
+                        </Link>
+                      </Button>
 
                     </div>
 
