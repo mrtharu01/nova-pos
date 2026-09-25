@@ -1,23 +1,108 @@
-import type { Metadata } from "next";
+import type {
+  Metadata,
+  Viewport,
+} from "next";
+
 import "./globals.css";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+
+import {
+  ThemeProvider,
+} from "@/components/providers/ThemeProvider";
+
 
 export const metadata: Metadata = {
   title: {
-    default: "Nova POS",
-    template: "%s | Nova POS",
+    default:
+      "NOVA POS",
+
+    template:
+      "%s | NOVA POS",
   },
-  description: "A fast, mobile-first point of sale and inventory system for small businesses.",
-  applicationName: "Nova POS",
-  robots: { index: false, follow: false },
+
+  description:
+    "A fast, mobile-first point of sale and inventory system for small businesses.",
+
+  applicationName:
+    "NOVA POS",
+
+  manifest:
+    "/site.webmanifest",
+
+  robots: {
+    index:
+      false,
+
+    follow:
+      false,
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+
+export const viewport: Viewport = {
+  colorScheme:
+    "light dark",
+
+  themeColor: [
+    {
+      media:
+        "(prefers-color-scheme: light)",
+
+      color:
+        "#ffffff",
+    },
+    {
+      media:
+        "(prefers-color-scheme: dark)",
+
+      color:
+        "#0a0a0a",
+    },
+  ],
+};
+
+
+export default function RootLayout({
+  children,
+}: {
+  children:
+    React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <ThemeProvider>{children}</ThemeProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+    >
+
+      <head>
+
+        <link
+          rel="icon"
+          href="/favicon-black.svg"
+          type="image/svg+xml"
+          media="(prefers-color-scheme: light)"
+        />
+
+
+        <link
+          rel="icon"
+          href="/favicon-white.svg"
+          type="image/svg+xml"
+          media="(prefers-color-scheme: dark)"
+        />
+
+      </head>
+
+
+      <body
+        suppressHydrationWarning
+      >
+
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+
       </body>
+
     </html>
   );
 }
