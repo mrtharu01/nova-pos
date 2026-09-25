@@ -63,6 +63,7 @@ function newVariant(): EditorVariant {
     clientId: crypto.randomUUID(),
     name: "Standard",
     sku: "",
+    barcode: "",
     price: 0,
     cost: 0,
     initialStock: 0,
@@ -77,6 +78,7 @@ function mapProductVariants(product: Product): EditorVariant[] {
     id: variant.id,
     name: variant.name,
     sku: variant.sku,
+    barcode: variant.barcode ?? "",
     price:
       variant.regularPrice ??
       variant.price,
