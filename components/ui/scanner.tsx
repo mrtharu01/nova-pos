@@ -1383,7 +1383,7 @@ export function Scanner({
             <div className="relative z-10 mt-8 w-full max-w-sm text-center">
 
               <p className="text-lg font-medium">
-                Point the camera at a ARC QR or product barcode
+                Point the camera at an ARC QR or product barcode
               </p>
 
 
