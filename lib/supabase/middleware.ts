@@ -7,6 +7,10 @@ import {
   type NextRequest,
 } from "next/server";
 
+import {
+  PLATFORM_AUTH_COOKIE,
+} from "@/lib/supabase/platform-auth-config";
+
 
 const PUBLIC_PATHS = [
   "/login",
@@ -53,13 +57,101 @@ function safeNextPath(
     value.startsWith("/signup") ||
     value.startsWith("/check-email") ||
     value.startsWith("/auth/") ||
-    value.startsWith("/onboarding")
+    value.startsWith("/onboarding") ||
+    value.startsWith("/internal/")
   ) {
     return "/";
   }
 
 
   return value;
+}
+
+
+function createCookieBackedClient({
+  request,
+  responseRef,
+  url,
+  key,
+  cookieName,
+}: {
+  request:
+    NextRequest;
+
+  responseRef: {
+    current:
+      NextResponse;
+  };
+
+  url:
+    string;
+
+  key:
+    string;
+
+  cookieName?:
+    string;
+}) {
+  return createServerClient(
+    url,
+    key,
+    {
+      ...(cookieName
+        ? {
+            cookieOptions: {
+              name:
+                cookieName,
+            },
+          }
+        : {}),
+
+      cookies: {
+        getAll() {
+          return request.cookies
+            .getAll();
+        },
+
+
+        setAll(
+          cookiesToSet,
+        ) {
+          cookiesToSet.forEach(
+            ({
+              name,
+              value,
+            }) => {
+              request.cookies.set(
+                name,
+                value,
+              );
+            },
+          );
+
+
+          responseRef.current =
+            NextResponse.next({
+              request,
+            });
+
+
+          cookiesToSet.forEach(
+            ({
+              name,
+              value,
+              options,
+            }) => {
+              responseRef.current
+                .cookies.set(
+                  name,
+                  value,
+                  options,
+                );
+            },
+          );
+        },
+      },
+    },
+  );
 }
 
 
@@ -114,66 +206,76 @@ export async function updateSession(
   }
 
 
-  let response =
-    NextResponse.next({
-      request,
-    });
+  const pathname =
+    request.nextUrl.pathname;
+
+
+  const responseRef = {
+    current:
+      NextResponse.next({
+        request,
+      }),
+  };
+
+
+  /* ==========================================================
+     NOVA PLATFORM ADMIN
+
+     Platform administration has its own Supabase auth cookie.
+     A user can therefore stay signed into the POS as one
+     account while signing into NOVA Internal as a completely
+     different platform-admin account.
+
+     Hidden-key validation + platform role authorization remain
+     inside the /internal/[key] route tree.
+  ========================================================== */
+
+  if (
+    pathname ===
+      "/internal" ||
+    pathname.startsWith(
+      "/internal/",
+    )
+  ) {
+    const platformSupabase =
+      createCookieBackedClient({
+        request,
+        responseRef,
+        url,
+        key,
+        cookieName:
+          PLATFORM_AUTH_COOKIE,
+      });
+
+
+    /*
+     * Refresh the isolated admin session when one exists.
+     * No redirect occurs here: the hidden internal route itself
+     * decides whether to render login, 404, or the admin panel.
+     */
+
+    await platformSupabase.auth
+      .getClaims();
+
+
+    responseRef.current
+      .headers.set(
+        "Cache-Control",
+        "private, no-store",
+      );
+
+
+    return responseRef.current;
+  }
 
 
   const supabase =
-    createServerClient(
+    createCookieBackedClient({
+      request,
+      responseRef,
       url,
       key,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-
-
-          setAll(
-            cookiesToSet,
-          ) {
-            cookiesToSet.forEach(
-              ({
-                name,
-                value,
-              }) => {
-                request.cookies.set(
-                  name,
-                  value,
-                );
-              },
-            );
-
-
-            response =
-              NextResponse.next({
-                request,
-              });
-
-
-            cookiesToSet.forEach(
-              ({
-                name,
-                value,
-                options,
-              }) => {
-                response.cookies.set(
-                  name,
-                  value,
-                  options,
-                );
-              },
-            );
-          },
-        },
-      },
-    );
-
-
-  const pathname =
-    request.nextUrl.pathname;
+    });
 
 
   const publicPath =
@@ -195,13 +297,14 @@ export async function updateSession(
       "/remote-scanner/",
     )
   ) {
-    response.headers.set(
-      "Cache-Control",
-      "private, no-store",
-    );
+    responseRef.current
+      .headers.set(
+        "Cache-Control",
+        "private, no-store",
+      );
 
 
-    return response;
+    return responseRef.current;
   }
 
 
@@ -238,7 +341,7 @@ export async function updateSession(
     if (
       publicPath
     ) {
-      return response;
+      return responseRef.current;
     }
 
 
@@ -334,10 +437,6 @@ export async function updateSession(
       );
 
 
-  /*
-   * Do not silently treat a database error as "no business".
-   */
-
   if (
     businessError
   ) {
@@ -364,13 +463,6 @@ export async function updateSession(
 
   /* ==========================================================
      AUTH ROUTES
-
-     These need to remain reachable before business access exists:
-
-     /auth/continue
-     /auth/setup-password
-     /auth/reset-password
-     /auth/signout
   ========================================================== */
 
   const isAuthRoute =
@@ -436,11 +528,12 @@ export async function updateSession(
   }
 
 
-  response.headers.set(
-    "Cache-Control",
-    "private, no-store",
-  );
+  responseRef.current
+    .headers.set(
+      "Cache-Control",
+      "private, no-store",
+    );
 
 
-  return response;
+  return responseRef.current;
 }
