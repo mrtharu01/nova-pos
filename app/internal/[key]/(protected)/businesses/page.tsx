@@ -3,8 +3,26 @@ import {
 } from "@/components/platform/PlatformBusinessesClient";
 
 
-export default function PlatformBusinessesPage() {
+export default async function PlatformBusinessesPage({
+  params,
+}: {
+  params:
+    Promise<{
+      key:
+        string;
+    }>;
+}) {
+  const {
+    key,
+  } =
+    await params;
+
+
   return (
-    <PlatformBusinessesClient />
+    <PlatformBusinessesClient
+      basePath={
+        `/internal/${key}`
+      }
+    />
   );
 }
