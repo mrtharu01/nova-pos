@@ -9,8 +9,8 @@ import {
 } from "next/navigation";
 
 import {
-  createClient,
-} from "@/lib/supabase/server";
+  createPlatformServerClient,
+} from "@/lib/supabase/platform-server";
 
 import type {
   PlatformAdminAccess,
@@ -21,7 +21,7 @@ export const requirePlatformAdmin =
   cache(
     async () => {
       const supabase =
-        await createClient();
+        await createPlatformServerClient();
 
 
       const {
