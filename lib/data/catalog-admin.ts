@@ -26,6 +26,8 @@ export type ProductVariantInput = {
 
   sku: string;
 
+  barcode?: string;
+
   price: number;
 
   cost: number;
@@ -270,6 +272,11 @@ export async function saveProduct(
             .trim()
             .toUpperCase(),
 
+        barcode:
+          variant.barcode
+            ?.trim() ||
+          null,
+
         price:
           Number(
             variant.price,
@@ -307,7 +314,7 @@ export async function saveProduct(
     error,
   } =
     await supabase.rpc(
-      "save_product_with_promotion_v2",
+      "save_product_with_promotion_v3",
       {
         p_product_id:
           input.id ??
