@@ -35,6 +35,10 @@ import {
 } from "@/hooks/use-current-business";
 
 import {
+  useSubscription,
+} from "@/hooks/use-subscription";
+
+import {
   hasAccessRequirement,
   type AccessRequirement,
 } from "@/lib/access/permissions";
@@ -337,6 +341,12 @@ export function Sidebar({
     useCurrentBusiness();
 
 
+  const {
+    subscription,
+  } =
+    useSubscription();
+
+
   const [
     profileOpen,
     setProfileOpen,
@@ -487,10 +497,10 @@ export function Sidebar({
             </span>
 
 
-            <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {
-                currentRoleLabel
-              }
+            <span className="mt-0.5 block truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {demo
+                ? currentRoleLabel
+                : `${currentRoleLabel} · ${subscription?.plan?.name ?? "Plan pending"}`}
             </span>
 
           </div>
