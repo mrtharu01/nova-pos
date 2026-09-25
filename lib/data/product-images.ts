@@ -75,7 +75,7 @@ export async function uploadProductImage(
   ) {
 
     throw new Error(
-      "Your NOVA business could not be identified.",
+      "Your ARC business could not be identified.",
     );
 
   }
