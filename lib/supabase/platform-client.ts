@@ -18,7 +18,7 @@ export function createPlatformClient() {
     !isSupabaseConfigured()
   ) {
     throw new Error(
-      "Supabase is not configured. Check the NOVA environment variables.",
+      "Supabase is not configured. Check the ARC environment variables.",
     );
   }
 
