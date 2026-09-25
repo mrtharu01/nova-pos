@@ -2,6 +2,10 @@ import {
   PlatformBackupsClient,
 } from "@/components/platform/PlatformBackupsClient";
 
+import {
+  requirePlatformAdmin,
+} from "@/lib/platform/auth";
+
 
 export default async function PlatformBackupsPage({
   params,
@@ -18,10 +22,19 @@ export default async function PlatformBackupsPage({
     await params;
 
 
+  const {
+    access,
+  } =
+    await requirePlatformAdmin();
+
+
   return (
     <PlatformBackupsClient
       basePath={
         `/internal/${key}`
+      }
+      currentRole={
+        access.role!
       }
     />
   );
