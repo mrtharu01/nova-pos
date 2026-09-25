@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import {
   Archive,
+  FileSpreadsheet,
   Loader2,
   Pencil,
   Plus,
@@ -365,17 +366,37 @@ export default function ProductsPage() {
         </div>
 
 
-        <Button asChild>
+        <div className="flex flex-wrap gap-2">
 
-          <Link href="/products/new">
+          <Button
+            asChild
+            variant="outline"
+          >
 
-            <Plus className="mr-2 h-4 w-4" />
+            <Link href="/products/import">
 
-            Add Product
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
 
-          </Link>
+              Import CSV / Excel
 
-        </Button>
+            </Link>
+
+          </Button>
+
+
+          <Button asChild>
+
+            <Link href="/products/new">
+
+              <Plus className="mr-2 h-4 w-4" />
+
+              Add Product
+
+            </Link>
+
+          </Button>
+
+        </div>
 
       </div>
 
