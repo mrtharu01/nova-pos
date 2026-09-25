@@ -632,6 +632,50 @@ export function ProductEditor({
       return;
     }
 
+
+    const normalizedBarcodes =
+      variants
+        .map(
+          (
+            variant,
+          ) =>
+            variant.barcode
+              ?.trim() ??
+            "",
+        )
+        .filter(
+          Boolean,
+        );
+
+
+    if (
+      new Set(
+        normalizedBarcodes,
+      ).size !==
+      normalizedBarcodes.length
+    ) {
+      setError(
+        "Variant barcodes must be unique.",
+      );
+      return;
+    }
+
+
+    if (
+      normalizedBarcodes.some(
+        (
+          barcode,
+        ) =>
+          barcode.length >
+          128,
+      )
+    ) {
+      setError(
+        "Barcode values must be 128 characters or fewer.",
+      );
+      return;
+    }
+
     if (
       variants.some(
         (variant) =>
