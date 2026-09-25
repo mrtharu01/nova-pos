@@ -119,17 +119,28 @@ export function PlatformBackupsClient({
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setLoading(true);
-            void load();
-          }}
-        >
-          <RefreshCw className={loading ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setLoading(true);
+              void load();
+            }}
+          >
+            <RefreshCw className={loading ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />
+            Refresh
+          </Button>
+
+          {canManage ? (
+            <Button
+              type="button"
+              onClick={() => setRecordOpen(true)}
+            >
+              Record Event
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {error ? (
