@@ -738,3 +738,119 @@ export async function fetchInventoryMovements(
     }),
   );
 }
+
+
+/* ============================================================
+   BULK PRODUCT IMPORT
+============================================================ */
+
+export type BulkProductImportRow = {
+  product_key?: string;
+
+  product_name: string;
+
+  category?: string;
+
+  description?: string;
+
+  variant_name?: string;
+
+  sku?: string;
+
+  barcode?: string;
+
+  price: number;
+
+  cost?: number;
+
+  stock?: number;
+
+  low_stock_threshold?: number;
+
+  status?:
+    | "active"
+    | "draft";
+};
+
+
+export type BulkProductImportResult = {
+  rowsImported: number;
+
+  productsCreated: number;
+
+  variantsCreated: number;
+
+  categoriesCreated: number;
+};
+
+
+export async function bulkImportProducts(
+  rows:
+    BulkProductImportRow[],
+): Promise<BulkProductImportResult> {
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "bulk_import_products",
+      {
+        p_rows:
+          rows,
+      },
+    );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  if (
+    !data ||
+    typeof data !==
+      "object"
+  ) {
+    throw new Error(
+      "NOVA did not return a valid bulk import result.",
+    );
+  }
+
+
+  const result =
+    data as Record<
+      string,
+      unknown
+    >;
+
+
+  return {
+    rowsImported:
+      Number(
+        result.rowsImported ??
+        0,
+      ),
+
+    productsCreated:
+      Number(
+        result.productsCreated ??
+        0,
+      ),
+
+    variantsCreated:
+      Number(
+        result.variantsCreated ??
+        0,
+      ),
+
+    categoriesCreated:
+      Number(
+        result.categoriesCreated ??
+        0,
+      ),
+  };
+}
