@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import {
   Archive,
+  BadgeDollarSign,
   BarChart3,
   CreditCard,
   LogOut,
@@ -91,6 +92,12 @@ const ITEMS:
       label: "Expenses",
       icon: CreditCard,
       requirement: "manager",
+    },
+
+    {
+      href: "/billing",
+      label: "Plan & Billing",
+      icon: BadgeDollarSign,
     },
 
     {
