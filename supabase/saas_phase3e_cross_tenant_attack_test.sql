@@ -11,7 +11,8 @@
 --   • creates temporary fixture rows inside both businesses
 --   • simulates each owner with the authenticated Postgres role
 --   • attacks the opposite tenant through RLS + SECURITY DEFINER RPCs
---   • removes every fixture before COMMIT
+--   • removes every SQL fixture before COMMIT
+--   • never writes directly to Supabase Storage system tables
 --   • never deletes either real business
 --
 -- BUSINESS SELECTION
@@ -495,14 +496,6 @@ declare
   v_scanner_b uuid :=
     gen_random_uuid();
 
-  v_storage_a_product text;
-
-  v_storage_b_product text;
-
-  v_storage_a_receipt text;
-
-  v_storage_b_receipt text;
-
   v_sequence_a bigint;
 
   v_sequence_b bigint;
@@ -881,116 +874,11 @@ begin
         interval '8 hours'
     );
 
-
-  v_storage_a_product :=
-    v_business_a::text
-    ||
-    '/phase3e-'
-    ||
-    replace(
-      gen_random_uuid()::text,
-      '-',
-      ''
-    )
-    ||
-    '.webp';
-
-
-  v_storage_b_product :=
-    v_business_b::text
-    ||
-    '/phase3e-'
-    ||
-    replace(
-      gen_random_uuid()::text,
-      '-',
-      ''
-    )
-    ||
-    '.webp';
-
-
-  v_storage_a_receipt :=
-    v_business_a::text
-    ||
-    '/phase3e-'
-    ||
-    replace(
-      gen_random_uuid()::text,
-      '-',
-      ''
-    )
-    ||
-    '.webp';
-
-
-  v_storage_b_receipt :=
-    v_business_b::text
-    ||
-    '/phase3e-'
-    ||
-    replace(
-      gen_random_uuid()::text,
-      '-',
-      ''
-    )
-    ||
-    '.webp';
-
-
-  perform set_config(
-    'nova.phase3e.storage_a_product',
-    v_storage_a_product,
-    true
-  );
-
-  perform set_config(
-    'nova.phase3e.storage_b_product',
-    v_storage_b_product,
-    true
-  );
-
-  perform set_config(
-    'nova.phase3e.storage_a_receipt',
-    v_storage_a_receipt,
-    true
-  );
-
-  perform set_config(
-    'nova.phase3e.storage_b_receipt',
-    v_storage_b_receipt,
-    true
-  );
-
-
-  insert into storage.objects (
-    bucket_id,
-    name
-  )
-  values
-    (
-      'product-images',
-      v_storage_a_product
-    ),
-    (
-      'product-images',
-      v_storage_b_product
-    ),
-    (
-      'receipt-assets',
-      v_storage_a_receipt
-    ),
-    (
-      'receipt-assets',
-      v_storage_b_receipt
-    );
-
-
   insert into nova_phase3e_results
   values (
     '01 fixtures',
     'PASS',
-    'Temporary A/B product, inventory, customer, sale, expense, scanner and storage fixtures created.'
+    'Temporary A/B product, inventory, customer, sale, expense and scanner fixtures created.'
   );
 
 end;
@@ -1008,6 +896,10 @@ do $$
 declare
 
   v_public_count integer;
+
+  v_policy_count integer;
+
+  v_unscoped_policy_count integer;
 
 begin
 
@@ -1046,9 +938,103 @@ begin
   );
 
 
+  select
+    count(*)::integer
+
+  into
+    v_policy_count
+
+  from pg_catalog.pg_policies
+    as policy_record
+
+  where
+    policy_record.schemaname =
+      'storage'
+
+    and
+    policy_record.tablename =
+      'objects'
+
+    and
+    policy_record.policyname in (
+      'nova_product_images_insert',
+      'nova_product_images_select',
+      'nova_product_images_delete',
+      'nova_receipt_assets_insert',
+      'nova_receipt_assets_select',
+      'nova_receipt_assets_delete'
+    );
+
+
+  select
+    count(*)::integer
+
+  into
+    v_unscoped_policy_count
+
+  from pg_catalog.pg_policies
+    as policy_record
+
+  where
+    policy_record.schemaname =
+      'storage'
+
+    and
+    policy_record.tablename =
+      'objects'
+
+    and
+    policy_record.policyname in (
+      'nova_product_images_insert',
+      'nova_product_images_select',
+      'nova_product_images_delete',
+      'nova_receipt_assets_insert',
+      'nova_receipt_assets_select',
+      'nova_receipt_assets_delete'
+    )
+
+    and
+    (
+      coalesce(
+        policy_record.qual,
+        ''
+      )
+      ||
+      ' '
+      ||
+      coalesce(
+        policy_record.with_check,
+        ''
+      )
+    ) not like
+      '%is_business_%';
+
+
   insert into nova_phase3e_results
   values (
-    '03 scanner direct table access',
+    '03 tenant-scoped storage policies',
+    case
+      when
+        v_policy_count = 6
+        and
+        v_unscoped_policy_count = 0
+      then 'PASS'
+      else 'FAIL'
+    end,
+    case
+      when
+        v_policy_count = 6
+        and
+        v_unscoped_policy_count = 0
+      then 'All six product/receipt storage policies exist and are tenant-scoped through NOVA business helpers.'
+      else 'Expected six tenant-scoped product/receipt storage policies.'
+    end
+  );
+
+
+  insert into nova_phase3e_results
+  values (
+    '04 scanner direct table access',
     case
       when
         not has_table_privilege(
@@ -1295,59 +1281,20 @@ begin
     'Business A must not read Business B report settings.'
   );
 
-
-  begin
-
-    select count(*)::integer
-    into v_count
-    from storage.objects
-    where
-      (
-        bucket_id =
-          'product-images'
-
-        and
-
-        name =
-          current_setting(
-            'nova.phase3e.storage_b_product'
-          )
+  insert into nova_phase3e_results
+  values (
+    'A11 storage tenant helper isolation',
+    case
+      when not (
+        select private.is_business_member(
+          v_business_b
+        )
       )
-
-      or
-
-      (
-        bucket_id =
-          'receipt-assets'
-
-        and
-
-        name =
-          current_setting(
-            'nova.phase3e.storage_b_receipt'
-          )
-      );
-
-
-    insert into nova_phase3e_results
-    values (
-      'A11 storage object isolation',
-      case when v_count = 0 then 'PASS' else 'FAIL' end,
-      'Business A must not read Business B private storage metadata.'
-    );
-
-  exception
-
-    when insufficient_privilege then
-
-      insert into nova_phase3e_results
-      values (
-        'A11 storage object isolation',
-        'PASS',
-        'Direct storage metadata read is denied to the authenticated role.'
-      );
-
-  end;
+      then 'PASS'
+      else 'FAIL'
+    end,
+    'Storage policies use NOVA tenant helpers; Business A must not satisfy Business B membership.'
+  );
 
 
   begin
@@ -1802,59 +1749,20 @@ begin
     'Business B must not read Business A expense.'
   );
 
-
-  begin
-
-    select count(*)::integer
-    into v_count
-    from storage.objects
-    where
-      (
-        bucket_id =
-          'product-images'
-
-        and
-
-        name =
-          current_setting(
-            'nova.phase3e.storage_a_product'
-          )
+  insert into nova_phase3e_results
+  values (
+    'B06 storage tenant helper isolation',
+    case
+      when not (
+        select private.is_business_member(
+          v_business_a
+        )
       )
-
-      or
-
-      (
-        bucket_id =
-          'receipt-assets'
-
-        and
-
-        name =
-          current_setting(
-            'nova.phase3e.storage_a_receipt'
-          )
-      );
-
-
-    insert into nova_phase3e_results
-    values (
-      'B06 storage object isolation',
-      case when v_count = 0 then 'PASS' else 'FAIL' end,
-      'Business B must not read Business A private storage metadata.'
-    );
-
-  exception
-
-    when insufficient_privilege then
-
-      insert into nova_phase3e_results
-      values (
-        'B06 storage object isolation',
-        'PASS',
-        'Direct storage metadata read is denied to the authenticated role.'
-      );
-
-  end;
+      then 'PASS'
+      else 'FAIL'
+    end,
+    'Storage policies use NOVA tenant helpers; Business B must not satisfy Business A membership.'
+  );
 
 
   begin
@@ -1908,44 +1816,6 @@ $$;
 -- ============================================================
 
 reset role;
-
-
-delete from storage.objects
-where
-  (
-    bucket_id =
-      'product-images'
-
-    and
-
-    name in (
-      current_setting(
-        'nova.phase3e.storage_a_product'
-      ),
-      current_setting(
-        'nova.phase3e.storage_b_product'
-      )
-    )
-  )
-
-  or
-
-  (
-    bucket_id =
-      'receipt-assets'
-
-    and
-
-    name in (
-      current_setting(
-        'nova.phase3e.storage_a_receipt'
-      ),
-      current_setting(
-        'nova.phase3e.storage_b_receipt'
-      )
-    )
-  );
-
 
 delete from public.remote_scanner_sessions
 where id in (
@@ -2059,6 +1929,10 @@ values (
 
 
 -- ============================================================
+-- Storage object upload/download/delete is intentionally not faked with direct SQL.
+-- Supabase protects storage.objects from direct deletion; actual object access
+-- is exercised through the Storage API by the live NOVA app.
+--
 -- 9. SUMMARY
 -- ============================================================
 
