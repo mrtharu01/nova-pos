@@ -63,7 +63,7 @@ export function useCatalog() {
     >(
       !demo &&
         !configured
-        ? "Supabase is not configured. Check the NOVA environment variables."
+        ? "Supabase is not configured. Check the ARC environment variables."
         : null,
     );
 
@@ -123,7 +123,7 @@ export function useCatalog() {
           );
 
           setError(
-            "Supabase is not configured. Check the NOVA environment variables.",
+            "Supabase is not configured. Check the ARC environment variables.",
           );
 
           setLoading(
