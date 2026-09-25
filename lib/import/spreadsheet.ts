@@ -621,7 +621,7 @@ function xmlDocument(
       0
   ) {
     throw new Error(
-      "NOVA could not read this Excel worksheet.",
+      "ARC could not read this Excel worksheet.",
     );
   }
 
@@ -971,7 +971,7 @@ async function parseXlsx(
     !worksheetXml
   ) {
     throw new Error(
-      "NOVA could not open the first worksheet.",
+      "ARC could not open the first worksheet.",
     );
   }
 
