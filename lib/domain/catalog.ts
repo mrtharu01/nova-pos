@@ -102,8 +102,19 @@ export const DEFAULT_CURRENCY =
   "LKR";
 
 
-export const NOVA_QR_PREFIX =
+export const ARC_QR_PREFIX =
+  "ARC:V1:";
+
+export const LEGACY_NOVA_QR_PREFIX =
   "NOVA:V1:";
+
+/*
+ * Backward-compatible export name for existing internal imports.
+ * New QR payloads are ARC-branded while already printed NOVA
+ * payloads remain scannable.
+ */
+export const NOVA_QR_PREFIX =
+  ARC_QR_PREFIX;
 
 
 export function formatMoney(
@@ -159,18 +170,30 @@ export function extractQrToken(
     value.trim();
 
 
-  const match =
+  const arcMatch =
+    /^ARC:V1:([0-9a-f-]{36})$/i.exec(
+      normalized,
+    );
+
+
+  if (
+    arcMatch?.[1]
+  ) {
+    return arcMatch[1]
+      .toLowerCase();
+  }
+
+
+  const legacyMatch =
     /^NOVA:V1:([0-9a-f-]{36})$/i.exec(
       normalized,
     );
 
 
   return (
-
-    match?.[1]?.toLowerCase()
-    ??
+    legacyMatch?.[1]
+      ?.toLowerCase() ??
     null
-
   );
 
 }
@@ -271,9 +294,9 @@ export function findVariantByScanValue(
           /*
            * Manufacturer barcode.
            *
-           * Kept separate from the NOVA QR token so packaged
+           * Kept separate from the ARC QR token so packaged
            * products can use their existing EAN / UPC / Code128
-           * value while NOVA QR remains available for everything
+           * value while ARC QR remains available for everything
            * else.
            */
 
@@ -287,7 +310,7 @@ export function findVariantByScanValue(
 
 
           /*
-           * Permanent NOVA QR.
+           * Permanent ARC QR.
            */
 
           if (
