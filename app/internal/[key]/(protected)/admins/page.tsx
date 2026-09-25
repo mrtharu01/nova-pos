@@ -1,15 +1,28 @@
 import {
-  PlatformSectionPlaceholder,
-} from "@/components/platform/PlatformSectionPlaceholder";
+  PlatformAdminsClient,
+} from "@/components/platform/PlatformAdminsClient";
+
+import {
+  requirePlatformAdmin,
+} from "@/lib/platform/auth";
 
 
-export default function PlatformAdminsPage() {
+export default async function PlatformAdminsPage() {
+  const {
+    user,
+    access,
+  } =
+    await requirePlatformAdmin();
+
+
   return (
-    <PlatformSectionPlaceholder
-      eyebrow="Security"
-      title="Platform Admins"
-      description="Control who can enter NOVA's platform administration system."
-      next="Owner-only admin invitation, role management and removal controls will be connected here."
+    <PlatformAdminsClient
+      currentUserId={
+        user.id
+      }
+      currentRole={
+        access.role!
+      }
     />
   );
 }
