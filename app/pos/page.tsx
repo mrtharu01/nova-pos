@@ -265,6 +265,11 @@ export default function POSPage() {
                     .toLowerCase()
                     .includes(
                       query,
+                    ) ||
+                  variant.barcode
+                    ?.toLowerCase()
+                    .includes(
+                      query,
                     ),
               )
             );
@@ -542,7 +547,7 @@ export default function POSPage() {
 
 
               <Input
-                placeholder="Search products, SKU..."
+                placeholder="Search products, SKU, barcode..."
                 className="h-11 rounded-xl bg-background pl-10 text-base shadow-sm"
                 value={
                   searchQuery
