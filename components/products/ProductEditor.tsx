@@ -827,20 +827,10 @@ export function ProductEditor({
     }
   }
 
-  function handleBarcodeScan(
+  function applyBarcodeToVariant(
+    targetId: string,
     value: string,
   ) {
-    const targetId =
-      barcodeScannerTarget;
-
-
-    if (
-      !targetId
-    ) {
-      return false;
-    }
-
-
     const barcode =
       value.trim();
 
@@ -848,7 +838,28 @@ export function ProductEditor({
     if (
       !barcode
     ) {
-      return false;
+      return {
+        accepted:
+          false,
+
+        message:
+          "No barcode value was detected.",
+      };
+    }
+
+
+    if (
+      parseNovaQrValue(
+        barcode,
+      )
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "That is a NOVA QR code. Scan the manufacturer's barcode printed on the product instead.",
+      };
     }
 
 
@@ -865,7 +876,39 @@ export function ProductEditor({
     if (
       !target
     ) {
-      return false;
+      return {
+        accepted:
+          false,
+
+        message:
+          "The target variant is no longer available.",
+      };
+    }
+
+
+    const duplicate =
+      variants.find(
+        (
+          variant,
+        ) =>
+          variant.clientId !==
+            targetId &&
+          variant.barcode
+            ?.trim() ===
+            barcode,
+      );
+
+
+    if (
+      duplicate
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          `That barcode is already entered for ${duplicate.name || "another variant"}.`,
+      };
     }
 
 
@@ -883,7 +926,37 @@ export function ProductEditor({
     );
 
 
-    return true;
+    return {
+      accepted:
+        true,
+
+      label:
+        barcode,
+
+      message:
+        `Barcode added to ${target.name || "variant"}.`,
+    };
+  }
+
+
+  function handleBarcodeScan(
+    value: string,
+  ) {
+    const targetId =
+      barcodeScannerTarget;
+
+
+    if (
+      !targetId
+    ) {
+      return false;
+    }
+
+
+    return applyBarcodeToVariant(
+      targetId,
+      value,
+    ).accepted;
   }
 
 
@@ -1532,7 +1605,7 @@ export function ProductEditor({
                         Manufacturer barcode
                       </FieldLabel>
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
 
                         <Input
                           value={
@@ -1552,7 +1625,7 @@ export function ProductEditor({
                           }
                           placeholder="EAN / UPC / Code128"
                           maxLength={128}
-                          className="font-mono"
+                          className="min-w-[180px] flex-1 font-mono"
                         />
 
 
@@ -1566,16 +1639,28 @@ export function ProductEditor({
                               variant.clientId,
                             )
                           }
-                          aria-label="Scan manufacturer barcode"
-                          title="Scan manufacturer barcode"
+                          aria-label="Scan manufacturer barcode with this device"
+                          title="Scan with this device"
                         >
                           <ScanLine className="h-4 w-4" />
                         </Button>
 
+
+                        <RemoteScannerControl
+                          onScan={(
+                            value,
+                          ) =>
+                            applyBarcodeToVariant(
+                              variant.clientId,
+                              value,
+                            )
+                          }
+                        />
+
                       </div>
 
                       <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                        Optional. Scan or type the barcode already printed on the product.
+                        Optional. Type it, scan with this device, or connect a phone and scan the barcode already printed on the product.
                       </p>
                     </div>
 
