@@ -469,3 +469,27 @@ export async function savePlatformBusinessSubscription(
 
   return data;
 }
+
+
+export async function fetchPlatformBackupOverview():
+Promise<PlatformBackupOverview> {
+  const supabase =
+    createPlatformClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "get_platform_backup_overview",
+    );
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+  return data as
+    PlatformBackupOverview;
+}
