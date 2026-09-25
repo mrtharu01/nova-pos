@@ -42,7 +42,6 @@ import {
 } from "@/hooks/use-current-business";
 
 import {
-  BadgeDollarSign,
   Building2,
   CircleDollarSign,
   Clock3,
