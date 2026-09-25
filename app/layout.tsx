@@ -77,14 +77,14 @@ export default function RootLayout({
 
         <link
           rel="icon"
-          href="/favicon-black.svg?v=4"
+          href="/favicon-black.svg?v=5"
           type="image/svg+xml"
           media="(prefers-color-scheme: light)"
         />
 
         <link
           rel="shortcut icon"
-          href="/favicon-black.svg?v=3"
+          href="/favicon-black.svg?v=5"
           type="image/svg+xml"
           media="(prefers-color-scheme: light)"
         />
@@ -92,14 +92,14 @@ export default function RootLayout({
 
         <link
           rel="icon"
-          href="/favicon-white.svg?v=4"
+          href="/favicon-white.svg?v=5"
           type="image/svg+xml"
           media="(prefers-color-scheme: dark)"
         />
 
         <link
           rel="shortcut icon"
-          href="/favicon-white.svg?v=3"
+          href="/favicon-white.svg?v=5"
           type="image/svg+xml"
           media="(prefers-color-scheme: dark)"
         />
