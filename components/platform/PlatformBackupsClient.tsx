@@ -310,6 +310,15 @@ export function PlatformBackupsClient({
           )}
         </CardContent>
       </Card>
+
+      <PlatformBackupRecordDialog
+        open={recordOpen}
+        onClose={() => setRecordOpen(false)}
+        onRecorded={() => {
+          setLoading(true);
+          void load();
+        }}
+      />
     </div>
   );
 }
