@@ -1,15 +1,24 @@
 import {
-  PlatformSectionPlaceholder,
-} from "@/components/platform/PlatformSectionPlaceholder";
+  PlatformPlansClient,
+} from "@/components/platform/PlatformPlansClient";
+
+import {
+  requirePlatformAdmin,
+} from "@/lib/platform/auth";
 
 
-export default function PlatformPlansPage() {
+export default async function PlatformPlansPage() {
+  const {
+    access,
+  } =
+    await requirePlatformAdmin();
+
+
   return (
-    <PlatformSectionPlaceholder
-      eyebrow="Commercial Controls"
-      title="Plans"
-      description="Manage the customer-facing Starter, Pro and Business plans from NOVA Control."
-      next="Phase 4B connects editable prices, features, limits and plan visibility here."
+    <PlatformPlansClient
+      currentRole={
+        access.role!
+      }
     />
   );
 }
