@@ -15,6 +15,7 @@ import type {
   PlatformBackupEventKind,
   PlatformBackupEventStatus,
   PlatformBackupOverview,
+  PlatformBusinessProductionReadiness,
   PlatformBusinessSubscription,
   PlatformComplimentaryMode,
   PlatformSubscriptionPlan,
@@ -588,4 +589,125 @@ export async function recordPlatformBackupEvent(
   }
 
   return data as string;
+}
+
+
+export async function fetchPlatformBusinessProductionReadiness(
+  businessId: string,
+): Promise<PlatformBusinessProductionReadiness> {
+  const supabase =
+    createPlatformClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "get_platform_business_production_readiness",
+      {
+        p_business_id:
+          businessId,
+      },
+    );
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+  return data as
+    PlatformBusinessProductionReadiness;
+}
+
+
+export async function savePlatformBusinessHandoffChecklist(
+  input: {
+    businessId: string;
+    businessDetailsVerified: boolean;
+    staffAccessVerified: boolean;
+    scannerVerified: boolean;
+    receiptPrintVerified: boolean;
+    backupFilesVerified: boolean;
+    trainingCompleted: boolean;
+    notes: string;
+  },
+): Promise<PlatformBusinessProductionReadiness> {
+  const supabase =
+    createPlatformClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "save_platform_business_handoff_checklist",
+      {
+        p_business_id:
+          input.businessId,
+
+        p_business_details_verified:
+          input.businessDetailsVerified,
+
+        p_staff_access_verified:
+          input.staffAccessVerified,
+
+        p_scanner_verified:
+          input.scannerVerified,
+
+        p_receipt_print_verified:
+          input.receiptPrintVerified,
+
+        p_backup_files_verified:
+          input.backupFilesVerified,
+
+        p_training_completed:
+          input.trainingCompleted,
+
+        p_notes:
+          input.notes.trim(),
+      },
+    );
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+  return data as
+    PlatformBusinessProductionReadiness;
+}
+
+
+export async function setPlatformBusinessHandoffApproval(
+  businessId: string,
+  approved: boolean,
+): Promise<PlatformBusinessProductionReadiness> {
+  const supabase =
+    createPlatformClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "set_platform_business_handoff_approval",
+      {
+        p_business_id:
+          businessId,
+
+        p_approved:
+          approved,
+      },
+    );
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+  return data as
+    PlatformBusinessProductionReadiness;
 }
