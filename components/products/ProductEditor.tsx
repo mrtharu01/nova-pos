@@ -827,6 +827,66 @@ export function ProductEditor({
     }
   }
 
+  function handleBarcodeScan(
+    value: string,
+  ) {
+    const targetId =
+      barcodeScannerTarget;
+
+
+    if (
+      !targetId
+    ) {
+      return false;
+    }
+
+
+    const barcode =
+      value.trim();
+
+
+    if (
+      !barcode
+    ) {
+      return false;
+    }
+
+
+    const target =
+      variants.find(
+        (
+          variant,
+        ) =>
+          variant.clientId ===
+          targetId,
+      );
+
+
+    if (
+      !target
+    ) {
+      return false;
+    }
+
+
+    updateVariant(
+      targetId,
+      {
+        barcode,
+
+        sku:
+          target.sku.trim()
+            ? target.sku
+            : `BC-${barcode}`
+                .toUpperCase(),
+      },
+    );
+
+
+    return true;
+  }
+
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -1337,10 +1397,7 @@ export function ProductEditor({
             </CardTitle>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Each variant has its
-              own permanent QR
-              identity and
-              independent stock.
+              Each variant has its own permanent NOVA QR identity, optional manufacturer barcode, and independent stock.
             </p>
           </div>
 
@@ -1467,6 +1524,61 @@ export function ProductEditor({
                         className="font-mono"
                       />
                     </div>
+
+                    {/* Barcode */}
+
+                    <div>
+                      <FieldLabel>
+                        Manufacturer barcode
+                      </FieldLabel>
+
+                      <div className="flex gap-2">
+
+                        <Input
+                          value={
+                            variant.barcode ??
+                            ""
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            updateVariant(
+                              variant.clientId,
+                              {
+                                barcode:
+                                  event.target.value.trim(),
+                              },
+                            )
+                          }
+                          placeholder="EAN / UPC / Code128"
+                          maxLength={128}
+                          className="font-mono"
+                        />
+
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() =>
+                            setBarcodeScannerTarget(
+                              variant.clientId,
+                            )
+                          }
+                          aria-label="Scan manufacturer barcode"
+                          title="Scan manufacturer barcode"
+                        >
+                          <ScanLine className="h-4 w-4" />
+                        </Button>
+
+                      </div>
+
+                      <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                        Optional. Scan or type the barcode already printed on the product.
+                      </p>
+                    </div>
+
 
                     {/* Price */}
 
@@ -1763,6 +1875,22 @@ export function ProductEditor({
             : "Create Product"}
         </Button>
       </div>
+      <Scanner
+        isOpen={
+          Boolean(
+            barcodeScannerTarget,
+          )
+        }
+        onClose={() =>
+          setBarcodeScannerTarget(
+            null,
+          )
+        }
+        onScan={
+          handleBarcodeScan
+        }
+      />
+
     </form>
   );
 }
