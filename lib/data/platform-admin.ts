@@ -523,3 +523,69 @@ Promise<PlatformBackupEvent[]> {
     []
   ) as PlatformBackupEvent[];
 }
+
+
+export async function recordPlatformBackupEvent(
+  input: {
+    kind:
+      PlatformBackupEventKind;
+
+    status:
+      PlatformBackupEventStatus;
+
+    businessId?:
+      string | null;
+
+    note?:
+      string;
+
+    metadata?:
+      Record<string, unknown>;
+
+    occurredAt?:
+      string;
+  },
+) {
+  const supabase =
+    createPlatformClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "record_platform_backup_event",
+      {
+        p_kind:
+          input.kind,
+
+        p_status:
+          input.status,
+
+        p_target_business_id:
+          input.businessId ??
+          null,
+
+        p_note:
+          input.note ??
+          "",
+
+        p_metadata:
+          input.metadata ??
+          {},
+
+        p_occurred_at:
+          input.occurredAt ??
+          new Date()
+            .toISOString(),
+      },
+    );
+
+  if (error) {
+    throw new Error(
+      error.message,
+    );
+  }
+
+  return data as string;
+}
