@@ -341,7 +341,7 @@ export async function sendStaffInvitation({
         InviteApiResponse;
   } catch {
     throw new Error(
-      "NOVA could not read the staff invitation response.",
+      "ARC could not read the staff invitation response.",
     );
   }
 
@@ -364,7 +364,7 @@ export async function sendStaffInvitation({
       "existing_user_added"
   ) {
     throw new Error(
-      "NOVA received an unexpected invitation response.",
+      "ARC received an unexpected invitation response.",
     );
   }
 
@@ -381,7 +381,7 @@ export async function sendStaffInvitation({
       (
         body.status ===
         "existing_user_added"
-          ? "Existing NOVA account added."
+          ? "Existing ARC account added."
           : "Staff invitation sent."
       ),
 
