@@ -291,6 +291,18 @@ export function BulkProductImport() {
     );
 
 
+  const [
+    captureTargetSourceRow,
+    setCaptureTargetSourceRow,
+  ] =
+    React.useState<
+      number |
+      null
+    >(
+      null,
+    );
+
+
   function reset() {
     setFileName(
       "",
@@ -305,6 +317,11 @@ export function BulkProductImport() {
     );
 
     setResult(
+      null,
+    );
+
+
+    setCaptureTargetSourceRow(
       null,
     );
 
@@ -452,30 +469,23 @@ export function BulkProductImport() {
       }
 
 
-      if (
-        !nextPreview
-          .recognizedColumns
-          .includes(
-            "sku",
-          ) &&
-        !nextPreview
-          .recognizedColumns
-          .includes(
-            "barcode",
-          )
-      ) {
-        throw new Error(
-          "Add a SKU or Barcode column. Each row needs at least one of them.",
-        );
-      }
-
-
       setFileName(
         parsed.fileName,
       );
 
       setPreview(
         nextPreview,
+      );
+
+
+      setCaptureTargetSourceRow(
+        nextPreview.rows.find(
+          (
+            row,
+          ) =>
+            !row.data.barcode,
+        )?.sourceRow ??
+        null,
       );
     } catch (
       cause
