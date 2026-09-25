@@ -40,6 +40,10 @@ interface ScannerProps {
 
   onClose: () => void;
 
+  onUnknownScan?: (
+    value: string,
+  ) => void;
+
   isOpen: boolean;
 
   continuous?: boolean;
@@ -108,6 +112,7 @@ function stopVideoTracks(
 export function Scanner({
   onScan,
   onClose,
+  onUnknownScan,
   isOpen,
   continuous = false,
 }: ScannerProps) {
@@ -142,6 +147,12 @@ export function Scanner({
   const onCloseRef =
     React.useRef(
       onClose,
+    );
+
+
+  const onUnknownScanRef =
+    React.useRef(
+      onUnknownScan,
     );
 
 
@@ -233,6 +244,14 @@ export function Scanner({
       onClose;
   }, [
     onClose,
+  ]);
+
+
+  React.useEffect(() => {
+    onUnknownScanRef.current =
+      onUnknownScan;
+  }, [
+    onUnknownScan,
   ]);
 
 
@@ -331,6 +350,11 @@ export function Scanner({
         if (
           accepted === false
         ) {
+          onUnknownScanRef.current?.(
+            value,
+          );
+
+
           setScanError(
             "QR, barcode, or SKU was not found in the current catalog.",
           );
