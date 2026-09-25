@@ -332,7 +332,7 @@ export function Scanner({
           accepted === false
         ) {
           setScanError(
-            "QR code / barcode, barcode, or SKU was not found in the current catalog.",
+            "QR, barcode, or SKU was not found in the current catalog.",
           );
 
           return;
@@ -1355,7 +1355,7 @@ export function Scanner({
             <div className="relative z-10 mt-8 w-full max-w-sm text-center">
 
               <p className="text-lg font-medium">
-                Point the camera at a NOVA product QR
+                Point the camera at a NOVA QR or product barcode
               </p>
 
 
@@ -1496,7 +1496,7 @@ export function Scanner({
                           );
                         }
                       }}
-                      placeholder="Enter SKU / NOVA QR"
+                      placeholder="Enter SKU / barcode / NOVA QR"
                       className="
                         h-10
                         rounded-[16px]
