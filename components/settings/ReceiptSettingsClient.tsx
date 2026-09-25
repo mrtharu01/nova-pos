@@ -886,7 +886,7 @@ export function ReceiptSettingsClient({
 
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Configure how NOVA receipts look and behave when a sale is completed.
+              Configure how ARC receipts look and behave when a sale is completed.
             </p>
 
           </div>
@@ -1110,7 +1110,7 @@ export function ReceiptSettingsClient({
 
                 <SettingToggle
                   title="Open print dialog automatically"
-                  description="After a successful sale NOVA automatically opens the browser print dialog."
+                  description="After a successful sale ARC automatically opens the browser print dialog."
                   checked={
                     settings.autoPrint
                   }
@@ -1129,7 +1129,7 @@ export function ReceiptSettingsClient({
 
                   Normal browsers cannot silently print without showing the system print dialog.
 
-                  Dedicated direct-print support can be added later for NOVA's desktop/offline mode.
+                  Dedicated direct-print support can be added later for ARC's desktop/offline mode.
 
                 </div>
 
@@ -1226,7 +1226,7 @@ export function ReceiptSettingsClient({
 
 
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                          JPG, PNG or WebP. NOVA converts it to an optimized WebP for thermal receipts.
+                          JPG, PNG or WebP. ARC converts it to an optimized WebP for thermal receipts.
                         </p>
 
 
@@ -1599,7 +1599,7 @@ export function ReceiptSettingsClient({
                       }
                       businessName={
                         business?.name ??
-                        "NOVA POS"
+                        "ARC"
                       }
                       currencyCode={
                         business?.currency_code ??

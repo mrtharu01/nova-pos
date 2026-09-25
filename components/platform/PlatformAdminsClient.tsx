@@ -430,7 +430,7 @@ export function PlatformAdminsClient({
 
 
       setNotice(
-        `${removeTarget.email} was removed from NOVA Control.`,
+        `${removeTarget.email} was removed from ARC Control.`,
       );
 
       setRemoveTarget(
@@ -471,7 +471,7 @@ export function PlatformAdminsClient({
 
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Accounts allowed into the hidden NOVA Control system. Only Platform Owners can change this list.
+            Accounts allowed into the hidden ARC Control system. Only Platform Owners can change this list.
           </p>
 
         </div>
@@ -919,7 +919,7 @@ export function PlatformAdminsClient({
           }
         }}
         title="Remove Platform Admin"
-        description="This immediately removes access to NOVA Control."
+        description="This immediately removes access to ARC Control."
       >
 
         <p className="text-sm leading-6 text-muted-foreground">

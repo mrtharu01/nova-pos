@@ -81,7 +81,7 @@ Promise<AccountProfile> {
     ) ??
     user.email
       ?.split("@")[0] ??
-    "NOVA User";
+    "ARC User";
 
 
   const customAvatarPath =

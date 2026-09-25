@@ -163,8 +163,12 @@ export async function updateSession(
   ========================================================== */
 
   if (
-    process.env
-      .NEXT_PUBLIC_NOVA_DEMO_MODE ===
+    (
+      process.env
+        .NEXT_PUBLIC_ARC_DEMO_MODE ??
+      process.env
+        .NEXT_PUBLIC_NOVA_DEMO_MODE
+    ) ===
     "true"
   ) {
     return NextResponse.next({
@@ -192,7 +196,7 @@ export async function updateSession(
     !key
   ) {
     return new NextResponse(
-      "NOVA POS configuration error. Supabase environment variables are missing.",
+      "ARC configuration error. Supabase environment variables are missing.",
       {
         status:
           503,
@@ -219,11 +223,11 @@ export async function updateSession(
 
 
   /* ==========================================================
-     NOVA PLATFORM ADMIN
+     ARC PLATFORM ADMIN
 
      Platform administration has its own Supabase auth cookie.
      A user can therefore stay signed into the POS as one
-     account while signing into NOVA Internal as a completely
+     account while signing into ARC Internal as a completely
      different platform-admin account.
 
      Hidden-key validation + platform role authorization remain
@@ -441,7 +445,7 @@ export async function updateSession(
     businessError
   ) {
     return new NextResponse(
-      "NOVA POS could not verify business access.",
+      "ARC could not verify business access.",
       {
         status:
           503,

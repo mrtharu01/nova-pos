@@ -866,7 +866,7 @@ export function ProductEditor({
           false,
 
         message:
-          "That is a NOVA QR code. Scan the manufacturer's barcode printed on the product instead.",
+          "That is a ARC QR code. Scan the manufacturer's barcode printed on the product instead.",
       };
     }
 
@@ -1187,7 +1187,7 @@ export function ProductEditor({
 
                   <p className="text-xs leading-5 text-muted-foreground">
                     JPG, PNG or WebP.
-                    NOVA automatically
+                    ARC automatically
                     resizes the longest
                     side to a maximum of
                     1600px and converts
@@ -1293,7 +1293,7 @@ export function ProductEditor({
               </CardTitle>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Apply a temporary percentage or fixed-value discount. NOVA keeps the normal selling price and uses the discounted price automatically in POS and checkout.
+                Apply a temporary percentage or fixed-value discount. ARC keeps the normal selling price and uses the discounted price automatically in POS and checkout.
               </p>
             </div>
           </div>
@@ -1478,7 +1478,7 @@ export function ProductEditor({
             </CardTitle>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Each variant has its own permanent NOVA QR identity, optional manufacturer barcode, and independent stock.
+              Each variant has its own permanent ARC QR identity, optional manufacturer barcode, and independent stock.
             </p>
           </div>
 
@@ -1899,7 +1899,7 @@ export function ProductEditor({
                           </div>
 
                           <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
-                            Permanent NOVA
+                            Permanent ARC
                             QR identity.
                             This is
                             generated

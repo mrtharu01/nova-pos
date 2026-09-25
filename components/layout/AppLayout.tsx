@@ -176,7 +176,7 @@ export function AppLayout({
 
 
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            NOVA could not verify your access to this business.
+            ARC could not verify your access to this business.
             Your account may have been disabled, or the permission
             check may have failed.
           </p>
@@ -259,7 +259,7 @@ export function AppLayout({
 
 
           <p className="mt-1 text-xs text-muted-foreground">
-            Loading your NOVA permissions.
+            Loading your ARC permissions.
           </p>
 
         </div>

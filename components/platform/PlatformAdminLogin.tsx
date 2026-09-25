@@ -205,7 +205,7 @@ export function PlatformAdminLogin({
 
 
           <h1 className="mt-5 text-2xl font-bold tracking-tight">
-            NOVA Internal
+            ARC Internal
           </h1>
 
 
@@ -334,7 +334,7 @@ export function PlatformAdminLogin({
 
 
         <p className="mt-6 text-center text-[11px] font-medium text-muted-foreground">
-          Authorized NOVA platform personnel only.
+          Authorized ARC platform personnel only.
         </p>
 
       </div>

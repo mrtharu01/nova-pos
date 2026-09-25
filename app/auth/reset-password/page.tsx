@@ -320,7 +320,7 @@ export default function ResetPasswordPage() {
 
 
         <p className="mt-2 text-sm leading-6 text-slate-400">
-          Create a secure new password for your NOVA account.
+          Create a secure new password for your ARC account.
         </p>
 
 

@@ -262,14 +262,14 @@ export default function SignupPage() {
         <div className="flex items-center gap-4">
 
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
-            N
+            ARC
           </div>
 
 
           <div>
 
             <p className="text-xl font-black">
-              NOVA POS
+              ARC
             </p>
 
 
@@ -290,8 +290,8 @@ export default function SignupPage() {
 
 
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Create your NOVA account.
-            After verification, NOVA will automatically determine the correct workspace setup.
+            Create your ARC account.
+            After verification, ARC will automatically determine the correct workspace setup.
           </p>
 
         </div>

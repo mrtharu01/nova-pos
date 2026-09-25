@@ -369,7 +369,7 @@ export function BulkProductImport() {
       url;
 
     anchor.download =
-      "nova-product-import-template.csv";
+      "arc-product-import-template.csv";
 
 
     document.body
@@ -431,7 +431,7 @@ export function BulkProductImport() {
     const baseName =
       (
         fileName ||
-        "nova-products"
+        "arc-products"
       )
         .replace(
           /\.[^.]+$/,
@@ -511,7 +511,7 @@ export function BulkProductImport() {
           false,
 
         message:
-          "That is a NOVA QR code. Scan the manufacturer barcode printed on the product.",
+          "That is a ARC QR code. Scan the manufacturer barcode printed on the product.",
       };
     }
 
@@ -740,7 +740,7 @@ export function BulkProductImport() {
           MAX_ROWS
       ) {
         throw new Error(
-          `This file has ${nextPreview.rows.length} product rows. NOVA imports up to ${MAX_ROWS} rows at a time.`,
+          `This file has ${nextPreview.rows.length} product rows. ARC imports up to ${MAX_ROWS} rows at a time.`,
         );
       }
 
@@ -753,7 +753,7 @@ export function BulkProductImport() {
           )
       ) {
         throw new Error(
-          "NOVA could not find a Product Name column.",
+          "ARC could not find a Product Name column.",
         );
       }
 
@@ -766,7 +766,7 @@ export function BulkProductImport() {
           )
       ) {
         throw new Error(
-          "NOVA could not find a Price column.",
+          "ARC could not find a Price column.",
         );
       }
 
@@ -803,7 +803,7 @@ export function BulkProductImport() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "NOVA could not read this spreadsheet.",
+          : "ARC could not read this spreadsheet.",
       );
     } finally {
       setParsing(
@@ -931,7 +931,7 @@ export function BulkProductImport() {
 
 
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            Upload a CSV or modern Excel workbook (.xlsx). NOVA validates the sheet first, shows a preview, then imports the catalog and starting stock in one transaction.
+            Upload a CSV or modern Excel workbook (.xlsx). ARC validates the sheet first, shows a preview, then imports the catalog and starting stock in one transaction.
           </p>
 
         </CardHeader>
@@ -977,7 +977,7 @@ export function BulkProductImport() {
 
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Upload the sheet first, then pair a phone and scan printed barcodes directly into the rows. If SKU is blank, NOVA creates one from the barcode.
+                Upload the sheet first, then pair a phone and scan printed barcodes directly into the rows. If SKU is blank, ARC creates one from the barcode.
               </p>
 
             </div>
@@ -1328,7 +1328,7 @@ export function BulkProductImport() {
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
 
 
-                NOVA will not partially import a file with validation errors. Missing SKU/barcode rows can be fixed with phone capture above; other data errors should be corrected in the spreadsheet and re-uploaded.
+                ARC will not partially import a file with validation errors. Missing SKU/barcode rows can be fixed with phone capture above; other data errors should be corrected in the spreadsheet and re-uploaded.
 
               </div>
 

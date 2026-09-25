@@ -366,7 +366,7 @@ export default function POSPage() {
      Used by:
      - laptop camera
      - phone remote scanner
-     - SKU / NOVA QR input
+     - SKU / ARC QR input
   ========================================================== */
 
   const processScan =
@@ -1259,7 +1259,7 @@ export default function POSPage() {
           )
         }
         title="Product Not Found"
-        description="This scanned barcode or code is not assigned to a NOVA product yet."
+        description="This scanned barcode or code is not assigned to a ARC product yet."
       >
 
         <div className="space-y-5">
@@ -1279,7 +1279,7 @@ export default function POSPage() {
 
 
           <p className="text-sm leading-6 text-muted-foreground">
-            Add a new product with this value pre-filled as its manufacturer barcode. NOVA will keep its generated QR identity separately.
+            Add a new product with this value pre-filled as its manufacturer barcode. ARC will keep its generated QR identity separately.
           </p>
 
 

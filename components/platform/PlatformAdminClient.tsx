@@ -228,7 +228,7 @@ export function PlatformAdminClient({
           setError(
             cause instanceof Error
               ? cause.message
-              : "NOVA Platform could not load.",
+              : "ARC Platform could not load.",
           );
         }
       },
@@ -325,7 +325,7 @@ export function PlatformAdminClient({
 
               <ShieldCheck className="h-4 w-4" />
 
-              NOVA Platform
+              ARC Platform
 
             </div>
 
@@ -573,7 +573,7 @@ export function PlatformAdminClient({
 
 
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  NOVA businesses and their owners. Package and billing controls connect here in Phase 4B.
+                  ARC businesses and their owners. Package and billing controls connect here in Phase 4B.
                 </p>
 
               </div>

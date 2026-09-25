@@ -505,7 +505,7 @@ export default function QRCodePage() {
           <meta charset="utf-8" />
 
           <title>
-            NOVA QR Labels
+            ARC QR Labels
           </title>
 
           <style>
@@ -685,7 +685,7 @@ export default function QRCodePage() {
           >
 
             Every saved variant
-            has one permanent NOVA
+            has one permanent ARC
             QR identity.
 
             Price and stock are

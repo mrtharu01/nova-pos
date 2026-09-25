@@ -74,7 +74,7 @@ type Section =
    These are intentionally honest placeholders.
 
    There are currently no persistent settings behind these
-   areas, so NOVA must not pretend values are being saved.
+   areas, so ARC must not pretend values are being saved.
 ============================================================ */
 
 function FutureSettingsCard({
@@ -225,7 +225,7 @@ export default function SettingsPage() {
                   </CardTitle>
 
                   <p className="text-sm text-muted-foreground">
-                    Current NOVA workspace information.
+                    Current ARC workspace information.
                   </p>
 
                 </CardHeader>
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                   ) : !business ? (
 
                     <div className="rounded-[18px] border border-dashed p-6 text-sm text-muted-foreground">
-                      No active NOVA business workspace was found.
+                      No active ARC business workspace was found.
                     </div>
 
                   ) : (
@@ -412,7 +412,7 @@ export default function SettingsPage() {
               icon={
                 <ShoppingCart className="h-5 w-5" />
               }
-              description="Checkout behaviour currently uses NOVA's production defaults. Additional business-level checkout preferences can be added later without changing the existing checkout engine."
+              description="Checkout behaviour currently uses ARC's production defaults. Additional business-level checkout preferences can be added later without changing the existing checkout engine."
             />
 
           ) : active ===
@@ -427,7 +427,7 @@ export default function SettingsPage() {
               icon={
                 <PackageSearch className="h-5 w-5" />
               }
-              description="Inventory tracking is already handled by NOVA's stock movement and inventory system. There are currently no extra workspace preferences to configure here."
+              description="Inventory tracking is already handled by ARC's stock movement and inventory system. There are currently no extra workspace preferences to configure here."
             />
 
           ) : (
@@ -441,7 +441,7 @@ export default function SettingsPage() {
               icon={
                 <QrCode className="h-5 w-5" />
               }
-              description="Product QR identifiers are generated and stored permanently by NOVA. Additional QR formatting preferences can be introduced later if required."
+              description="Product QR identifiers are generated and stored permanently by ARC. Additional QR formatting preferences can be introduced later if required."
             />
 
           )}

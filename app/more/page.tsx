@@ -227,7 +227,7 @@ export default function MorePage() {
 
           <p className="font-semibold">
             {business?.name ??
-              "NOVA Account"}
+              "ARC Account"}
           </p>
 
 

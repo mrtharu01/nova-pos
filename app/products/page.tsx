@@ -791,7 +791,7 @@ export default function ProductsPage() {
 
                         <p className="mt-1 text-sm">
 
-                          Add your first real product to start using NOVA inventory and QR scanning.
+                          Add your first real product to start using ARC inventory and QR scanning.
 
                         </p>
 
@@ -846,7 +846,7 @@ export default function ProductsPage() {
         title="Delete product?"
         description={
           deleteTarget
-            ? `Remove "${deleteTarget.name}" from NOVA.`
+            ? `Remove "${deleteTarget.name}" from ARC.`
             : "Remove product."
         }
         className="max-w-lg"
@@ -872,7 +872,7 @@ export default function ProductsPage() {
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
 
-                If this product has stock, inventory history, or previous sales, NOVA will archive it instead of destroying historical records.
+                If this product has stock, inventory history, or previous sales, ARC will archive it instead of destroying historical records.
 
               </p>
 
@@ -953,7 +953,7 @@ export default function ProductsPage() {
                 {deleteResult ===
                 "deleted"
                   ? "Product permanently deleted."
-                  : "Product has business history, so NOVA archived it safely."}
+                  : "Product has business history, so ARC archived it safely."}
 
               </span>
 

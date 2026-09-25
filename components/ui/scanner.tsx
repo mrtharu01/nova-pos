@@ -443,7 +443,7 @@ export function Scanner({
   /* ==========================================================
      START CAMERA
 
-     BrowserMultiFormatReader keeps NOVA QR scanning while also
+     BrowserMultiFormatReader keeps ARC QR scanning while also
      decoding manufacturer barcodes from the same camera feed.
      Deployment retry marker: barcode quick-add rollout.
   ========================================================== */
@@ -588,7 +588,7 @@ export function Scanner({
           error
         ) {
           console.error(
-            "NOVA scanner camera error:",
+            "ARC scanner camera error:",
             error,
           );
 
@@ -604,7 +604,7 @@ export function Scanner({
               case "PermissionDeniedError":
 
                 setCameraError(
-                  "Camera permission was blocked. Allow camera access for NOVA and try again.",
+                  "Camera permission was blocked. Allow camera access for ARC and try again.",
                 );
 
                 break;
@@ -806,7 +806,7 @@ export function Scanner({
       error
     ) {
       console.error(
-        "NOVA torch error:",
+        "ARC torch error:",
         error,
       );
 
@@ -1383,7 +1383,7 @@ export function Scanner({
             <div className="relative z-10 mt-8 w-full max-w-sm text-center">
 
               <p className="text-lg font-medium">
-                Point the camera at a NOVA QR or product barcode
+                Point the camera at a ARC QR or product barcode
               </p>
 
 
@@ -1524,7 +1524,7 @@ export function Scanner({
                           );
                         }
                       }}
-                      placeholder="Enter SKU / barcode / NOVA QR"
+                      placeholder="Enter SKU / barcode / ARC QR"
                       className="
                         h-10
                         rounded-[16px]

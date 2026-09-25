@@ -1128,7 +1128,7 @@ export default function DashboardPage() {
 
                   <EmptyState
                     title="No transactions in this period"
-                    description="Complete a sale in NOVA or select a wider reporting range."
+                    description="Complete a sale in ARC or select a wider reporting range."
                   />
 
                 </div>

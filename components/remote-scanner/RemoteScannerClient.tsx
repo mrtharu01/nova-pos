@@ -726,7 +726,7 @@ export function RemoteScannerClient({
           <Loader2 className="mx-auto h-8 w-8 animate-spin" />
 
           <p className="mt-4 text-sm text-white/60">
-            Connecting NOVA
+            Connecting ARC
             Scanner…
           </p>
         </div>
@@ -754,7 +754,7 @@ export function RemoteScannerClient({
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-white/55">
-            Return to NOVA on the
+            Return to ARC on the
             laptop and create a new
             remote scanner session.
           </p>
@@ -803,7 +803,7 @@ export function RemoteScannerClient({
               </p>
 
               <p className="mt-0.5 text-[11px] text-white/50">
-                NOVA Remote Scanner
+                ARC Remote Scanner
               </p>
             </div>
 

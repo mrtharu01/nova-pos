@@ -1,10 +1,10 @@
-# NOVA POS
+# ARC
 
 A mobile-first Point of Sale system built with Next.js, TypeScript, Tailwind CSS, Zustand and Supabase.
 
 ## Current stage — Phase 3B
 
-NOVA now has a live Supabase-backed owner workspace plus real product, variant and inventory management.
+ARC now has a live Supabase-backed owner workspace plus real product, variant and inventory management.
 
 Implemented foundation:
 
@@ -30,12 +30,13 @@ Implemented foundation:
 npm install
 ```
 
-Copy `.env.example` to `.env.local` and set your NOVA Supabase project URL + publishable key.
+Copy `.env.example` to `.env.local` and set your ARC Supabase project URL + publishable key.
 
 After Phase 3A is complete, live mode should be:
 
 ```text
-NEXT_PUBLIC_NOVA_DEMO_MODE="false"
+NEXT_PUBLIC_ARC_DEMO_MODE="false"
+NEXT_PUBLIC_ARC_PUBLIC_URL=""
 ```
 
 Then:

@@ -604,13 +604,13 @@ export default function ReportsPage() {
 
     const rows: string[][] = [
       [
-        "NOVA POS REPORT",
+        "ARC REPORT",
       ],
 
       [
         "Business",
         business?.name ??
-          "NOVA POS",
+          "ARC",
       ],
 
       [
@@ -827,7 +827,7 @@ export default function ReportsPage() {
 
 
     anchor.download =
-      `nova-report-${report.startDate}-${report.endDate}.csv`;
+      `arc-report-${report.startDate}-${report.endDate}.csv`;
 
 
     document.body.appendChild(
@@ -885,7 +885,7 @@ export default function ReportsPage() {
 
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Sales, refunds, cost of goods and operating-expense reporting from NOVA.
+              Sales, refunds, cost of goods and operating-expense reporting from ARC.
             </p>
 
           </div>
@@ -1673,7 +1673,7 @@ export default function ReportsPage() {
         }
         businessName={
           business?.name ??
-          "NOVA POS"
+          "ARC"
         }
         currencyCode={
           currencyCode

@@ -291,7 +291,7 @@ export default function StaffSetupPasswordPage() {
         setError(
           cause instanceof Error
             ? cause.message
-            : "NOVA could not prepare this staff invitation.",
+            : "ARC could not prepare this staff invitation.",
         );
       } finally {
         setLoading(
@@ -366,7 +366,7 @@ export default function StaffSetupPasswordPage() {
 
 
       /*
-       * First create the staff member's permanent NOVA
+       * First create the staff member's permanent ARC
        * password.
        */
 
@@ -455,7 +455,7 @@ export default function StaffSetupPasswordPage() {
 
 
           <p className="mt-4 text-sm text-slate-400">
-            Preparing your NOVA account…
+            Preparing your ARC account…
           </p>
 
         </div>
@@ -480,7 +480,7 @@ export default function StaffSetupPasswordPage() {
           <div>
 
             <p className="text-xl font-black">
-              NOVA POS
+              ARC
             </p>
 
 
@@ -523,7 +523,7 @@ export default function StaffSetupPasswordPage() {
 
 
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Your invitation has been verified. Create your password to finish joining this NOVA workspace.
+                Your invitation has been verified. Create your password to finish joining this ARC workspace.
               </p>
 
             </div>

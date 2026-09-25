@@ -267,7 +267,7 @@ export async function GET(
   /* ==========================================================
      NO BUSINESS + NO STAFF INVITATION
 
-     This is a genuine new NOVA account.
+     This is a genuine new ARC account.
 
      Continue to owner/business onboarding.
   ========================================================== */

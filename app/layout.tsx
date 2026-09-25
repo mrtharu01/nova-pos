@@ -13,17 +13,17 @@ import {
 export const metadata: Metadata = {
   title: {
     default:
-      "NOVA POS",
+      "ARC",
 
     template:
-      "%s | NOVA POS",
+      "%s | ARC",
   },
 
   description:
-    "A fast, mobile-first point of sale and inventory system for small businesses.",
+    "ARC is a fast, mobile-first point of sale, inventory and business operations platform.",
 
   applicationName:
-    "NOVA POS",
+    "ARC",
 
   manifest:
     "/site.webmanifest",
@@ -77,7 +77,7 @@ export default function RootLayout({
 
         <link
           rel="icon"
-          href="/favicon-black.svg?v=3"
+          href="/favicon-black.svg?v=4"
           type="image/svg+xml"
           media="(prefers-color-scheme: light)"
         />
@@ -92,7 +92,7 @@ export default function RootLayout({
 
         <link
           rel="icon"
-          href="/favicon-white.svg?v=3"
+          href="/favicon-white.svg?v=4"
           type="image/svg+xml"
           media="(prefers-color-scheme: dark)"
         />

@@ -389,14 +389,14 @@ export default function LoginPage() {
         <div className="flex items-center gap-4">
 
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
-            N
+            ARC
           </div>
 
 
           <div>
 
             <p className="text-xl font-black">
-              NOVA POS
+              ARC
             </p>
 
 
@@ -417,7 +417,7 @@ export default function LoginPage() {
 
 
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Owners, managers and cashiers all use the same secure NOVA sign-in.
+            Owners, managers and cashiers all use the same secure ARC sign-in.
           </p>
 
         </div>

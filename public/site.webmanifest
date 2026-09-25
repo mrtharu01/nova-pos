@@ -1,7 +1,7 @@
 {
-  "name": "NOVA POS",
-  "short_name": "NOVA",
-  "description": "NOVA point of sale, inventory and business operations platform.",
+  "name": "ARC",
+  "short_name": "ARC",
+  "description": "ARC point of sale, inventory and business operations platform.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

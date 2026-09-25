@@ -96,7 +96,7 @@ const AUTOMATIC_LABELS: {
   {
     key: "ownerConfirmed",
     label: "Owner account confirmed",
-    description: "The business owner has a confirmed NOVA account.",
+    description: "The business owner has a confirmed ARC account.",
   },
   {
     key: "catalogConfigured",
@@ -614,7 +614,7 @@ export function PlatformBusinessDetailClient({
             </CardTitle>
 
             <p className="text-sm leading-6 text-muted-foreground">
-              These are calculated from NOVA's actual database state and recovery records.
+              These are calculated from ARC's actual database state and recovery records.
             </p>
           </CardHeader>
 

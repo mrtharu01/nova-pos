@@ -76,7 +76,7 @@ type RealtimeSubscribeError =
 function getPublicBaseUrl() {
   const configured =
     process.env
-      .NEXT_PUBLIC_NOVA_PUBLIC_URL
+      .NEXT_PUBLIC_ARC_PUBLIC_URL
       ?.trim()
       .replace(/\/+$/, "");
 
@@ -415,7 +415,7 @@ export function RemoteScannerControl({
               accepted: false,
 
               message:
-                "NOVA could not process this scan.",
+                "ARC could not process this scan.",
             };
           }
 
@@ -643,7 +643,7 @@ export function RemoteScannerControl({
         !nextSession
       ) {
         throw new Error(
-          "NOVA could not create the scanner session.",
+          "ARC could not create the scanner session.",
         );
       }
 
@@ -971,7 +971,7 @@ export function RemoteScannerControl({
 
                 <p className="mt-1 text-xs text-slate-500">
                   The phone opens only
-                  the NOVA scanner
+                  the ARC scanner
                   companion.
                 </p>
               </div>
@@ -1020,12 +1020,12 @@ export function RemoteScannerControl({
                 laptop&apos;s
                 localhost.
 
-                Deploy NOVA to HTTPS
+                Deploy ARC to HTTPS
                 or set{" "}
                 <code className="font-mono font-semibold">
-                  NEXT_PUBLIC_NOVA_PUBLIC_URL
+                  NEXT_PUBLIC_ARC_PUBLIC_URL
                 </code>{" "}
-                to your HTTPS NOVA
+                to your HTTPS ARC
                 address.
               </div>
             )}

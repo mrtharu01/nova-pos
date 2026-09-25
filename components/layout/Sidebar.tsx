@@ -474,7 +474,7 @@ export function Sidebar({
   const accountName =
     profile?.displayName ??
     business?.name ??
-    "NOVA Account";
+    "ARC Account";
 
 
   const avatarInitials =
@@ -495,9 +495,9 @@ export function Sidebar({
 
         <div className="flex items-center gap-3 p-6">
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary font-bold text-primary-foreground shadow-lg shadow-primary/30">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary text-[10px] font-black tracking-[0.08em] text-primary-foreground shadow-lg shadow-primary/20">
 
-            N
+            ARC
 
           </div>
 
@@ -505,7 +505,7 @@ export function Sidebar({
           <div className="min-w-0">
 
             <span className="block truncate text-xl font-bold tracking-tight text-foreground">
-              Nova POS
+              ARC
             </span>
 
 
@@ -738,7 +738,7 @@ export function Sidebar({
           }
           businessName={
             business?.name ??
-            "NOVA POS"
+            "ARC"
           }
           roleLabel={
             currentRoleLabel

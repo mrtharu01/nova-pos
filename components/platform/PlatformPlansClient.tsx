@@ -795,7 +795,7 @@ export function PlatformPlansClient({
 
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Configure NOVA's three customer-facing packages. Complimentary or lifetime-free access is handled separately per business and never appears here as a plan.
+            Configure ARC's three customer-facing packages. Complimentary or lifetime-free access is handled separately per business and never appears here as a plan.
           </p>
 
         </div>

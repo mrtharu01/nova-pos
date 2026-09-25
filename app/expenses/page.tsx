@@ -563,7 +563,7 @@ export default function ExpensesPage() {
   ) {
     const confirmed =
       window.confirm(
-        `Delete "${expense.title}"?\n\nThis removes the expense from NOVA's operating-expense reports.`,
+        `Delete "${expense.title}"?\n\nThis removes the expense from ARC's operating-expense reports.`,
       );
 
 
@@ -710,7 +710,7 @@ export default function ExpensesPage() {
         {demo && (
 
           <div className="rounded-[18px] border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-300">
-            Expenses require a connected NOVA business database.
+            Expenses require a connected ARC business database.
           </div>
 
         )}

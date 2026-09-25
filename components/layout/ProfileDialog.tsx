@@ -82,7 +82,7 @@ function initials(
     pieces.length ===
     0
   ) {
-    return "NV";
+    return "AR";
   }
 
 
@@ -507,7 +507,7 @@ export function ProfileDialog({
           : onClose
       }
       title="Profile"
-      description="Manage your NOVA account profile."
+      description="Manage your ARC account profile."
       className="max-h-[calc(100dvh-2rem)] max-w-lg overflow-hidden"
     >
 
@@ -647,7 +647,7 @@ export function ProfileDialog({
 
 
               <p className="mt-2 text-[11px] text-muted-foreground">
-                JPG, PNG or WebP. NOVA automatically converts the image to WebP.
+                JPG, PNG or WebP. ARC automatically converts the image to WebP.
               </p>
 
             </div>
@@ -845,7 +845,7 @@ export function ProfileDialog({
           <p className="mt-1 text-sm text-destructive">
             {
               error ??
-              "NOVA could not load your account."
+              "ARC could not load your account."
             }
           </p>
 

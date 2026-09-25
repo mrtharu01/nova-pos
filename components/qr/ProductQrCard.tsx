@@ -122,7 +122,7 @@ export function ProductQrCard({
     link.href = imageData;
 
     link.download = `${
-      sku || "nova-product"
+      sku || "arc-product"
     }-qr.png`;
 
     document.body.appendChild(
@@ -189,7 +189,7 @@ export function ProductQrCard({
           <meta charset="utf-8" />
 
           <title>
-            ${safeSku} · NOVA QR
+            ${safeSku} · ARC QR
           </title>
 
           <style>

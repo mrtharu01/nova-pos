@@ -199,7 +199,7 @@ export function PlatformBusinessesClient({
 
 
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          View every NOVA tenant, then open a business to review production readiness and handoff status.
+          View every ARC tenant, then open a business to review production readiness and handoff status.
         </p>
 
       </div>

@@ -169,7 +169,7 @@ export function PlatformDashboardClient() {
           setError(
             cause instanceof Error
               ? cause.message
-              : "NOVA Platform dashboard could not load.",
+              : "ARC Platform dashboard could not load.",
           );
         }
       },
@@ -231,7 +231,7 @@ export function PlatformDashboardClient() {
         <div>
 
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            NOVA Platform
+            ARC Platform
           </p>
 
 

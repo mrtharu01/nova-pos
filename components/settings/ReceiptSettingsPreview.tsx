@@ -295,7 +295,7 @@ export function ReceiptSettingsPreview({
           </p>
 
           <p className="mt-2 text-[8px]">
-            Powered by NOVA POS
+            Powered by ARC
           </p>
         </footer>
       </article>

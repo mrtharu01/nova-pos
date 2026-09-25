@@ -1199,7 +1199,7 @@ export function PlatformSubscriptionsClient({
 
 
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    The tenant still belongs to the selected commercial plan. NOVA simply treats billing as permanently complimentary for this business.
+                    The tenant still belongs to the selected commercial plan. ARC simply treats billing as permanently complimentary for this business.
                   </p>
 
                 </div>

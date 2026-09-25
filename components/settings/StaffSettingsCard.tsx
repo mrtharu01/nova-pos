@@ -421,7 +421,7 @@ export function StaffSettingsCard() {
         "existing_user_added"
       ) {
         setSuccess(
-          "This person already had a verified NOVA account, so access was added immediately.",
+          "This person already had a verified ARC account, so access was added immediately.",
         );
       } else {
         setSuccess(
@@ -515,7 +515,7 @@ export function StaffSettingsCard() {
         "existing_user_added"
       ) {
         setSuccess(
-          `${invitation.email} now has active NOVA access.`,
+          `${invitation.email} now has active ARC access.`,
         );
       } else {
         setSuccess(
@@ -787,7 +787,7 @@ export function StaffSettingsCard() {
 
           <p className="text-sm leading-6 text-muted-foreground">
             Invite a cashier or manager by email.
-            New staff will receive a secure NOVA account setup link.
+            New staff will receive a secure ARC account setup link.
           </p>
         </CardHeader>
 
@@ -1140,7 +1140,7 @@ export function StaffSettingsCard() {
               </CardTitle>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Control active NOVA access and staff roles.
+                Control active ARC access and staff roles.
               </p>
             </div>
 

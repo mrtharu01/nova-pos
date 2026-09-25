@@ -2047,7 +2047,7 @@ export function SaleDetailsClient({
         }
         businessName={
           business?.name ??
-          "NOVA POS"
+          "ARC"
         }
         isReprint
       />

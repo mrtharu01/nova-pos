@@ -519,7 +519,7 @@ export function LoyaltySettingsCard() {
 
 
               <p className="mt-1 text-sm text-muted-foreground">
-                NOVA could not determine the current business.
+                ARC could not determine the current business.
               </p>
 
             </div>

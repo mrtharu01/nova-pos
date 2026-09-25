@@ -53,8 +53,12 @@ export async function GET(
 
 
   const expectedKey =
-    process.env
-      .NOVA_PLATFORM_PORTAL_KEY
+    (
+      process.env
+        .ARC_PLATFORM_PORTAL_KEY ??
+      process.env
+        .NOVA_PLATFORM_PORTAL_KEY
+    )
       ?.trim();
 
 
@@ -185,12 +189,12 @@ export async function GET(
           businessId,
 
         p_note:
-          "Tenant export downloaded from NOVA Control.",
+          "Tenant export downloaded from ARC Control.",
 
         p_metadata:
           {
             format:
-              "NOVA_TENANT_EXPORT_V1",
+              "ARC_TENANT_EXPORT_V1",
           },
 
         p_occurred_at:
@@ -218,6 +222,18 @@ export async function GET(
       },
     );
   }
+
+
+  const brandedSnapshot =
+    typeof snapshot === "object" &&
+    snapshot !== null &&
+    !Array.isArray(snapshot)
+      ? {
+          ...snapshot,
+          format:
+            "ARC_TENANT_EXPORT_V1",
+        }
+      : snapshot;
 
 
   const businessName =
@@ -275,7 +291,7 @@ export async function GET(
 
   return new NextResponse(
     JSON.stringify(
-      snapshot,
+      brandedSnapshot,
       null,
       2,
     ),
@@ -288,7 +304,7 @@ export async function GET(
           "application/json; charset=utf-8",
 
         "Content-Disposition":
-          `attachment; filename="nova-${safeFilename(
+          `attachment; filename="arc-${safeFilename(
             businessName,
           )}-export-${timestamp}.json"`,
 

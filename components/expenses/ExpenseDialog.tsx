@@ -429,7 +429,7 @@ export function ExpenseDialog({
 
 
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Stock sold through NOVA already contributes to COGS. Do not enter normal product cost here again.
+                  Stock sold through ARC already contributes to COGS. Do not enter normal product cost here again.
                 </p>
 
               </div>

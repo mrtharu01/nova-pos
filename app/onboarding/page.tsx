@@ -160,14 +160,14 @@ export default async function OnboardingPage({
           <div className="mb-7 flex items-center gap-3">
 
             <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-primary text-lg font-black text-primary-foreground">
-              N
+              ARC
             </div>
 
 
             <div>
 
               <p className="text-xl font-black tracking-tight">
-                NOVA POS
+                ARC
               </p>
 
 
@@ -186,7 +186,7 @@ export default async function OnboardingPage({
 
 
           <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
-            Create your NOVA owner workspace and default{" "}
+            Create your ARC owner workspace and default{" "}
             <strong>
               Main
             </strong>{" "}

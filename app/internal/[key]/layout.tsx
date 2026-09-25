@@ -13,7 +13,7 @@ export const dynamic =
 
 export const metadata: Metadata = {
   title:
-    "NOVA Internal",
+    "ARC Internal",
 
   robots: {
     index:
@@ -48,8 +48,12 @@ export default async function InternalLayout({
 
 
   const expectedKey =
-    process.env
-      .NOVA_PLATFORM_PORTAL_KEY
+    (
+      process.env
+        .ARC_PLATFORM_PORTAL_KEY ??
+      process.env
+        .NOVA_PLATFORM_PORTAL_KEY
+    )
       ?.trim();
 
 

@@ -275,7 +275,7 @@ export function SubscriptionSettingsCard() {
 
 
               <p className="mt-2 text-sm text-muted-foreground">
-                Your NOVA package and billing status.
+                Your ARC package and billing status.
               </p>
 
             </div>
@@ -320,7 +320,7 @@ export function SubscriptionSettingsCard() {
 
 
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                NOVA Platform must assign a package before commercial billing begins.
+                ARC Platform must assign a package before commercial billing begins.
               </p>
 
             </div>
@@ -416,7 +416,7 @@ export function SubscriptionSettingsCard() {
 
 
           <p className="text-sm leading-6 text-muted-foreground">
-            Starter, Pro and Business are managed from the NOVA package catalog. Self-service payments will be connected when the payment gateway goes live.
+            Starter, Pro and Business are managed from the ARC package catalog. Self-service payments will be connected when the payment gateway goes live.
           </p>
 
         </CardHeader>
@@ -517,7 +517,7 @@ export function SubscriptionSettingsCard() {
 
                       <p className="mt-3 min-h-12 text-sm leading-6 text-muted-foreground">
                         {plan.description ||
-                          "NOVA commercial package."}
+                          "ARC commercial package."}
                       </p>
 
 
@@ -580,7 +580,7 @@ export function SubscriptionSettingsCard() {
                       ) : (
 
                         <p className="mt-4 text-xs leading-5 text-muted-foreground">
-                          Features and limits will appear here as you configure them in NOVA Control.
+                          Features and limits will appear here as you configure them in ARC Control.
                         </p>
 
                       )}
@@ -655,7 +655,7 @@ export function SubscriptionSettingsCard() {
             ? `Change to ${selectedPlan.name}`
             : "Change Plan"
         }
-        description="NOVA's tenant-facing package UI is ready; online payment processing is the remaining commercial step."
+        description="ARC's tenant-facing package UI is ready; online payment processing is the remaining commercial step."
       >
 
         <div className="space-y-5">
@@ -675,7 +675,7 @@ export function SubscriptionSettingsCard() {
 
 
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Until the payment gateway is added, package changes are performed from NOVA Control by the platform administrator. This button will become the real checkout / upgrade flow when billing goes live.
+                  Until the payment gateway is added, package changes are performed from ARC Control by the platform administrator. This button will become the real checkout / upgrade flow when billing goes live.
                 </p>
 
               </div>

@@ -149,7 +149,7 @@ export default function InventoryPage() {
     <div>
       <p
         className="max-w-[140px] truncate font-mono text-xs"
-        title={`NOVA:V1:${item.qrToken}`}
+        title={`ARC:V1:${item.qrToken}`}
       >
         {item.qrToken.slice(0, 8)}…
       </p>

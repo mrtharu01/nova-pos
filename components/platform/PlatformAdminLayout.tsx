@@ -229,7 +229,7 @@ export function PlatformAdminLayout({
             <div>
 
               <p className="text-sm font-bold">
-                NOVA CONTROL
+                ARC CONTROL
               </p>
 
 

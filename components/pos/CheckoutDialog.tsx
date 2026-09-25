@@ -1252,7 +1252,7 @@ export function CheckoutDialog({
           }
         }}
         title="Payment"
-        description="NOVA verifies live price, stock, customer discounts and loyalty inside PostgreSQL before committing the sale."
+        description="ARC verifies live price, stock, customer discounts and loyalty inside PostgreSQL before committing the sale."
         className="w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] max-w-2xl overflow-hidden sm:w-full"
       >
 
@@ -2333,7 +2333,7 @@ export function CheckoutDialog({
         }
         businessName={
           business?.name ??
-          "NOVA POS"
+          "ARC"
         }
       />
 
