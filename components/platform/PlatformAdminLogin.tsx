@@ -12,8 +12,8 @@ import {
 } from "next/navigation";
 
 import {
-  createClient,
-} from "@/lib/supabase/client";
+  createPlatformClient,
+} from "@/lib/supabase/platform-client";
 
 import type {
   PlatformAdminAccess,
@@ -109,7 +109,7 @@ export function PlatformAdminLogin({
 
 
     const supabase =
-      createClient();
+      createPlatformClient();
 
 
     try {
