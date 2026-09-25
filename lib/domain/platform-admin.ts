@@ -210,3 +210,66 @@ export type PlatformBusinessSubscription = {
     | string
     | null;
 };
+
+
+export type PlatformBackupEventKind =
+  | "database_dump"
+  | "storage_snapshot"
+  | "tenant_export"
+  | "restore_test";
+
+
+export type PlatformBackupEventStatus =
+  | "success"
+  | "failed";
+
+
+export type PlatformBackupOverview = {
+  latestDatabaseDumpAt:
+    | string
+    | null;
+
+  latestStorageSnapshotAt:
+    | string
+    | null;
+
+  latestRestoreTestAt:
+    | string
+    | null;
+
+  tenantExportCount: number;
+};
+
+
+export type PlatformBackupEvent = {
+  id: string;
+
+  kind: PlatformBackupEventKind;
+
+  status: PlatformBackupEventStatus;
+
+  businessId:
+    | string
+    | null;
+
+  businessName:
+    | string
+    | null;
+
+  actorUserId:
+    | string
+    | null;
+
+  actorEmail:
+    | string
+    | null;
+
+  note: string;
+
+  metadata:
+    Record<string, unknown>;
+
+  occurredAt: string;
+
+  createdAt: string;
+};
