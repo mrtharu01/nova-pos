@@ -128,3 +128,85 @@ export type PlatformSubscriptionPlan = {
 
   updatedAt: string;
 };
+
+
+export type PlatformSubscriptionStatus =
+  | "incomplete"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "paused"
+  | "cancelled"
+  | "expired";
+
+
+export type PlatformBillingInterval =
+  | "monthly"
+  | "yearly";
+
+
+export type PlatformComplimentaryMode =
+  | "none"
+  | "until_date"
+  | "lifetime";
+
+
+export type PlatformBusinessSubscription = {
+  businessId: string;
+
+  businessName: string;
+
+  ownerEmail: string;
+
+  subscriptionId:
+    | string
+    | null;
+
+  planCode:
+    | PlatformSubscriptionPlanCode
+    | null;
+
+  planName:
+    | string
+    | null;
+
+  status:
+    | PlatformSubscriptionStatus
+    | null;
+
+  billingInterval:
+    | PlatformBillingInterval
+    | null;
+
+  complimentaryMode:
+    | PlatformComplimentaryMode
+    | null;
+
+  complimentaryUntil:
+    | string
+    | null;
+
+  complimentaryActive:
+    | boolean
+    | null;
+
+  cancelAtPeriodEnd:
+    | boolean
+    | null;
+
+  currentPeriodStart:
+    | string
+    | null;
+
+  currentPeriodEnd:
+    | string
+    | null;
+
+  provider:
+    | string
+    | null;
+
+  updatedAt:
+    | string
+    | null;
+};
