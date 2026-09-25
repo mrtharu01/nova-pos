@@ -445,6 +445,7 @@ export function Scanner({
 
      BrowserMultiFormatReader keeps NOVA QR scanning while also
      decoding manufacturer barcodes from the same camera feed.
+     Deployment retry marker: barcode quick-add rollout.
   ========================================================== */
 
   const startCamera =
