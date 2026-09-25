@@ -1,15 +1,28 @@
 import {
-  PlatformSectionPlaceholder,
-} from "@/components/platform/PlatformSectionPlaceholder";
+  PlatformBackupsClient,
+} from "@/components/platform/PlatformBackupsClient";
 
 
-export default function PlatformBackupsPage() {
+export default async function PlatformBackupsPage({
+  params,
+}: {
+  params:
+    Promise<{
+      key:
+        string;
+    }>;
+}) {
+  const {
+    key,
+  } =
+    await params;
+
+
   return (
-    <PlatformSectionPlaceholder
-      eyebrow="Recovery"
-      title="Backups"
-      description="Track NOVA backup, export and restore readiness before production handoff."
-      next="Phase 4D connects database backups, tenant exports, Storage backups and restore-test records here."
+    <PlatformBackupsClient
+      basePath={
+        `/internal/${key}`
+      }
     />
   );
 }
