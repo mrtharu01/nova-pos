@@ -863,7 +863,7 @@ export function RemoteScannerControl({
         }
         title="Remote Phone Scanner"
         description="Use your phone camera as a wireless scanner while the full POS stays on this laptop."
-        className="max-w-xl"
+        className="max-h-[calc(100dvh-2rem)] max-w-xl overflow-hidden"
       >
         {!session ? (
           <div className="py-8 text-center">
@@ -892,7 +892,7 @@ export function RemoteScannerControl({
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="max-h-[calc(100dvh-10rem)] space-y-4 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
 
             {/* ======================
                 STATUS
