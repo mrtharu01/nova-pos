@@ -830,7 +830,7 @@ begin
         then
 
           v_base_slug :=
-            btrim(
+            trim(
               both '-'
               from regexp_replace(
                 lower(
