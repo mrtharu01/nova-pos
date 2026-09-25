@@ -825,3 +825,91 @@ export function buildCatalogCsvTemplate() {
       "\r\n",
     );
 }
+
+
+
+export function buildCatalogCsvFromImportRows(
+  rows:
+    BulkProductImportRow[],
+) {
+  const values = [
+    [
+      ...BULK_IMPORT_COLUMNS,
+    ],
+
+    ...rows.map(
+      (
+        row,
+      ) => [
+        row.product_key ??
+          "",
+
+        row.product_name,
+
+        row.category ??
+          "",
+
+        row.description ??
+          "",
+
+        row.variant_name ??
+          "Standard",
+
+        row.sku ??
+          "",
+
+        row.barcode ??
+          "",
+
+        String(
+          row.price ??
+          0,
+        ),
+
+        String(
+          row.cost ??
+          0,
+        ),
+
+        String(
+          row.stock ??
+          0,
+        ),
+
+        String(
+          row.low_stock_threshold ??
+          5,
+        ),
+
+        row.status ??
+          "active",
+      ],
+    ),
+  ];
+
+
+  return values
+    .map(
+      (
+        row,
+      ) =>
+        row
+          .map(
+            (
+              value,
+            ) =>
+              `"${String(
+                value,
+              ).replaceAll(
+                '"',
+                '""',
+              )}"`,
+          )
+          .join(
+            ",",
+          ),
+    )
+    .join(
+      "\r\n",
+    );
+}
