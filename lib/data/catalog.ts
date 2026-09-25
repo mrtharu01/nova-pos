@@ -21,6 +21,7 @@ type CatalogVariantRow = {
   variant_name: string;
   sku: string;
   qr_token: string;
+  barcode: string | null;
   price: number | string;
   regular_price: number | string;
   cost: number | string;
@@ -136,6 +137,7 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       stock: row.stock ?? 0,
       active: row.is_active,
       qrToken: row.qr_token,
+      barcode: row.barcode ?? undefined,
       lowStockThreshold: row.low_stock_threshold ?? 5,
     };
 
