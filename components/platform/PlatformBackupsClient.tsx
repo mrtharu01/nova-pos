@@ -4,6 +4,7 @@ import * as React from "react";
 import { ArchiveRestore, Database, Download, HardDrive, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PlatformBackupRecordDialog } from "@/components/platform/PlatformBackupRecordDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/lib/data/platform-admin";
 
 import type {
+  PlatformAdminRole,
   PlatformBackupEvent,
   PlatformBackupOverview,
   PlatformBusiness,
