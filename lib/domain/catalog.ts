@@ -33,6 +33,8 @@ export type ProductVariant = {
 
   qrToken?: string;
 
+  barcode?: string;
+
   lowStockThreshold?: number;
 
 };
@@ -259,15 +261,28 @@ export function findVariantByScanValue(
            */
 
           if (
-
-            candidate.sku.toLowerCase()
-            ===
-            normalized.toLowerCase()
-
+            candidate.sku.toLowerCase() ===
+              normalized.toLowerCase()
           ) {
-
             return true;
+          }
 
+
+          /*
+           * Manufacturer barcode.
+           *
+           * Kept separate from the NOVA QR token so packaged
+           * products can use their existing EAN / UPC / Code128
+           * value while NOVA QR remains available for everything
+           * else.
+           */
+
+          if (
+            candidate.barcode &&
+            candidate.barcode ===
+              normalized
+          ) {
+            return true;
           }
 
 
@@ -356,6 +371,9 @@ export function flattenInventory(
 
           qrToken:
             variant.qrToken,
+
+          barcode:
+            variant.barcode,
 
           stock:
             variant.stock,
