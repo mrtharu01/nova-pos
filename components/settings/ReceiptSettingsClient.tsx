@@ -110,6 +110,10 @@ export function ReceiptSettingsClient({
     useCurrentBusiness();
 
 
+  const businessId =
+    business?.id;
+
+
   const [
     settings,
     setSettings,
@@ -269,7 +273,7 @@ export function ReceiptSettingsClient({
 
   React.useEffect(() => {
     if (
-      !business?.id
+      !businessId
     ) {
       return;
     }
@@ -292,7 +296,7 @@ export function ReceiptSettingsClient({
       try {
         const result =
           await fetchReceiptSettings(
-            business!.id,
+            businessId,
           );
 
 
@@ -344,7 +348,7 @@ export function ReceiptSettingsClient({
         true;
     };
   }, [
-    business?.id,
+    businessId,
   ]);
 
 
@@ -548,7 +552,7 @@ export function ReceiptSettingsClient({
   async function save() {
     if (
       saveLockRef.current ||
-      !business?.id ||
+      !businessId ||
       saving
     ) {
       return;
