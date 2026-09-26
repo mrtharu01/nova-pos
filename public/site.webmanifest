@@ -14,7 +14,7 @@
   ],
   "icons": [
     {
-      "src": "/arc-icon.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
