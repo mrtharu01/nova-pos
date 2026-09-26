@@ -13,9 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, History, Loader2, PackageOpen } from "lucide-react";
+import { Search, History, Loader2, PackageOpen, Gift } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { adjustInventory, breakInventoryUnit, fetchDefaultInventoryLocation, receiveInventoryBatch, type InventoryMovementType } from "@/lib/data/catalog-admin";
+import { adjustInventory, breakInventoryUnit, fetchDefaultInventoryLocation, receiveInventoryBatch, receiveInventorySupplierBonus, type InventoryMovementType } from "@/lib/data/catalog-admin";
 
 type AdjustmentAction = "stock_in" | "stock_out" | "damage" | "loss" | "return" | "increase" | "decrease";
 
@@ -51,6 +51,8 @@ export default function InventoryPage() {
   const [action, setAction] = React.useState<AdjustmentAction>("stock_in");
   const [quantity, setQuantity] = React.useState(1);
   const [breakQuantity, setBreakQuantity] = React.useState(1);
+  const [supplierBonusEnabled, setSupplierBonusEnabled] = React.useState(false);
+  const [bonusQuantity, setBonusQuantity] = React.useState(1);
   const [incomingUnitCost, setIncomingUnitCost] = React.useState("");
   const [newSellingPrice, setNewSellingPrice] = React.useState("");
   const [reason, setReason] = React.useState("");
@@ -68,6 +70,8 @@ export default function InventoryPage() {
     setAction("stock_in");
     setQuantity(1);
     setBreakQuantity(1);
+    setSupplierBonusEnabled(false);
+    setBonusQuantity(1);
     setIncomingUnitCost("");
     setNewSellingPrice("");
     setReason("");
@@ -197,7 +201,25 @@ export default function InventoryPage() {
       return;
     }
 
-    const resolved = resolveAdjustment(action, quantity);
+    if (
+      action === "stock_in" &&
+      supplierBonusEnabled &&
+      (
+        !Number.isFinite(
+          bonusQuantity,
+        ) ||
+        Math.trunc(
+          bonusQuantity,
+        ) <= 0
+      )
+    ) {
+      setAdjustError(
+        "Bonus quantity must be greater than zero.",
+      );
+      return;
+    }
+
+        const resolved = resolveAdjustment(action, quantity);
     if (selected.stock + resolved.delta < 0) {
       setAdjustError(`This would reduce stock below zero. Current stock is ${selected.stock}.`);
       return;
@@ -208,15 +230,40 @@ export default function InventoryPage() {
     try {
       const locationId = await fetchDefaultInventoryLocation(business?.id);
       if (action === "stock_in") {
-        await receiveInventoryBatch({
-          variantId: selected.variantId,
-          locationId,
-          quantity: Math.trunc(quantity),
-          unitCost: incomingCost,
-          sellingPrice,
-          reason: reason || "New stock delivery",
-          note,
-        });
+        if (
+          supplierBonusEnabled
+        ) {
+          await receiveInventorySupplierBonus({
+            variantId:
+              selected.variantId,
+            locationId,
+            paidQuantity:
+              Math.trunc(
+                quantity,
+              ),
+            bonusQuantity:
+              Math.trunc(
+                bonusQuantity,
+              ),
+            supplierUnitCost:
+              incomingCost,
+            sellingPrice,
+            reason:
+              reason ||
+              "Supplier bonus stock",
+            note,
+          });
+        } else {
+          await receiveInventoryBatch({
+            variantId: selected.variantId,
+            locationId,
+            quantity: Math.trunc(quantity),
+            unitCost: incomingCost,
+            sellingPrice,
+            reason: reason || "New stock delivery",
+            note,
+          });
+        }
       } else {
         await adjustInventory({
           variantId: selected.variantId,
@@ -466,7 +513,26 @@ export default function InventoryPage() {
             )}
 
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Action</label><Select value={action} onChange={(event) => setAction(event.target.value as AdjustmentAction)}><option value="stock_in">Stock In</option><option value="stock_out">Stock Out</option><option value="return">Customer Return</option><option value="damage">Damaged</option><option value="loss">Lost</option><option value="increase">Manual Increase</option><option value="decrease">Manual Decrease</option></Select></div>
-            <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Quantity</label><Input type="number" min="1" step="1" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} /></div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+                {action === "stock_in" && supplierBonusEnabled
+                  ? "Purchased quantity"
+                  : "Quantity"}
+              </label>
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                value={quantity}
+                onChange={(event) =>
+                  setQuantity(
+                    Number(
+                      event.target.value,
+                    ),
+                  )
+                }
+              />
+            </div>
 
             {action === "stock_in" && (
               <div className="space-y-3 rounded-[20px] border bg-muted/20 p-4">
@@ -481,8 +547,163 @@ export default function InventoryPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Incoming unit cost (optional)</label>
+                <label className="flex cursor-pointer items-start justify-between gap-4 rounded-[16px] border bg-background p-3">
+                  <div className="flex min-w-0 gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-muted">
+                      <Gift className="h-4 w-4" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Supplier bonus / free stock
+                      </p>
+
+                      <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                        Use this when the supplier gives extra units of this same SKU, such as buy 12 + get 1 free.
+                      </p>
+                    </div>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    checked={
+                      supplierBonusEnabled
+                    }
+                    onChange={(event) => {
+                      setSupplierBonusEnabled(
+                        event.target.checked,
+                      );
+
+                      setAdjustError(
+                        null,
+                      );
+                    }}
+                    className="mt-1 h-4 w-4 shrink-0"
+                  />
+                </label>
+
+                {supplierBonusEnabled && (
+                  <div className="space-y-3 rounded-[18px] border bg-background p-4">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+                        Free / bonus quantity
+                      </label>
+
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={
+                          bonusQuantity
+                        }
+                        onChange={(event) =>
+                          setBonusQuantity(
+                            Number(
+                              event.target.value,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+
+                    {(() => {
+                      const paid =
+                        Math.max(
+                          0,
+                          Math.trunc(
+                            Number.isFinite(
+                              quantity,
+                            )
+                              ? quantity
+                              : 0,
+                          ),
+                        );
+
+                      const free =
+                        Math.max(
+                          0,
+                          Math.trunc(
+                            Number.isFinite(
+                              bonusQuantity,
+                            )
+                              ? bonusQuantity
+                              : 0,
+                          ),
+                        );
+
+                      const supplierCost =
+                        incomingUnitCost.trim() === ""
+                          ? selected.defaultCost
+                          : Number(
+                              incomingUnitCost,
+                            );
+
+                      const totalReceived =
+                        paid +
+                        free;
+
+                      const invoiceCost =
+                        Number.isFinite(
+                          supplierCost,
+                        )
+                          ? paid *
+                            supplierCost
+                          : 0;
+
+                      const effectiveCost =
+                        totalReceived >
+                          0
+                          ? invoiceCost /
+                            totalReceived
+                          : 0;
+
+                      return (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="rounded-[14px] bg-muted/40 p-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Stock received
+                            </p>
+                            <p className="mt-1 text-sm font-semibold">
+                              {paid} paid + {free} free = {totalReceived}
+                            </p>
+                          </div>
+
+                          <div className="rounded-[14px] bg-muted/40 p-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Supplier invoice
+                            </p>
+                            <p className="mt-1 text-sm font-semibold">
+                              LKR {invoiceCost.toFixed(2)}
+                            </p>
+                          </div>
+
+                          <div className="rounded-[14px] border border-primary/20 bg-primary/[0.04] p-3 sm:col-span-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Effective FIFO cost
+                            </p>
+                            <p className="mt-1 text-base font-bold text-primary">
+                              LKR {effectiveCost.toFixed(2)} / unit
+                            </p>
+                            <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                              ARC spreads the real invoice cost across every unit physically received, so profit reporting stays realistic.
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <p className="text-[11px] leading-5 text-muted-foreground">
+                      Same-variant bonus only. If the supplier gives a different product or SKU for free, record that separately for now.
+                    </p>
+                  </div>
+                )}
+
+                                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+                    {supplierBonusEnabled
+                      ? "Supplier unit cost (paid units)"
+                      : "Incoming unit cost (optional)"}
+                  </label>
                   <Input
                     type="number"
                     min="0"
@@ -516,7 +737,7 @@ export default function InventoryPage() {
               </div>
             )}
 
-            <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Reason</label><Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="e.g. New stock delivery" /></div>
+            <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Reason</label><Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder={supplierBonusEnabled && action === "stock_in" ? "e.g. Buy 12 + 1 free" : "e.g. New stock delivery"} /></div>
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Note (optional)</label><Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Additional details…" /></div>
             <div className="flex justify-end gap-2 pt-2"><Button variant="outline" onClick={() => setSelected(null)} disabled={saving}>Cancel</Button><Button onClick={() => void submitAdjustment()} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Apply Adjustment</Button></div>
           </div>
