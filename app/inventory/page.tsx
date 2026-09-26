@@ -322,7 +322,7 @@ export default function InventoryPage() {
                     placeholder={selected.defaultSellingPrice.toFixed(2)}
                   />
                   <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                    This creates a new FIFO price batch. The same barcode keeps selling the older stock at its old price first, then switches automatically to this batch price.
+                    This creates a new FIFO price batch. Older stock keeps its old price, and this delivery keeps its new price. Barcode labels are optional; FIFO pricing works through the product record itself.
                   </p>
                 </div>
 
