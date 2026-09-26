@@ -130,6 +130,7 @@ export type InventoryItem = {
 export function priceVariantQuantity(
   variant: ProductVariant,
   quantity: number,
+  batchId?: string,
 ) {
   const requested =
     Math.max(
@@ -158,6 +159,67 @@ export function priceVariantQuantity(
     regularPrice: number;
     cost: number;
   }> = [];
+
+
+  if (batchId) {
+    const selectedBatch =
+      variant.priceBatches
+        ?.find(
+          (batch) =>
+            batch.id ===
+            batchId,
+        );
+
+    if (selectedBatch) {
+      const lineQuantity =
+        Math.min(
+          requested,
+          Math.max(
+            0,
+            Math.trunc(
+              selectedBatch.quantity,
+            ),
+          ),
+        );
+
+      return {
+        quantity:
+          lineQuantity,
+        subtotal:
+          Math.round(
+            lineQuantity *
+              selectedBatch.price *
+              100,
+          ) / 100,
+        regularSubtotal:
+          Math.round(
+            lineQuantity *
+              selectedBatch.regularPrice *
+              100,
+          ) / 100,
+        costTotal:
+          Math.round(
+            lineQuantity *
+              selectedBatch.cost *
+              100,
+          ) / 100,
+        lines: [
+          {
+            batchId:
+              selectedBatch.id,
+            quantity:
+              lineQuantity,
+            price:
+              selectedBatch.price,
+            regularPrice:
+              selectedBatch.regularPrice,
+            cost:
+              selectedBatch.cost,
+          },
+        ],
+      };
+    }
+  }
 
 
   for (
