@@ -13,9 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, History, Loader2 } from "lucide-react";
+import { Search, History, Loader2, PackageOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { adjustInventory, fetchDefaultInventoryLocation, receiveInventoryBatch, type InventoryMovementType } from "@/lib/data/catalog-admin";
+import { adjustInventory, breakInventoryUnit, fetchDefaultInventoryLocation, receiveInventoryBatch, type InventoryMovementType } from "@/lib/data/catalog-admin";
 
 type AdjustmentAction = "stock_in" | "stock_out" | "damage" | "loss" | "return" | "increase" | "decrease";
 
@@ -50,6 +50,7 @@ export default function InventoryPage() {
   const [selected, setSelected] = React.useState<InventoryItem | null>(null);
   const [action, setAction] = React.useState<AdjustmentAction>("stock_in");
   const [quantity, setQuantity] = React.useState(1);
+  const [breakQuantity, setBreakQuantity] = React.useState(1);
   const [incomingUnitCost, setIncomingUnitCost] = React.useState("");
   const [newSellingPrice, setNewSellingPrice] = React.useState("");
   const [reason, setReason] = React.useState("");
@@ -66,12 +67,94 @@ export default function InventoryPage() {
     setSelected(item);
     setAction("stock_in");
     setQuantity(1);
+    setBreakQuantity(1);
     setIncomingUnitCost("");
     setNewSellingPrice("");
     setReason("");
     setNote("");
     setAdjustError(null);
   }
+
+  async function submitBreak() {
+    if (
+      !selected ||
+      !selected.unitParentVariantId ||
+      !selected.unitsPerParent ||
+      saving
+    ) {
+      return;
+    }
+
+    const parentQuantity =
+      Math.trunc(
+        breakQuantity,
+      );
+
+    if (
+      !Number.isFinite(
+        breakQuantity,
+      ) ||
+      parentQuantity <= 0
+    ) {
+      setAdjustError(
+        "Pack quantity must be greater than zero.",
+      );
+      return;
+    }
+
+    if (
+      parentQuantity >
+      (
+        selected.parentStock ??
+        0
+      )
+    ) {
+      setAdjustError(
+        `Not enough ${selected.unitParentVariantName ?? "parent"} stock. Available: ${selected.parentStock ?? 0}.`,
+      );
+      return;
+    }
+
+    setSaving(
+      true,
+    );
+    setAdjustError(
+      null,
+    );
+
+    try {
+      const locationId =
+        await fetchDefaultInventoryLocation(
+          business?.id,
+        );
+
+      await breakInventoryUnit({
+        childVariantId:
+          selected.variantId,
+        locationId,
+        parentQuantity,
+      });
+
+      setSelected(
+        null,
+      );
+
+      await refresh();
+    } catch (
+      cause
+    ) {
+      setAdjustError(
+        getInventoryErrorMessage(
+          cause,
+        ),
+      );
+    } finally {
+      setSaving(
+        false,
+      );
+    }
+  }
+
 
   async function submitAdjustment() {
     if (!selected || saving) return;
@@ -187,7 +270,7 @@ export default function InventoryPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-[8px] border bg-muted"><img src={item.image} alt={item.productName} className="h-full w-full object-cover" /></div>
-                        <div><p className="font-medium leading-none">{item.productName}</p><p className="mt-1 text-xs text-muted-foreground">{item.variantName}</p></div>
+                        <div><p className="font-medium leading-none">{item.productName}</p><p className="mt-1 text-xs text-muted-foreground">{item.variantName}</p>{item.unitParentVariantId && <p className="mt-1 text-[10px] text-muted-foreground">Loose unit · 1 {item.unitParentVariantName ?? "parent"} → {item.unitsPerParent ?? "—"} {item.variantName}</p>}</div>
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs">
@@ -232,6 +315,96 @@ export default function InventoryPage() {
           <div className="space-y-4">
             {adjustError && <div className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{adjustError}</div>}
             <div className="rounded-[20px] border bg-muted/20 p-3 text-sm"><span className="text-muted-foreground">Current stock</span><span className="float-right font-semibold">{selected.stock}</span></div>
+
+            {selected.unitParentVariantId &&
+              selected.unitsPerParent && (
+              <div className="rounded-[20px] border bg-muted/20 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-[12px] border bg-background p-2">
+                    <PackageOpen className="h-4 w-4" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">
+                      Break sealed stock into {selected.variantName}
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      1 {selected.unitParentVariantName ?? "parent unit"} → {selected.unitsPerParent} {selected.variantName}. ARC keeps sealed and loose stock separate and carries the exact FIFO cost into the loose units.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+                      {selected.unitParentVariantName ?? "Parent"} quantity to open
+                    </label>
+
+                    <Input
+                      type="number"
+                      min="1"
+                      max={
+                        selected.parentStock ??
+                        0
+                      }
+                      step="1"
+                      value={
+                        breakQuantity
+                      }
+                      onChange={
+                        (
+                          event,
+                        ) =>
+                          setBreakQuantity(
+                            Number(
+                              event.target.value,
+                            ),
+                          )
+                      }
+                    />
+
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {selected.parentStock ?? 0} sealed available · creates {
+                        Number.isFinite(
+                          breakQuantity,
+                        )
+                          ? Math.max(
+                              0,
+                              Math.trunc(
+                                breakQuantity,
+                              ),
+                            ) *
+                            selected.unitsPerParent
+                          : 0
+                      } loose
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="rounded-[14px]"
+                    disabled={
+                      saving ||
+                      (
+                        selected.parentStock ??
+                        0
+                      ) <=
+                        0
+                    }
+                    onClick={() =>
+                      void submitBreak()
+                    }
+                  >
+                    {saving
+                      ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      : <PackageOpen className="mr-2 h-4 w-4" />}
+                    Break stock
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {selected.priceBatches &&
               selected.priceBatches.length >
