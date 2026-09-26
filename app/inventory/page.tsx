@@ -50,6 +50,8 @@ export default function InventoryPage() {
   const [selected, setSelected] = React.useState<InventoryItem | null>(null);
   const [action, setAction] = React.useState<AdjustmentAction>("stock_in");
   const [quantity, setQuantity] = React.useState(1);
+  const [incomingUnitCost, setIncomingUnitCost] = React.useState("");
+  const [newSellingPrice, setNewSellingPrice] = React.useState("");
   const [reason, setReason] = React.useState("");
   const [note, setNote] = React.useState("");
   const [saving, setSaving] = React.useState(false);
@@ -64,6 +66,8 @@ export default function InventoryPage() {
     setSelected(item);
     setAction("stock_in");
     setQuantity(1);
+    setIncomingUnitCost("");
+    setNewSellingPrice("");
     setReason("");
     setNote("");
     setAdjustError(null);
@@ -73,6 +77,40 @@ export default function InventoryPage() {
     if (!selected || saving) return;
     if (!Number.isFinite(quantity) || quantity <= 0) {
       setAdjustError("Quantity must be greater than zero.");
+      return;
+    }
+
+    const incomingCost =
+      incomingUnitCost.trim() === ""
+        ? undefined
+        : Number(incomingUnitCost);
+
+    const sellingPrice =
+      newSellingPrice.trim() === ""
+        ? undefined
+        : Number(newSellingPrice);
+
+    if (
+      action === "stock_in" &&
+      incomingCost !== undefined &&
+      (
+        !Number.isFinite(incomingCost) ||
+        incomingCost < 0
+      )
+    ) {
+      setAdjustError("Incoming unit cost must be zero or greater.");
+      return;
+    }
+
+    if (
+      action === "stock_in" &&
+      sellingPrice !== undefined &&
+      (
+        !Number.isFinite(sellingPrice) ||
+        sellingPrice < 0
+      )
+    ) {
+      setAdjustError("New selling price must be zero or greater.");
       return;
     }
 
@@ -93,6 +131,14 @@ export default function InventoryPage() {
         movementType: resolved.type,
         reason: reason || action.replaceAll("_", " "),
         note,
+        incomingUnitCost:
+          action === "stock_in"
+            ? incomingCost
+            : undefined,
+        newSellingPrice:
+          action === "stock_in"
+            ? sellingPrice
+            : undefined,
       });
       setSelected(null);
       await refresh();
@@ -102,6 +148,32 @@ export default function InventoryPage() {
       setSaving(false);
     }
   }
+
+  const parsedIncomingCost =
+    incomingUnitCost.trim() === ""
+      ? null
+      : Number(incomingUnitCost);
+
+  const projectedAverageCost =
+    selected &&
+    action === "stock_in" &&
+    Number.isFinite(parsedIncomingCost) &&
+    parsedIncomingCost !== null &&
+    Number.isFinite(quantity) &&
+    quantity > 0
+      ? (
+          (
+            selected.stock *
+              selected.cost +
+            Math.trunc(quantity) *
+              parsedIncomingCost
+          ) /
+          (
+            selected.stock +
+            Math.trunc(quantity)
+          )
+        )
+      : null;
 
   return (
     <AppLayout title="Inventory">
@@ -184,6 +256,59 @@ export default function InventoryPage() {
             <div className="rounded-[20px] border bg-muted/20 p-3 text-sm"><span className="text-muted-foreground">Current stock</span><span className="float-right font-semibold">{selected.stock}</span></div>
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Action</label><Select value={action} onChange={(event) => setAction(event.target.value as AdjustmentAction)}><option value="stock_in">Stock In</option><option value="stock_out">Stock Out</option><option value="return">Customer Return</option><option value="damage">Damaged</option><option value="loss">Lost</option><option value="increase">Manual Increase</option><option value="decrease">Manual Decrease</option></Select></div>
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Quantity</label><Input type="number" min="1" step="1" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} /></div>
+
+            {action === "stock_in" && (
+              <div className="space-y-3 rounded-[20px] border bg-muted/20 p-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Current average cost</p>
+                    <p className="mt-1 text-base font-semibold">LKR {selected.cost.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Current selling price</p>
+                    <p className="mt-1 text-base font-semibold">LKR {selected.sellingPrice.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Incoming unit cost (optional)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={incomingUnitCost}
+                    onChange={(event) => setIncomingUnitCost(event.target.value)}
+                    placeholder={selected.cost.toFixed(2)}
+                  />
+                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                    ARC uses weighted-average costing for the remaining stock and this delivery.
+                  </p>
+                </div>
+
+                {projectedAverageCost !== null && (
+                  <div className="flex items-center justify-between rounded-[14px] border bg-background px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">Projected average cost</span>
+                    <span className="font-semibold">LKR {projectedAverageCost.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">New selling price (optional)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newSellingPrice}
+                    onChange={(event) => setNewSellingPrice(event.target.value)}
+                    placeholder={selected.sellingPrice.toFixed(2)}
+                  />
+                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                    Same barcode means one live selling price. If set, this price applies to both old and new units of this variant.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Reason</label><Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="e.g. New stock delivery" /></div>
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Note (optional)</label><Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Additional details…" /></div>
             <div className="flex justify-end gap-2 pt-2"><Button variant="outline" onClick={() => setSelected(null)} disabled={saving}>Cancel</Button><Button onClick={() => void submitAdjustment()} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Apply Adjustment</Button></div>
