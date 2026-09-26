@@ -521,9 +521,7 @@ export function ProfileDialog({
 
       ) : profile ? (
 
-        <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
-
-          <div className="space-y-5 pb-1">
+        <div className="space-y-5 pb-1">
 
             {/* ===============================================
                 AVATAR
@@ -825,8 +823,6 @@ export function ProfileDialog({
               </form>
 
             </div>
-
-          </div>
 
         </div>
 
