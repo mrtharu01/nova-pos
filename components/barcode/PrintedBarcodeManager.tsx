@@ -678,6 +678,63 @@ export function PrintedBarcodeManager({
   }
 
 
+  async function clearSingle() {
+    if (
+      !target ||
+      saving
+    ) {
+      return;
+    }
+
+    setSaving(
+      true,
+    );
+
+    setFeedback(
+      null,
+    );
+
+    try {
+      await setVariantBarcode({
+        variantId:
+          target.variantId,
+        barcode:
+          null,
+      });
+
+      setValue(
+        "",
+      );
+
+      await refresh();
+
+      setFeedback(
+        "Printed barcode cleared. ARC QR/SKU/generated barcode are unaffected.",
+      );
+
+      setFeedbackError(
+        false,
+      );
+    } catch (
+      cause
+    ) {
+      setFeedback(
+        getErrorMessage(
+          cause,
+        ),
+      );
+
+      setFeedbackError(
+        true,
+      );
+    } finally {
+      setSaving(
+        false,
+      );
+    }
+  }
+
+
   async function saveBulk() {
     if (
       staged.size ===
@@ -1088,13 +1145,9 @@ export function PrintedBarcodeManager({
                 disabled={
                   saving
                 }
-                onClick={() => {
-                  setValue(
-                    "",
-                  );
-
-                  void saveSingle();
-                }}
+                onClick={() =>
+                  void clearSingle()
+                }
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear printed barcode
