@@ -10,7 +10,9 @@ import {
 
 import {
   Archive,
+  BadgeDollarSign,
   BarChart3,
+  Barcode,
   ChevronRight,
   CreditCard,
   LayoutDashboard,
@@ -33,6 +35,10 @@ import {
 import {
   useCurrentBusiness,
 } from "@/hooks/use-current-business";
+
+import {
+  useSubscription,
+} from "@/hooks/use-subscription";
 
 import {
   hasAccessRequirement,
@@ -102,6 +108,9 @@ const NAV_ITEMS:
 
       icon:
         ShoppingCart,
+
+      requirement:
+        "checkout",
     },
 
     {
@@ -141,6 +150,9 @@ const NAV_ITEMS:
 
       icon:
         ReceiptText,
+
+      requirement:
+        "viewSales",
     },
 
     {
@@ -163,6 +175,20 @@ const NAV_ITEMS:
 
       icon:
         QrCode,
+
+      requirement:
+        "manager",
+    },
+
+    {
+      href:
+        "/barcodes",
+
+      label:
+        "Barcodes",
+
+      icon:
+        Barcode,
 
       requirement:
         "manager",
@@ -194,6 +220,20 @@ const NAV_ITEMS:
 
       requirement:
         "manager",
+    },
+
+    {
+      href:
+        "/billing",
+
+      label:
+        "Plan & Billing",
+
+      icon:
+        BadgeDollarSign,
+
+      requirement:
+        "owner",
     },
 
     {
@@ -337,6 +377,12 @@ export function Sidebar({
     useCurrentBusiness();
 
 
+  const {
+    subscription,
+  } =
+    useSubscription();
+
+
   const [
     profileOpen,
     setProfileOpen,
@@ -452,7 +498,7 @@ export function Sidebar({
   const accountName =
     profile?.displayName ??
     business?.name ??
-    "NOVA Account";
+    "ARC Account";
 
 
   const avatarInitials =
@@ -473,24 +519,22 @@ export function Sidebar({
 
         <div className="flex items-center gap-3 p-6">
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary font-bold text-primary-foreground shadow-lg shadow-primary/30">
-
-            N
-
+          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary text-base font-black text-primary-foreground shadow-lg shadow-primary/20">
+            A
           </div>
 
 
           <div className="min-w-0">
 
             <span className="block truncate text-xl font-bold tracking-tight text-foreground">
-              Nova POS
+              ARC
             </span>
 
 
-            <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {
-                currentRoleLabel
-              }
+            <span className="mt-0.5 block truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {demo
+                ? currentRoleLabel
+                : `${currentRoleLabel} · ${subscription?.plan?.name ?? "Plan pending"}`}
             </span>
 
           </div>
@@ -716,7 +760,7 @@ export function Sidebar({
           }
           businessName={
             business?.name ??
-            "NOVA POS"
+            "ARC"
           }
           roleLabel={
             currentRoleLabel

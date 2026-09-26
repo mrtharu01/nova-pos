@@ -12,7 +12,6 @@ import {
   Landmark,
   PackageSearch,
   ReceiptText,
-  RefreshCw,
   ShoppingBag,
   TrendingUp,
   TriangleAlert,
@@ -22,10 +21,6 @@ import {
 import {
   AppLayout,
 } from "@/components/layout/AppLayout";
-
-import {
-  Button,
-} from "@/components/ui/button";
 
 import {
   Card,
@@ -42,6 +37,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import {
+  useCatalog,
+} from "@/hooks/use-catalog";
 
 import {
   useCurrentBusiness,
@@ -336,11 +335,119 @@ export default function DashboardPage() {
     report,
     loading,
     error,
-    refresh,
+    liveStatus,
   } =
     useDashboardReport(
       business?.id,
       preset,
+    );
+
+
+  const {
+    products:
+      catalogProducts,
+    loading:
+      catalogLoading,
+    refresh:
+      refreshCatalog,
+  } =
+    useCatalog();
+
+
+  React.useEffect(
+    () => {
+      if (!report) {
+        return;
+      }
+
+      void refreshCatalog();
+    },
+    [
+      report,
+      refreshCatalog,
+    ],
+  );
+
+
+  const inventorySnapshot =
+    React.useMemo(
+      () => {
+        let unitsOnHand = 0;
+        let costValue = 0;
+        let retailValue = 0;
+
+        catalogProducts.forEach(
+          (product) => {
+            product.variants.forEach(
+              (variant) => {
+                const stock =
+                  Math.max(
+                    0,
+                    variant.stock,
+                  );
+
+                if (stock <= 0) {
+                  return;
+                }
+
+                unitsOnHand +=
+                  stock;
+
+                if (
+                  variant.priceBatches &&
+                  variant.priceBatches.length >
+                    0
+                ) {
+                  variant.priceBatches.forEach(
+                    (batch) => {
+                      const batchQuantity =
+                        Math.max(
+                          0,
+                          Math.trunc(
+                            batch.quantity,
+                          ),
+                        );
+
+                      costValue +=
+                        batchQuantity *
+                        batch.cost;
+
+                      retailValue +=
+                        batchQuantity *
+                        batch.price;
+                    },
+                  );
+                } else {
+                  costValue +=
+                    stock *
+                    variant.cost;
+
+                  retailValue +=
+                    stock *
+                    variant.price;
+                }
+              },
+            );
+          },
+        );
+
+        return {
+          unitsOnHand,
+          costValue:
+            Math.round(
+              costValue *
+              100,
+            ) / 100,
+          retailValue:
+            Math.round(
+              retailValue *
+              100,
+            ) / 100,
+        };
+      },
+      [
+        catalogProducts,
+      ],
     );
 
 
@@ -502,29 +609,20 @@ export default function DashboardPage() {
           </div>
 
 
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 rounded-[14px]"
-            disabled={
-              loading
-            }
-            onClick={
-              refresh
-            }
-          >
+          {liveStatus ===
+          "offline" && (
 
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${
-                loading
-                  ? "animate-spin"
-                  : ""
-              }`}
-            />
+            <div className="flex items-center gap-1.5 px-1 text-xs font-medium text-amber-700 dark:text-amber-300">
 
-            Refresh
+              <TriangleAlert className="h-3.5 w-3.5" />
 
-          </Button>
+              <span>
+                Live updates unavailable
+              </span>
+
+            </div>
+
+          )}
 
         </div>
 
@@ -770,10 +868,10 @@ export default function DashboardPage() {
 
 
           {/* ==================================================
-              TOP PRODUCTS + LOW STOCK
+              TOP PRODUCTS + LOW STOCK + INVENTORY VALUE
           =================================================== */}
 
-          <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <div className="mt-5 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
 
             {/* ===============================================
                 TOP PRODUCTS
@@ -950,6 +1048,133 @@ export default function DashboardPage() {
                     title="Stock levels look healthy"
                     description="No active variant is currently at or below its low-stock threshold."
                   />
+
+                )}
+
+              </CardContent>
+
+            </Card>
+
+
+            {/* ===============================================
+                INVENTORY VALUE
+            ================================================ */}
+
+            <Card className="rounded-[24px]">
+
+              <CardHeader>
+
+                <div className="flex items-center justify-between gap-3">
+
+                  <div>
+
+                    <CardTitle>
+                      Inventory Value
+                    </CardTitle>
+
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Current stock at the default inventory location.
+                    </p>
+
+                  </div>
+
+
+                  <Boxes className="h-5 w-5 text-muted-foreground" />
+
+                </div>
+
+              </CardHeader>
+
+
+              <CardContent>
+
+                {catalogLoading &&
+                catalogProducts.length ===
+                  0 ? (
+
+                  <div className="space-y-3">
+
+                    <div className="h-20 animate-pulse rounded-[16px] bg-muted" />
+
+                    <div className="h-20 animate-pulse rounded-[16px] bg-muted" />
+
+                  </div>
+
+                ) : (
+
+                  <div className="space-y-3">
+
+                    <div className="rounded-[18px] border bg-muted/20 p-4">
+
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Stock cost value
+                      </p>
+
+
+                      <p className="mt-2 text-2xl font-bold tracking-tight">
+                        {formatSaleMoney(
+                          inventorySnapshot.costValue,
+                          currency,
+                        )}
+                      </p>
+
+
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Cash currently tied up in stock at stored cost price.
+                      </p>
+
+                    </div>
+
+
+                    <div className="rounded-[18px] border bg-muted/20 p-4">
+
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Retail stock value
+                      </p>
+
+
+                      <p className="mt-2 text-2xl font-bold tracking-tight">
+                        {formatSaleMoney(
+                          inventorySnapshot.retailValue,
+                          currency,
+                        )}
+                      </p>
+
+
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Estimated value at current selling prices.
+                      </p>
+
+                    </div>
+
+
+                    <div className="flex items-center justify-between rounded-[14px] border px-4 py-3 text-sm">
+
+                      <span className="text-muted-foreground">
+                        Units on hand
+                      </span>
+
+
+                      <span className="font-bold tabular-nums">
+                        {inventorySnapshot.unitsOnHand.toLocaleString(
+                          "en-LK",
+                        )}
+                      </span>
+
+                    </div>
+
+
+                    <Link
+                      href="/inventory"
+                      className="inline-flex items-center text-sm font-semibold text-primary hover:underline"
+                    >
+                      Open Inventory
+
+                      <ArrowUpRight className="ml-1 h-4 w-4" />
+                    </Link>
+
+                  </div>
 
                 )}
 
@@ -1142,7 +1367,7 @@ export default function DashboardPage() {
 
                   <EmptyState
                     title="No transactions in this period"
-                    description="Complete a sale in NOVA or select a wider reporting range."
+                    description="Complete a sale in ARC or select a wider reporting range."
                   />
 
                 </div>

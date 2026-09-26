@@ -4,6 +4,10 @@ import {
   createClient,
 } from "@/lib/supabase/client";
 
+import {
+  createReceiptLogoSignedUrl,
+} from "@/lib/data/receipt-logo";
+
 import type {
   ReceiptItem,
   ReceiptPayment,
@@ -174,6 +178,14 @@ type ItemRow = {
   unit_price:
     | number
     | string;
+
+  regular_unit_price:
+    | number
+    | string;
+
+  product_discount_total:
+    | number
+    | string;
 
   line_subtotal:
     | number
@@ -229,6 +241,14 @@ type SettingsRow = {
 
   auto_print:
     boolean;
+
+  logo_url:
+    | string
+    | null;
+
+  logo_path:
+    | string
+    | null;
 
   display_name:
     | string
@@ -479,6 +499,8 @@ export async function fetchSaleReceipt(
           sku,
           quantity,
           unit_price,
+          regular_unit_price,
+          product_discount_total,
           line_subtotal,
           discount_total,
           tax_total,
@@ -534,6 +556,8 @@ export async function fetchSaleReceipt(
           `
           paper_width,
           auto_print,
+          logo_url,
+          logo_path,
           display_name,
           address_line_1,
           address_line_2,
@@ -739,6 +763,21 @@ export async function fetchSaleReceipt(
      SETTINGS
   ========================================================== */
 
+  let resolvedReceiptLogoUrl =
+    settingsRow?.logo_url ??
+    undefined;
+
+
+  if (
+    settingsRow?.logo_path
+  ) {
+    resolvedReceiptLogoUrl =
+      await createReceiptLogoSignedUrl(
+        settingsRow.logo_path,
+      );
+  }
+
+
   const settings:
     ReceiptSettings =
       settingsRow
@@ -748,6 +787,14 @@ export async function fetchSaleReceipt(
 
             autoPrint:
               settingsRow.auto_print,
+
+
+            logoUrl:
+              resolvedReceiptLogoUrl,
+
+            logoPath:
+              settingsRow.logo_path ??
+              undefined,
 
             displayName:
               settingsRow.display_name ??
@@ -816,6 +863,17 @@ export async function fetchSaleReceipt(
           unitPrice:
             numberValue(
               item.unit_price,
+            ),
+
+
+          regularUnitPrice:
+            numberValue(
+              item.regular_unit_price,
+            ),
+
+          productDiscountTotal:
+            numberValue(
+              item.product_discount_total,
             ),
 
           lineSubtotal:

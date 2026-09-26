@@ -80,7 +80,7 @@ export function useSales() {
           setSales(next);
         } catch (cause) {
           console.error(
-            "Failed to load NOVA sales:",
+            "Failed to load ARC sales:",
             cause,
           );
 

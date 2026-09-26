@@ -3,6 +3,10 @@
 import * as React from "react";
 
 import {
+  useRouter,
+} from "next/navigation";
+
+import {
   Minus,
   PackageOpen,
   Plus,
@@ -46,6 +50,10 @@ import {
 } from "@/components/ui/scanner";
 
 import {
+  useBusinessAccess,
+} from "@/hooks/use-business-access";
+
+import {
   useCatalog,
 } from "@/hooks/use-catalog";
 
@@ -56,12 +64,19 @@ import {
 import {
   findVariantByScanValue,
   formatMoney,
+  priceVariantQuantity,
   type Product,
+  type ProductVariant,
 } from "@/lib/domain/catalog";
 
-import type {
-  CompleteSaleResult,
-} from "@/lib/domain/checkout";
+import {
+  breakInventoryUnit,
+  fetchDefaultInventoryLocation,
+} from "@/lib/data/catalog-admin";
+
+import {
+  fetchCatalogProducts,
+} from "@/lib/data/catalog";
 
 import type {
   RemoteScanResult,
@@ -106,6 +121,17 @@ export default function POSPage() {
 
 
   const [
+    unknownScanValue,
+    setUnknownScanValue,
+  ] =
+    React.useState<
+      string | null
+    >(
+      null,
+    );
+
+
+  const [
     mobileCartOpen,
     setMobileCartOpen,
   ] =
@@ -127,9 +153,44 @@ export default function POSPage() {
       Product | null
     >(null);
 
+  const [
+    unitBreakRequest,
+    setUnitBreakRequest,
+  ] =
+    React.useState<{
+      product: Product;
+      variant: ProductVariant;
+    } | null>(
+      null,
+    );
+
+
+  const [
+    breakingUnit,
+    setBreakingUnit,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const [
+    unitBreakError,
+    setUnitBreakError,
+  ] =
+    React.useState<
+      string | null
+    >(
+      null,
+    );
+
 
   const cart =
     useCart();
+
+
+  const router =
+    useRouter();
 
 
   const {
@@ -151,6 +212,20 @@ export default function POSPage() {
       refreshCatalog,
   } =
     useCatalog();
+
+
+  const {
+    access,
+  } =
+    useBusinessAccess(
+      business?.id,
+    );
+
+
+  const canManageCatalog =
+    access?.permissions
+      .manageCatalog ??
+    false;
 
 
   const currencyCode =
@@ -223,6 +298,60 @@ export default function POSPage() {
     );
 
 
+  function getProductStockLabel(
+    product: Product,
+  ) {
+    if (
+      product.variants.length ===
+      1
+    ) {
+      return `${product.variants[0].stock} in stock`;
+    }
+
+
+    const ordered =
+      [...product.variants]
+        .sort(
+          (
+            left,
+            right,
+          ) =>
+            right.stock -
+            left.stock,
+        );
+
+
+    const visible =
+      ordered.slice(
+        0,
+        2,
+      );
+
+
+    const summary =
+      visible
+        .map(
+          (
+            variant,
+          ) =>
+            `${variant.name} ${variant.stock}`,
+        )
+        .join(
+          " · ",
+        );
+
+
+    const extra =
+      ordered.length >
+      visible.length
+        ? ` · +${ordered.length - visible.length} more`
+        : "";
+
+
+    return `${summary}${extra}`;
+  }
+
+
   /* ==========================================================
      FILTER PRODUCTS
   ========================================================== */
@@ -265,6 +394,11 @@ export default function POSPage() {
                     .toLowerCase()
                     .includes(
                       query,
+                    ) ||
+                  variant.barcode
+                    ?.toLowerCase()
+                    .includes(
+                      query,
                     ),
               )
             );
@@ -277,6 +411,253 @@ export default function POSPage() {
         sellableProducts,
       ],
     );
+
+
+  function cartQuantityForVariant(
+    variantId: string,
+  ) {
+    return cart.items.reduce(
+      (
+        total,
+        item,
+      ) =>
+        item.variant.id ===
+        variantId
+          ? total +
+            item.quantity
+          : total,
+      0,
+    );
+  }
+
+
+  function getBreakableParent(
+    product: Product,
+    variant: ProductVariant,
+  ) {
+    if (
+      !product.multiUnitEnabled ||
+      !variant.unitParentVariantId ||
+      !variant.unitsPerParent
+    ) {
+      return null;
+    }
+
+
+    const parent =
+      product.variants.find(
+        (
+          candidate,
+        ) =>
+          candidate.id ===
+          variant.unitParentVariantId &&
+          candidate.active !==
+          false,
+      ) ??
+      null;
+
+
+    if (!parent) {
+      return null;
+    }
+
+
+    const availableParent =
+      parent.stock -
+      cartQuantityForVariant(
+        parent.id,
+      );
+
+
+    return availableParent >
+      0
+      ? parent
+      : null;
+  }
+
+
+  function canAddVariant(
+    product: Product,
+    variant: ProductVariant,
+  ) {
+    const directAvailable =
+      variant.stock -
+      cartQuantityForVariant(
+        variant.id,
+      );
+
+
+    return (
+      directAvailable >
+        0 ||
+      Boolean(
+        getBreakableParent(
+          product,
+          variant,
+        ),
+      )
+    );
+  }
+
+
+  function requestAddVariant(
+    product: Product,
+    variant: ProductVariant,
+    batchId?: string,
+  ):
+    | "added"
+    | "break"
+    | "out" {
+    const directAvailable =
+      variant.stock -
+      cartQuantityForVariant(
+        variant.id,
+      );
+
+
+    if (
+      directAvailable >
+      0
+    ) {
+      cart.addItem(
+        product,
+        variant,
+        1,
+        batchId,
+      );
+
+      return "added";
+    }
+
+
+    if (
+      getBreakableParent(
+        product,
+        variant,
+      )
+    ) {
+      setSelectedProduct(
+        null,
+      );
+
+      setScannerOpen(
+        false,
+      );
+
+      setUnitBreakError(
+        null,
+      );
+
+      setUnitBreakRequest({
+        product,
+        variant,
+      });
+
+      return "break";
+    }
+
+
+    return "out";
+  }
+
+
+  async function handleBreakAndAdd() {
+    if (
+      !unitBreakRequest ||
+      breakingUnit
+    ) {
+      return;
+    }
+
+
+    setBreakingUnit(
+      true,
+    );
+
+    setUnitBreakError(
+      null,
+    );
+
+
+    try {
+      const locationId =
+        await fetchDefaultInventoryLocation(
+          business?.id,
+        );
+
+
+      await breakInventoryUnit({
+        childVariantId:
+          unitBreakRequest.variant.id,
+        locationId,
+        parentQuantity:
+          1,
+      });
+
+
+      const freshProducts =
+        await fetchCatalogProducts();
+
+
+      const freshProduct =
+        freshProducts.find(
+          (
+            product,
+          ) =>
+            product.id ===
+            unitBreakRequest.product.id,
+        );
+
+
+      const freshVariant =
+        freshProduct?.variants.find(
+          (
+            variant,
+          ) =>
+            variant.id ===
+            unitBreakRequest.variant.id,
+        );
+
+
+      if (
+        !freshProduct ||
+        !freshVariant ||
+        freshVariant.stock <=
+          0
+      ) {
+        throw new Error(
+          "The pack was opened, but ARC could not refresh the loose stock. Refresh POS before continuing.",
+        );
+      }
+
+
+      cart.addItem(
+        freshProduct,
+        freshVariant,
+      );
+
+
+      setUnitBreakRequest(
+        null,
+      );
+
+
+      await refreshCatalog();
+    } catch (
+      cause
+    ) {
+      setUnitBreakError(
+        cause instanceof
+          Error
+          ? cause.message
+          : "ARC could not break the sealed stock.",
+      );
+    } finally {
+      setBreakingUnit(
+        false,
+      );
+    }
+  }
 
 
   /* ==========================================================
@@ -294,15 +675,7 @@ export default function POSPage() {
         product.variants[0];
 
 
-      if (
-        variant.stock <=
-        0
-      ) {
-        return;
-      }
-
-
-      cart.addItem(
+      requestAddVariant(
         product,
         variant,
       );
@@ -324,100 +697,114 @@ export default function POSPage() {
      Used by:
      - laptop camera
      - phone remote scanner
-     - SKU / NOVA QR input
+     - SKU / ARC QR input
   ========================================================== */
 
-  const processScan =
-    React.useCallback(
-      (
-        value: string,
-      ): RemoteScanResult => {
-        const match =
-          findVariantByScanValue(
-            products,
-            value,
-          );
+  function processScan(
+    value: string,
+  ): RemoteScanResult {
+    const match =
+      findVariantByScanValue(
+        products,
+        value,
+      );
 
 
-        if (!match) {
-          return {
-            accepted:
-              false,
-
-            message:
-              "Product was not found.",
-          };
-        }
-
-
-        if (
-          match.variant.stock <=
-          0
-        ) {
-          return {
-            accepted:
-              false,
-
-            label:
-              `${match.product.name} · ${match.variant.name}`,
-
-            message:
-              "This product is out of stock.",
-          };
-        }
-
-
-        cart.addItem(
-          match.product,
-          match.variant,
+    if (!match) {
+      if (
+        canManageCatalog
+      ) {
+        setUnknownScanValue(
+          value.trim(),
         );
 
 
-        return {
-          accepted:
-            true,
+        setScannerOpen(
+          false,
+        );
+      }
 
-          label:
-            `${match.product.name} · ${match.variant.name}`,
-        };
-      },
 
-      [
-        cart,
-        products,
-      ],
+      return {
+        accepted:
+          false,
+
+        message:
+          canManageCatalog
+            ? "Product was not found. You can add this scanned code as a new product."
+            : "Product was not found.",
+      };
+    }
+
+
+    const addResult =
+      requestAddVariant(
+        match.product,
+        match.variant,
+        match.batchId,
+      );
+
+
+    if (
+      addResult ===
+      "out"
+    ) {
+      return {
+        accepted:
+          false,
+
+        label:
+          `${match.product.name} · ${match.variant.name}`,
+
+        message:
+          "This unit is out of stock.",
+      };
+    }
+
+
+    if (
+      addResult ===
+      "break"
+    ) {
+      return {
+        accepted:
+          false,
+
+        label:
+          `${match.product.name} · ${match.variant.name}`,
+
+        message:
+          "Loose stock is empty. Confirm Break & Add on the POS.",
+      };
+    }
+
+
+    return {
+      accepted:
+        true,
+
+      label:
+        `${match.product.name} · ${match.variant.name}`,
+    };
+  }
+
+
+  function handleLocalScan(
+    value: string,
+  ) {
+    return processScan(
+      value,
+    ).accepted;
+  }
+
+
+  function handleRemoteScan(
+    value: string,
+  ) {
+    return processScan(
+      value,
     );
-
-
-  const handleLocalScan =
-    React.useCallback(
-      (
-        value: string,
-      ) =>
-        processScan(
-          value,
-        ).accepted,
-
-      [
-        processScan,
-      ],
-    );
-
-
-  const handleRemoteScan =
-    React.useCallback(
-      (
-        value: string,
-      ) =>
-        processScan(
-          value,
-        ),
-
-      [
-        processScan,
-      ],
-    );
-
+  }
 
   /* ==========================================================
      CHECKOUT
@@ -448,10 +835,7 @@ export default function POSPage() {
   }
 
 
-  async function handleSaleCompleted(
-    _result:
-      CompleteSaleResult,
-  ) {
+  async function handleSaleCompleted() {
     /*
      * Database transaction already
      * committed before this runs.
@@ -542,7 +926,7 @@ export default function POSPage() {
 
 
               <Input
-                placeholder="Search products, SKU..."
+                placeholder="Search products, SKU, barcode..."
                 className="h-11 rounded-xl bg-background pl-10 text-base shadow-sm"
                 value={
                   searchQuery
@@ -820,14 +1204,48 @@ export default function POSPage() {
                           />
 
 
-                          <div className="absolute right-2 top-2 rounded-[8px] bg-background/90 px-2 py-1 text-xs font-bold shadow-sm backdrop-blur-sm">
+                          <div className="absolute right-2 top-2 rounded-[8px] bg-background/90 px-2 py-1 text-right shadow-sm backdrop-blur-sm">
 
-                            {formatMoney(
-                              product
-                                .variants[0]
-                                .price,
+                            <div className="text-xs font-bold text-primary">
 
-                              currencyCode,
+                              {formatMoney(
+                                product
+                                  .variants[0]
+                                  .price,
+
+                                currencyCode,
+                              )}
+
+                            </div>
+
+                            {product.promotionEnabled &&
+                              (
+                                product
+                                  .variants[0]
+                                  .regularPrice ??
+                                product
+                                  .variants[0]
+                                  .price
+                              ) >
+                                product
+                                  .variants[0]
+                                  .price && (
+
+                              <div className="text-[10px] text-muted-foreground line-through">
+
+                                {formatMoney(
+                                  product
+                                    .variants[0]
+                                    .regularPrice ??
+                                    product
+                                      .variants[0]
+                                      .price,
+
+                                  currencyCode,
+                                )}
+
+                              </div>
+
                             )}
 
                           </div>
@@ -853,12 +1271,10 @@ export default function POSPage() {
                           <p className="mt-1 text-xs font-medium text-muted-foreground">
 
                             {
-                              product
-                                .variants[0]
-                                .stock
-                            }{" "}
-
-                            in stock
+                              getProductStockLabel(
+                                product,
+                              )
+                            }
 
                           </p>
 
@@ -1154,6 +1570,98 @@ export default function POSPage() {
       />
 
 
+      <Dialog
+        isOpen={
+          Boolean(
+            unknownScanValue,
+          )
+        }
+        onClose={() =>
+          setUnknownScanValue(
+            null,
+          )
+        }
+        title="Product Not Found"
+        description="This scanned barcode or code is not assigned to a ARC product yet."
+      >
+
+        <div className="space-y-5">
+
+          <div className="rounded-[16px] border bg-muted/20 p-4">
+
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Scanned value
+            </p>
+
+
+            <p className="mt-2 break-all font-mono text-sm font-semibold">
+              {unknownScanValue}
+            </p>
+
+          </div>
+
+
+          <p className="text-sm leading-6 text-muted-foreground">
+            Add a new product with this value pre-filled as its manufacturer barcode. ARC will keep its generated QR identity separately.
+          </p>
+
+
+          <div className="flex flex-wrap justify-end gap-2">
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setUnknownScanValue(
+                  null,
+                );
+
+
+                setScannerOpen(
+                  true,
+                );
+              }}
+            >
+              Keep Scanning
+            </Button>
+
+
+            <Button
+              type="button"
+              onClick={() => {
+                const value =
+                  unknownScanValue;
+
+
+                if (
+                  !value
+                ) {
+                  return;
+                }
+
+
+                setUnknownScanValue(
+                  null,
+                );
+
+
+                router.push(
+                  `/products/new?barcode=${encodeURIComponent(
+                    value,
+                  )}`,
+                );
+              }}
+            >
+              Add New Product
+            </Button>
+
+          </div>
+
+        </div>
+
+      </Dialog>
+
+
       {/* ======================================================
           VARIANT PICKER
       ======================================================= */}
@@ -1190,19 +1698,27 @@ export default function POSPage() {
                 }
                 type="button"
                 disabled={
-                  variant.stock <=
-                  0
-                }
-                onClick={() => {
-                  cart.addItem(
+                  !canAddVariant(
                     selectedProduct,
                     variant,
-                  );
+                  )
+                }
+                onClick={() => {
+                  const result =
+                    requestAddVariant(
+                      selectedProduct,
+                      variant,
+                    );
 
 
-                  setSelectedProduct(
-                    null,
-                  );
+                  if (
+                    result ===
+                    "added"
+                  ) {
+                    setSelectedProduct(
+                      null,
+                    );
+                  }
                 }}
                 className="
                   flex
@@ -1246,14 +1762,37 @@ export default function POSPage() {
 
                 <div className="text-right">
 
-                  <p className="font-bold text-primary">
+                  <div>
 
-                    {formatMoney(
-                      variant.price,
-                      currencyCode,
+                    <p className="font-bold text-primary">
+
+                      {formatMoney(
+                        variant.price,
+                        currencyCode,
+                      )}
+
+                    </p>
+
+                    {selectedProduct?.promotionEnabled &&
+                      (
+                        variant.regularPrice ??
+                        variant.price
+                      ) >
+                        variant.price && (
+
+                      <p className="mt-0.5 text-xs text-muted-foreground line-through">
+
+                        {formatMoney(
+                          variant.regularPrice ??
+                          variant.price,
+                          currencyCode,
+                        )}
+
+                      </p>
+
                     )}
 
-                  </p>
+                  </div>
 
 
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -1263,6 +1802,22 @@ export default function POSPage() {
                     }{" "}
 
                     in stock
+
+                    {variant.stock <=
+                      0 &&
+                      getBreakableParent(
+                        selectedProduct,
+                        variant,
+                      ) && (
+                        <span className="ml-1">
+                          · can open {
+                            getBreakableParent(
+                              selectedProduct,
+                              variant,
+                            )?.name
+                          }
+                        </span>
+                      )}
 
                   </p>
 
@@ -1274,6 +1829,117 @@ export default function POSPage() {
           )}
 
         </div>
+
+      </Dialog>
+
+
+      <Dialog
+        isOpen={
+          Boolean(
+            unitBreakRequest,
+          )
+        }
+        onClose={() =>
+          !breakingUnit &&
+          setUnitBreakRequest(
+            null,
+          )
+        }
+        title="Open sealed stock?"
+        description={
+          unitBreakRequest
+            ? `No loose ${unitBreakRequest.variant.name} stock is available.`
+            : undefined
+        }
+        className="max-w-lg"
+      >
+
+        {unitBreakRequest && (
+          <div className="space-y-4">
+
+            {unitBreakError && (
+              <div className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                {unitBreakError}
+              </div>
+            )}
+
+
+            <div className="rounded-[20px] border bg-muted/20 p-4">
+
+              <div className="flex items-start gap-3">
+
+                <div className="rounded-[12px] border bg-background p-2">
+                  <PackageOpen className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="font-semibold">
+                    {unitBreakRequest.product.name}
+                  </p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Open 1 {
+                      unitBreakRequest.product.variants.find(
+                        (
+                          variant,
+                        ) =>
+                          variant.id ===
+                          unitBreakRequest.variant.unitParentVariantId,
+                      )?.name ??
+                      "parent unit"
+                    } → {
+                      unitBreakRequest.variant.unitsPerParent
+                    } {
+                      unitBreakRequest.variant.name
+                    }
+                  </p>
+                </div>
+
+              </div>
+
+
+              <p className="mt-4 text-xs leading-5 text-muted-foreground">
+                ARC will move inventory from sealed stock to loose stock, inherit FIFO cost from the exact pack opened, then add 1 loose unit to this order.
+              </p>
+
+            </div>
+
+
+            <div className="flex justify-end gap-2">
+
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  breakingUnit
+                }
+                onClick={() =>
+                  setUnitBreakRequest(
+                    null,
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                disabled={
+                  breakingUnit
+                }
+                onClick={() =>
+                  void handleBreakAndAdd()
+                }
+              >
+                {breakingUnit
+                  ? "Opening…"
+                  : "Break & Add"}
+              </Button>
+
+            </div>
+
+          </div>
+        )}
 
       </Dialog>
 
@@ -1349,6 +2015,24 @@ function CartContent({
   onClose?:
     () => void;
 }) {
+  const [
+    batchPickerItemId,
+    setBatchPickerItemId,
+  ] =
+    React.useState<string | null>(
+      null,
+    );
+
+
+  const batchPickerItem =
+    cart.items.find(
+      (item) =>
+        item.id ===
+        batchPickerItemId,
+    ) ??
+    null;
+
+
   return (
     <div className="flex h-full min-h-0 flex-col">
 
@@ -1441,7 +2125,40 @@ function CartContent({
             {cart.items.map(
               (
                 item,
-              ) => (
+              ) => {
+                const pricing =
+                  priceVariantQuantity(
+                    item.variant,
+                    item.quantity,
+                    item.batchId,
+                  );
+
+                const selectedBatch =
+                  item.variant
+                    .priceBatches
+                    ?.find(
+                      (batch) =>
+                        batch.id ===
+                        item.batchId,
+                    );
+
+                const selectedBatchIndex =
+                  item.variant
+                    .priceBatches
+                    ?.findIndex(
+                      (batch) =>
+                        batch.id ===
+                        item.batchId,
+                    ) ??
+                  -1;
+
+                const batchCapacity =
+                  selectedBatch
+                    ?.quantity ??
+                  item.variant
+                    .stock;
+
+                return (
 
                 <motion.div
                   key={
@@ -1496,14 +2213,66 @@ function CartContent({
                     </p>
 
 
-                    <p className="mt-1 text-sm font-medium text-primary">
+                    <div className="mt-1">
 
-                      {formatMoney(
-                        item.variant.price,
-                        currencyCode,
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+
+                        <p className="text-sm font-medium text-primary">
+                          {formatMoney(
+                            pricing.lines[0]
+                              ?.price ??
+                              item.variant
+                                .price,
+                            currencyCode,
+                          )}{" "}
+                          each
+                        </p>
+
+
+                        {item.quantity >
+                          1 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            · {formatMoney(
+                              pricing.subtotal,
+                              currencyCode,
+                            )} total
+                          </span>
+                        )}
+
+                      </div>
+
+
+                      {selectedBatch && (
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {selectedBatchIndex ===
+                          0
+                            ? "Oldest stock"
+                            : `Price batch #${selectedBatchIndex + 1}`}
+                          {" · "}
+                          {selectedBatch.quantity} unit{selectedBatch.quantity === 1 ? "" : "s"} available
+                        </p>
                       )}
 
-                    </p>
+
+                      {(item.variant
+                        .priceBatches
+                        ?.length ??
+                        0) >
+                        1 && (
+                        <button
+                          type="button"
+                          className="mt-1.5 text-[11px] font-semibold text-primary hover:underline"
+                          onClick={() =>
+                            setBatchPickerItemId(
+                              item.id,
+                            )
+                          }
+                        >
+                          Change price batch
+                        </button>
+                      )}
+
+                    </div>
 
                   </div>
 
@@ -1549,7 +2318,7 @@ function CartContent({
                         className="rounded-r-lg p-1.5 transition-colors hover:bg-background disabled:opacity-40"
                         disabled={
                           item.quantity >=
-                          item.variant.stock
+                          batchCapacity
                         }
                         onClick={() =>
                           cart.updateQuantity(
@@ -1571,7 +2340,8 @@ function CartContent({
 
                 </motion.div>
 
-              ),
+                );
+              },
             )}
 
           </AnimatePresence>
@@ -1678,6 +2448,134 @@ function CartContent({
         </Button>
 
       </div>
+
+
+      <Dialog
+        isOpen={
+          Boolean(
+            batchPickerItem,
+          )
+        }
+        onClose={() =>
+          setBatchPickerItemId(
+            null,
+          )
+        }
+        title="Choose price batch"
+        description={
+          batchPickerItem
+            ? `${batchPickerItem.product.name} · ${batchPickerItem.variant.name}`
+            : undefined
+        }
+      >
+
+        {batchPickerItem && (
+          <div className="space-y-2">
+
+            {batchPickerItem.variant.priceBatches?.map(
+              (
+                batch,
+                index,
+              ) => {
+                const usedByOtherLine =
+                  cart.items.reduce(
+                    (
+                      total,
+                      item,
+                    ) =>
+                      item.id !==
+                        batchPickerItem.id &&
+                      item.variant.id ===
+                        batchPickerItem.variant.id &&
+                      item.batchId ===
+                        batch.id
+                        ? total +
+                          item.quantity
+                        : total,
+                    0,
+                  );
+
+                const available =
+                  Math.max(
+                    0,
+                    batch.quantity -
+                      usedByOtherLine,
+                  );
+
+                const selected =
+                  batch.id ===
+                  batchPickerItem.batchId;
+
+                const canUse =
+                  selected ||
+                  available >=
+                    batchPickerItem.quantity;
+
+                return (
+                  <button
+                    key={
+                      batch.id
+                    }
+                    type="button"
+                    disabled={
+                      !canUse
+                    }
+                    onClick={() => {
+                      cart.setItemBatch(
+                        batchPickerItem.id,
+                        batch.id,
+                      );
+
+                      setBatchPickerItemId(
+                        null,
+                      );
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-4 rounded-[16px] border p-4 text-left transition-colors",
+                      selected
+                        ? "border-primary bg-primary/5"
+                        : "bg-background hover:border-primary/40 hover:bg-muted/40",
+                      !canUse &&
+                        "cursor-not-allowed opacity-45",
+                    )}
+                  >
+                    <div>
+                      <p className="font-semibold">
+                        {index ===
+                        0
+                          ? "Oldest stock"
+                          : `Price batch #${index + 1}`}
+                      </p>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {available} unit{available === 1 ? "" : "s"} available
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-bold text-primary">
+                        {formatMoney(
+                          batch.price,
+                          currencyCode,
+                        )}
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        cost {formatMoney(
+                          batch.cost,
+                          currencyCode,
+                        )}
+                      </p>
+                    </div>
+                  </button>
+                );
+              },
+            )}
+
+          </div>
+        )}
+
+      </Dialog>
 
     </div>
   );

@@ -1,3 +1,9 @@
+import {
+  buildArcBatchBarcodePayload,
+  buildArcVariantBarcodePayload,
+} from "@/lib/barcode/code128";
+
+
 export type ProductStatus =
   | "Active"
   | "Draft"
@@ -6,6 +12,24 @@ export type ProductStatus =
 
 export type Category =
   string;
+
+
+export type PromotionType =
+  | "percentage"
+  | "fixed";
+
+
+export type ProductPriceBatch = {
+  id: string;
+
+  quantity: number;
+
+  price: number;
+
+  regularPrice: number;
+
+  cost: number;
+};
 
 
 export type ProductVariant = {
@@ -18,7 +42,15 @@ export type ProductVariant = {
 
   price: number;
 
+  regularPrice?: number;
+
   cost: number;
+
+  defaultPrice?: number;
+
+  defaultCost?: number;
+
+  priceBatches?: ProductPriceBatch[];
 
   stock: number;
 
@@ -26,7 +58,13 @@ export type ProductVariant = {
 
   qrToken?: string;
 
+  barcode?: string;
+
   lowStockThreshold?: number;
+
+  unitParentVariantId?: string;
+
+  unitsPerParent?: number;
 
 };
 
@@ -45,9 +83,25 @@ export type Product = {
 
   image: string;
 
+  imagePath?: string;
+
   variants: ProductVariant[];
 
   status: ProductStatus;
+
+  promotionEnabled?: boolean;
+
+  promotionActive?: boolean;
+
+  promotionType?: PromotionType;
+
+  promotionValue?: number;
+
+  promotionStartsAt?: string;
+
+  promotionEndsAt?: string;
+
+  multiUnitEnabled?: boolean;
 
 };
 
@@ -68,19 +122,258 @@ export type InventoryItem = {
 
   stock: number;
 
+  cost: number;
+
+  sellingPrice: number;
+
+  defaultCost: number;
+
+  defaultSellingPrice: number;
+
+  priceBatches?: ProductPriceBatch[];
+
   image: string;
 
   threshold: number;
 
+  unitParentVariantId?: string;
+
+  unitParentVariantName?: string;
+
+  unitsPerParent?: number;
+
+  parentStock?: number;
+
 };
+
+
+export function priceVariantQuantity(
+  variant: ProductVariant,
+  quantity: number,
+  batchId?: string,
+) {
+  const requested =
+    Math.max(
+      0,
+      Math.trunc(
+        quantity,
+      ),
+    );
+
+  let remaining =
+    requested;
+
+  let subtotal =
+    0;
+
+  let regularSubtotal =
+    0;
+
+  let costTotal =
+    0;
+
+  const lines: Array<{
+    batchId?: string;
+    quantity: number;
+    price: number;
+    regularPrice: number;
+    cost: number;
+  }> = [];
+
+
+  if (batchId) {
+    const selectedBatch =
+      variant.priceBatches
+        ?.find(
+          (batch) =>
+            batch.id ===
+            batchId,
+        );
+
+    if (selectedBatch) {
+      const lineQuantity =
+        Math.min(
+          requested,
+          Math.max(
+            0,
+            Math.trunc(
+              selectedBatch.quantity,
+            ),
+          ),
+        );
+
+      return {
+        quantity:
+          lineQuantity,
+        subtotal:
+          Math.round(
+            lineQuantity *
+              selectedBatch.price *
+              100,
+          ) / 100,
+        regularSubtotal:
+          Math.round(
+            lineQuantity *
+              selectedBatch.regularPrice *
+              100,
+          ) / 100,
+        costTotal:
+          Math.round(
+            lineQuantity *
+              selectedBatch.cost *
+              100,
+          ) / 100,
+        lines: [
+          {
+            batchId:
+              selectedBatch.id,
+            quantity:
+              lineQuantity,
+            price:
+              selectedBatch.price,
+            regularPrice:
+              selectedBatch.regularPrice,
+            cost:
+              selectedBatch.cost,
+          },
+        ],
+      };
+    }
+  }
+
+
+  for (
+    const batch of
+      variant.priceBatches ??
+      []
+  ) {
+    if (
+      remaining <= 0
+    ) {
+      break;
+    }
+
+    const available =
+      Math.max(
+        0,
+        Math.trunc(
+          batch.quantity,
+        ),
+      );
+
+    if (
+      available <= 0
+    ) {
+      continue;
+    }
+
+    const take =
+      Math.min(
+        remaining,
+        available,
+      );
+
+    subtotal +=
+      take *
+      batch.price;
+
+    regularSubtotal +=
+      take *
+      batch.regularPrice;
+
+    costTotal +=
+      take *
+      batch.cost;
+
+    lines.push({
+      batchId:
+        batch.id,
+      quantity:
+        take,
+      price:
+        batch.price,
+      regularPrice:
+        batch.regularPrice,
+      cost:
+        batch.cost,
+    });
+
+    remaining -=
+      take;
+  }
+
+
+  if (
+    remaining > 0
+  ) {
+    const regularPrice =
+      variant.regularPrice ??
+      variant.price;
+
+    subtotal +=
+      remaining *
+      variant.price;
+
+    regularSubtotal +=
+      remaining *
+      regularPrice;
+
+    costTotal +=
+      remaining *
+      variant.cost;
+
+    lines.push({
+      quantity:
+        remaining,
+      price:
+        variant.price,
+      regularPrice,
+      cost:
+        variant.cost,
+    });
+  }
+
+
+  return {
+    quantity:
+      requested,
+    subtotal:
+      Math.round(
+        subtotal *
+        100,
+      ) / 100,
+    regularSubtotal:
+      Math.round(
+        regularSubtotal *
+        100,
+      ) / 100,
+    costTotal:
+      Math.round(
+        costTotal *
+        100,
+      ) / 100,
+    lines,
+  };
+}
 
 
 export const DEFAULT_CURRENCY =
   "LKR";
 
 
-export const NOVA_QR_PREFIX =
+export const ARC_QR_PREFIX =
+  "ARC:V1:";
+
+export const LEGACY_NOVA_QR_PREFIX =
   "NOVA:V1:";
+
+/*
+ * Backward-compatible export name for existing internal imports.
+ * New QR payloads are ARC-branded while already printed NOVA
+ * payloads remain scannable.
+ */
+export const NOVA_QR_PREFIX =
+  ARC_QR_PREFIX;
 
 
 export function formatMoney(
@@ -136,18 +429,30 @@ export function extractQrToken(
     value.trim();
 
 
-  const match =
+  const arcMatch =
+    /^ARC:V1:([0-9a-f-]{36})$/i.exec(
+      normalized,
+    );
+
+
+  if (
+    arcMatch?.[1]
+  ) {
+    return arcMatch[1]
+      .toLowerCase();
+  }
+
+
+  const legacyMatch =
     /^NOVA:V1:([0-9a-f-]{36})$/i.exec(
       normalized,
     );
 
 
   return (
-
-    match?.[1]?.toLowerCase()
-    ??
+    legacyMatch?.[1]
+      ?.toLowerCase() ??
     null
-
   );
 
 }
@@ -181,16 +486,16 @@ export function shortQrToken(
 
 
 export function findVariantByScanValue(
-
   products: Product[],
-
   value: string,
-
 ) {
-
   const normalized =
-    value.trim();
+    value
+      .trim();
 
+  const normalizedLower =
+    normalized
+      .toLowerCase();
 
   const qrToken =
     extractQrToken(
@@ -202,103 +507,105 @@ export function findVariantByScanValue(
     const product
     of products
   ) {
-
     if (
-      product.status
-      !==
+      product.status !==
       "Active"
     ) {
-
       continue;
-
     }
 
 
-    const variant =
-      product.variants.find(
-
-        (
-          candidate,
-        ) => {
-
-
-          if (
-            candidate.active
-            ===
-            false
-          ) {
-
-            return false;
-
-          }
+    for (
+      const variant
+      of product.variants
+    ) {
+      if (
+        variant.active ===
+        false
+      ) {
+        continue;
+      }
 
 
-          /*
-           * SKU fallback.
-           */
-
-          if (
-
-            candidate.sku.toLowerCase()
-            ===
-            normalized.toLowerCase()
-
-          ) {
-
-            return true;
-
-          }
+      if (
+        variant.sku.toLowerCase() ===
+        normalizedLower
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
 
 
-          /*
-           * Permanent NOVA QR.
-           */
-
-          if (
-            !qrToken
-            ||
-            !candidate.qrToken
-          ) {
-
-            return false;
-
-          }
+      if (
+        variant.barcode &&
+        variant.barcode ===
+        normalized
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
 
 
-          return (
+      if (
+        qrToken &&
+        variant.qrToken &&
+        variant.qrToken.toLowerCase() ===
+        qrToken
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
 
-            candidate.qrToken.toLowerCase()
-            ===
-            qrToken
 
+      if (
+        variant.qrToken &&
+        buildArcVariantBarcodePayload(
+          variant.qrToken,
+        ).toLowerCase() ===
+        normalizedLower
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
+
+
+      const priceBatch =
+        variant.priceBatches
+          ?.find(
+            (
+              batch,
+            ) =>
+              buildArcBatchBarcodePayload(
+                batch.id,
+              ).toLowerCase() ===
+              normalizedLower,
           );
 
-        },
 
-      );
-
-
-    if (
-      variant
-    ) {
-
-      return {
-
-        product,
-
-        variant,
-
-      };
-
+      if (
+        priceBatch
+      ) {
+        return {
+          product,
+          variant,
+          batchId:
+            priceBatch.id,
+        };
+      }
     }
-
   }
 
 
   return null;
-
 }
-
 
 export function flattenInventory(
 
@@ -316,7 +623,17 @@ export function flattenInventory(
 
         (
           variant,
-        ) => ({
+        ) => {
+          const parentVariant =
+            variant.unitParentVariantId
+              ? product.variants.find(
+                  (candidate) =>
+                    candidate.id ===
+                    variant.unitParentVariantId,
+                )
+              : undefined;
+
+          return ({
 
           productId:
             product.id,
@@ -336,8 +653,30 @@ export function flattenInventory(
           qrToken:
             variant.qrToken,
 
+          barcode:
+            variant.barcode,
+
           stock:
             variant.stock,
+
+          cost:
+            variant.cost,
+
+          sellingPrice:
+            variant.regularPrice ??
+            variant.price,
+
+          defaultCost:
+            variant.defaultCost ??
+            variant.cost,
+
+          defaultSellingPrice:
+            variant.defaultPrice ??
+            variant.regularPrice ??
+            variant.price,
+
+          priceBatches:
+            variant.priceBatches,
 
           image:
             product.image,
@@ -347,7 +686,20 @@ export function flattenInventory(
             ??
             5,
 
-        }),
+          unitParentVariantId:
+            variant.unitParentVariantId,
+
+          unitParentVariantName:
+            parentVariant?.name,
+
+          unitsPerParent:
+            variant.unitsPerParent,
+
+          parentStock:
+            parentVariant?.stock,
+
+        });
+        },
 
       ),
 

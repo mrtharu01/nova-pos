@@ -286,7 +286,7 @@ export function ReportDocument({
             <div>
 
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-500">
-                NOVA POS
+                ARC
               </p>
 
 
@@ -1103,7 +1103,7 @@ export function ReportDocument({
 
 
             <p className="mt-1 text-[8px] text-gray-400">
-              NOVA POS · Financial report ·{" "}
+              ARC · Financial report ·{" "}
               {
                 report.startDate
               }{" "}

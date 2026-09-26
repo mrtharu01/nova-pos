@@ -4,7 +4,7 @@ import * as React from "react";
 
 import {
   BrowserCodeReader,
-  BrowserQRCodeReader,
+  BrowserMultiFormatReader,
   type IScannerControls,
 } from "@zxing/browser";
 
@@ -39,6 +39,10 @@ interface ScannerProps {
   ) => boolean | void;
 
   onClose: () => void;
+
+  onUnknownScan?: (
+    value: string,
+  ) => void;
 
   isOpen: boolean;
 
@@ -108,6 +112,7 @@ function stopVideoTracks(
 export function Scanner({
   onScan,
   onClose,
+  onUnknownScan,
   isOpen,
   continuous = false,
 }: ScannerProps) {
@@ -142,6 +147,12 @@ export function Scanner({
   const onCloseRef =
     React.useRef(
       onClose,
+    );
+
+
+  const onUnknownScanRef =
+    React.useRef(
+      onUnknownScan,
     );
 
 
@@ -236,6 +247,14 @@ export function Scanner({
   ]);
 
 
+  React.useEffect(() => {
+    onUnknownScanRef.current =
+      onUnknownScan;
+  }, [
+    onUnknownScan,
+  ]);
+
+
   /* ==========================================================
      STOP CAMERA
   ========================================================== */
@@ -298,7 +317,7 @@ export function Scanner({
 
         /*
          * Avoid repeatedly adding the
-         * same physical QR while it
+         * same physical QR / barcode while it
          * remains visible to the camera.
          */
         if (
@@ -331,8 +350,13 @@ export function Scanner({
         if (
           accepted === false
         ) {
+          onUnknownScanRef.current?.(
+            value,
+          );
+
+
           setScanError(
-            "QR code or SKU was not found in the current catalog.",
+            "QR, barcode, or SKU was not found in the current catalog.",
           );
 
           return;
@@ -418,6 +442,10 @@ export function Scanner({
 
   /* ==========================================================
      START CAMERA
+
+     BrowserMultiFormatReader keeps ARC QR scanning while also
+     decoding manufacturer barcodes from the same camera feed.
+     Deployment retry marker: barcode quick-add rollout.
   ========================================================== */
 
   const startCamera =
@@ -467,7 +495,7 @@ export function Scanner({
 
         try {
           const reader =
-            new BrowserQRCodeReader();
+            new BrowserMultiFormatReader();
 
 
           const controls =
@@ -560,7 +588,7 @@ export function Scanner({
           error
         ) {
           console.error(
-            "NOVA scanner camera error:",
+            "ARC scanner camera error:",
             error,
           );
 
@@ -576,7 +604,7 @@ export function Scanner({
               case "PermissionDeniedError":
 
                 setCameraError(
-                  "Camera permission was blocked. Allow camera access for NOVA and try again.",
+                  "Camera permission was blocked. Allow camera access for ARC and try again.",
                 );
 
                 break;
@@ -778,7 +806,7 @@ export function Scanner({
       error
     ) {
       console.error(
-        "NOVA torch error:",
+        "ARC torch error:",
         error,
       );
 
@@ -1355,7 +1383,7 @@ export function Scanner({
             <div className="relative z-10 mt-8 w-full max-w-sm text-center">
 
               <p className="text-lg font-medium">
-                Point the camera at a NOVA product QR
+                Point the camera at an ARC QR or product barcode
               </p>
 
 
@@ -1496,7 +1524,7 @@ export function Scanner({
                           );
                         }
                       }}
-                      placeholder="Enter SKU / NOVA QR"
+                      placeholder="Enter SKU / barcode / ARC QR"
                       className="
                         h-10
                         rounded-[16px]

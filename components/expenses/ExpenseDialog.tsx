@@ -192,6 +192,12 @@ export function ExpenseDialog({
     >(null);
 
 
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     if (!isOpen) {
       return;
@@ -250,6 +256,10 @@ export function ExpenseDialog({
     setError(
       null,
     );
+
+
+    saveLockRef.current =
+      false;
   }, [
     expense,
     isOpen,
@@ -263,7 +273,10 @@ export function ExpenseDialog({
     event.preventDefault();
 
 
-    if (saving) {
+    if (
+      saveLockRef.current ||
+      saving
+    ) {
       return;
     }
 
@@ -296,6 +309,10 @@ export function ExpenseDialog({
 
       return;
     }
+
+
+    saveLockRef.current =
+      true;
 
 
     setSaving(
@@ -348,6 +365,10 @@ export function ExpenseDialog({
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(
         false,
       );
@@ -378,13 +399,14 @@ export function ExpenseDialog({
           : "Record a business operating expense."
       }
       className="max-h-[calc(100dvh-1rem)] max-w-xl overflow-hidden"
+      contentClassName="flex min-h-0 flex-col !overflow-hidden !pr-0 [scrollbar-gutter:auto]"
     >
 
       <form
         onSubmit={
           handleSubmit
         }
-        className="flex max-h-[calc(100dvh-9rem)] flex-col"
+        className="flex min-h-0 flex-1 flex-col"
       >
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
@@ -408,7 +430,7 @@ export function ExpenseDialog({
 
 
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Stock sold through NOVA already contributes to COGS. Do not enter normal product cost here again.
+                  Stock sold through ARC already contributes to COGS. Do not enter normal product cost here again.
                 </p>
 
               </div>

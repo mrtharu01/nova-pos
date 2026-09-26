@@ -81,12 +81,104 @@ Promise<AccountProfile> {
     ) ??
     user.email
       ?.split("@")[0] ??
-    "NOVA User";
+    "ARC User";
 
 
-  const avatarUrl =
+  const customAvatarPath =
+    stringValue(
+      metadata.nova_avatar_path,
+    );
+
+
+  const legacyAvatarUrl =
     stringValue(
       metadata.avatar_url,
+    );
+
+
+  const legacyCustomMarker =
+    "/storage/v1/object/public/profile-avatars/";
+
+
+  let resolvedCustomPath =
+    customAvatarPath;
+
+
+  if (
+    !resolvedCustomPath &&
+    legacyAvatarUrl?.includes(
+      legacyCustomMarker,
+    )
+  ) {
+    const rawPath =
+      legacyAvatarUrl
+        .split(
+          legacyCustomMarker,
+        )[1]
+        ?.split(
+          "?",
+        )[0];
+
+
+    if (
+      rawPath
+    ) {
+      try {
+        resolvedCustomPath =
+          decodeURIComponent(
+            rawPath,
+          );
+      } catch {
+        resolvedCustomPath =
+          rawPath;
+      }
+    }
+  }
+
+
+  let avatarUrl:
+    string |
+    null =
+      null;
+
+
+  if (
+    resolvedCustomPath
+  ) {
+    const {
+      data:
+        signedData,
+      error:
+        signedError,
+    } =
+      await supabase.storage
+        .from(
+          "profile-avatars",
+        )
+        .createSignedUrl(
+          resolvedCustomPath,
+          60 * 60 * 8,
+        );
+
+
+    if (
+      !signedError &&
+      signedData?.signedUrl
+    ) {
+      avatarUrl =
+        signedData.signedUrl;
+    }
+  }
+
+
+  avatarUrl ??=
+    (
+      legacyAvatarUrl &&
+      !legacyAvatarUrl.includes(
+        legacyCustomMarker,
+      )
+        ? legacyAvatarUrl
+        : null
     ) ??
     stringValue(
       metadata.picture,
@@ -410,33 +502,15 @@ export async function uploadProfileAvatar(
 
 
   const {
-    data: publicUrlData,
-  } =
-    supabase.storage
-      .from(
-        "profile-avatars",
-      )
-      .getPublicUrl(
-        path,
-      );
-
-
-  /*
-   * Cache-busting value means a newly uploaded avatar
-   * immediately replaces the old one in the browser.
-   */
-
-  const avatarUrl =
-    `${publicUrlData.publicUrl}?v=${Date.now()}`;
-
-
-  const {
     error: metadataError,
   } =
     await supabase.auth.updateUser({
       data: {
+        nova_avatar_path:
+          path,
+
         avatar_url:
-          avatarUrl,
+          null,
       },
     });
 
@@ -518,6 +592,9 @@ Promise<AccountProfile> {
   } =
     await supabase.auth.updateUser({
       data: {
+        nova_avatar_path:
+          null,
+
         avatar_url:
           null,
       },

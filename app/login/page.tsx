@@ -99,6 +99,12 @@ export default function LoginPage() {
     );
 
 
+  const actionLockRef =
+    React.useRef(
+      false,
+    );
+
+
   const [
     nextPath,
     setNextPath,
@@ -167,7 +173,9 @@ export default function LoginPage() {
 
 
     if (
-      loading
+      actionLockRef.current ||
+      loading ||
+      resetLoading
     ) {
       return;
     }
@@ -189,6 +197,10 @@ export default function LoginPage() {
 
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setLoading(
@@ -251,20 +263,34 @@ export default function LoginPage() {
 
       router.refresh();
     } catch (cause) {
+      actionLockRef.current =
+        false;
+
+
+      setLoading(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Sign in failed.",
-      );
-    } finally {
-      setLoading(
-        false,
       );
     }
   }
 
 
   async function handleForgotPassword() {
+    if (
+      actionLockRef.current ||
+      loading ||
+      resetLoading
+    ) {
+      return;
+    }
+
+
     const normalizedEmail =
       email
         .trim()
@@ -280,6 +306,10 @@ export default function LoginPage() {
 
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setResetLoading(
@@ -333,14 +363,19 @@ export default function LoginPage() {
         )}`,
       );
     } catch (cause) {
+      actionLockRef.current =
+        false;
+
+
+      setResetLoading(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Password reset email could not be sent.",
-      );
-    } finally {
-      setResetLoading(
-        false,
       );
     }
   }
@@ -354,14 +389,14 @@ export default function LoginPage() {
         <div className="flex items-center gap-4">
 
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
-            N
+            A
           </div>
 
 
           <div>
 
             <p className="text-xl font-black">
-              NOVA POS
+              ARC
             </p>
 
 
@@ -382,7 +417,7 @@ export default function LoginPage() {
 
 
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Owners, managers and cashiers all use the same secure NOVA sign-in.
+            Owners, managers and cashiers all use the same secure ARC sign-in.
           </p>
 
         </div>
@@ -442,6 +477,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 disabled={
+                  loading ||
                   resetLoading
                 }
                 onClick={() =>
@@ -543,7 +579,8 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={
-              loading
+              loading ||
+              resetLoading
             }
             className="flex h-[52px] w-full items-center justify-center rounded-[15px] bg-indigo-500 px-5 font-bold transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
           >

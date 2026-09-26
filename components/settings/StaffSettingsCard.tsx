@@ -223,6 +223,47 @@ export function StaffSettingsCard() {
     );
 
 
+  const actionLocksRef =
+    React.useRef(
+      new Set<string>(),
+    );
+
+
+  const feedbackRef =
+    React.useRef<
+      HTMLDivElement | null
+    >(
+      null,
+    );
+
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !success
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    success,
+  ]);
+
+
   /* ==========================================================
      LOAD STAFF + INVITATIONS
   ========================================================== */
@@ -309,6 +350,9 @@ export function StaffSettingsCard() {
 
   async function handleInvite() {
     if (
+      actionLocksRef.current.has(
+        "invite",
+      ) ||
       !business?.id ||
       inviting
     ) {
@@ -334,6 +378,11 @@ export function StaffSettingsCard() {
 
       return;
     }
+
+
+    actionLocksRef.current.add(
+      "invite",
+    );
 
 
     setInviting(
@@ -372,7 +421,7 @@ export function StaffSettingsCard() {
         "existing_user_added"
       ) {
         setSuccess(
-          "This person already had a verified NOVA account, so access was added immediately.",
+          "This person already had a verified ARC account, so access was added immediately.",
         );
       } else {
         setSuccess(
@@ -389,6 +438,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        "invite",
+      );
+
+
       setInviting(
         false,
       );
@@ -413,6 +467,20 @@ export function StaffSettingsCard() {
 
     const busyKey =
       `resend-${invitation.id}`;
+
+
+    if (
+      actionLocksRef.current.has(
+        busyKey,
+      )
+    ) {
+      return;
+    }
+
+
+    actionLocksRef.current.add(
+      busyKey,
+    );
 
 
     setBusyId(
@@ -447,7 +515,7 @@ export function StaffSettingsCard() {
         "existing_user_added"
       ) {
         setSuccess(
-          `${invitation.email} now has active NOVA access.`,
+          `${invitation.email} now has active ARC access.`,
         );
       } else {
         setSuccess(
@@ -464,6 +532,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        busyKey,
+      );
+
+
       setBusyId(
         null,
       );
@@ -481,6 +554,20 @@ export function StaffSettingsCard() {
   ) {
     const busyKey =
       `revoke-${invitation.id}`;
+
+
+    if (
+      actionLocksRef.current.has(
+        busyKey,
+      )
+    ) {
+      return;
+    }
+
+
+    actionLocksRef.current.add(
+      busyKey,
+    );
 
 
     setBusyId(
@@ -515,6 +602,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        busyKey,
+      );
+
+
       setBusyId(
         null,
       );
@@ -540,10 +632,18 @@ export function StaffSettingsCard() {
   ) {
     if (
       !business?.id ||
-      !member.staffId
+      !member.staffId ||
+      actionLocksRef.current.has(
+        member.staffId,
+      )
     ) {
       return;
     }
+
+
+    actionLocksRef.current.add(
+      member.staffId,
+    );
 
 
     setBusyId(
@@ -596,6 +696,11 @@ export function StaffSettingsCard() {
         ),
       );
     } finally {
+      actionLocksRef.current.delete(
+        member.staffId,
+      );
+
+
       setBusyId(
         null,
       );
@@ -682,7 +787,7 @@ export function StaffSettingsCard() {
 
           <p className="text-sm leading-6 text-muted-foreground">
             Invite a cashier or manager by email.
-            New staff will receive a secure NOVA account setup link.
+            New staff will receive a secure ARC account setup link.
           </p>
         </CardHeader>
 
@@ -804,7 +909,12 @@ export function StaffSettingsCard() {
       ====================================================== */}
 
       {error && (
-        <div className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <div
+          ref={
+            feedbackRef
+          }
+          className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+        >
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
           <span>
@@ -815,7 +925,12 @@ export function StaffSettingsCard() {
 
 
       {success && (
-        <div className="flex items-start gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300">
+        <div
+          ref={
+            feedbackRef
+          }
+          className="flex items-start gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300"
+        >
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
 
           <span>
@@ -1025,7 +1140,7 @@ export function StaffSettingsCard() {
               </CardTitle>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Control active NOVA access and staff roles.
+                Control active ARC access and staff roles.
               </p>
             </div>
 

@@ -3,6 +3,10 @@
 import * as React from "react";
 
 import {
+  createClient,
+} from "@/lib/supabase/client";
+
+import {
   fetchDashboardReport,
 } from "@/lib/data/dashboard";
 
@@ -13,6 +17,25 @@ import {
 } from "@/lib/domain/dashboard";
 
 
+type LiveStatus =
+  | "connecting"
+  | "live"
+  | "offline";
+
+
+const LIVE_TABLES = [
+  "sales",
+  "sale_items",
+  "payments",
+  "sale_refunds",
+  "sale_refund_items",
+  "sale_voids",
+  "inventory_levels",
+  "products",
+  "product_variants",
+] as const;
+
+
 export function useDashboardReport(
   businessId:
     | string
@@ -21,6 +44,14 @@ export function useDashboardReport(
   preset:
     DashboardRangePreset,
 ) {
+  const supabase =
+    React.useMemo(
+      () =>
+        createClient(),
+      [],
+    );
+
+
   const [
     report,
     setReport,
@@ -36,6 +67,15 @@ export function useDashboardReport(
   ] =
     React.useState(
       true,
+    );
+
+
+  const [
+    syncing,
+    setSyncing,
+  ] =
+    React.useState(
+      false,
     );
 
 
@@ -57,6 +97,48 @@ export function useDashboardReport(
     );
 
 
+  const [
+    liveStatus,
+    setLiveStatus,
+  ] =
+    React.useState<
+      LiveStatus
+    >(
+      "connecting",
+    );
+
+
+  const [
+    lastUpdatedAt,
+    setLastUpdatedAt,
+  ] =
+    React.useState<
+      string | null
+    >(
+      null,
+    );
+
+
+  const requestIdRef =
+    React.useRef(
+      0,
+    );
+
+
+  const hasReportRef =
+    React.useRef(
+      false,
+    );
+
+
+  const liveRefreshTimerRef =
+    React.useRef<
+      number | null
+    >(
+      null,
+    );
+
+
   const range =
     React.useMemo(
       () =>
@@ -69,10 +151,34 @@ export function useDashboardReport(
     );
 
 
+  /* ==========================================================
+     REPORT LOAD
+
+     Initial loads show the full skeleton.
+     Realtime updates refresh quietly in the background.
+  ========================================================== */
+
   React.useEffect(() => {
     if (
       !businessId
     ) {
+      setReport(
+        null,
+      );
+
+
+      hasReportRef.current =
+        false;
+
+
+      setLoading(
+        false,
+      );
+
+      setSyncing(
+        false,
+      );
+
       return;
     }
 
@@ -81,10 +187,27 @@ export function useDashboardReport(
       false;
 
 
+    const requestId =
+      ++requestIdRef.current;
+
+
     async function load() {
-      setLoading(
-        true,
-      );
+      const background =
+        hasReportRef.current;
+
+
+      if (
+        background
+      ) {
+        setSyncing(
+          true,
+        );
+      } else {
+        setLoading(
+          true,
+        );
+      }
+
 
       setError(
         null,
@@ -106,7 +229,9 @@ export function useDashboardReport(
 
 
         if (
-          cancelled
+          cancelled ||
+          requestId !==
+            requestIdRef.current
         ) {
           return;
         }
@@ -115,9 +240,21 @@ export function useDashboardReport(
         setReport(
           result,
         );
+
+
+        hasReportRef.current =
+          true;
+
+
+        setLastUpdatedAt(
+          new Date()
+            .toISOString(),
+        );
       } catch (cause) {
         if (
-          cancelled
+          cancelled ||
+          requestId !==
+            requestIdRef.current
         ) {
           return;
         }
@@ -131,12 +268,22 @@ export function useDashboardReport(
         );
       } finally {
         if (
-          !cancelled
+          cancelled ||
+          requestId !==
+            requestIdRef.current
         ) {
-          setLoading(
-            false,
-          );
+          return;
         }
+
+
+        setLoading(
+          false,
+        );
+
+
+        setSyncing(
+          false,
+        );
       }
     }
 
@@ -156,9 +303,175 @@ export function useDashboardReport(
   ]);
 
 
+  /* ==========================================================
+     LIVE DATABASE WRAPPER
+
+     Any relevant tenant-scoped database change schedules a
+     single quiet refresh. Multiple writes from one checkout are
+     collapsed into one refresh so checkout does not cause a
+     burst of report requests.
+  ========================================================== */
+
+  React.useEffect(() => {
+    if (
+      !businessId
+    ) {
+      setLiveStatus(
+        "offline",
+      );
+
+      return;
+    }
+
+
+    setLiveStatus(
+      "connecting",
+    );
+
+
+    function scheduleRefresh() {
+      if (
+        liveRefreshTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          liveRefreshTimerRef.current,
+        );
+      }
+
+
+      liveRefreshTimerRef.current =
+        window.setTimeout(
+          () => {
+            liveRefreshTimerRef.current =
+              null;
+
+
+            setRefreshKey(
+              (
+                value,
+              ) =>
+                value + 1,
+            );
+          },
+          350,
+        );
+    }
+
+
+    const channel =
+      supabase.channel(
+        `nova-dashboard-live-${businessId}`,
+      );
+
+
+    for (
+      const table of
+      LIVE_TABLES
+    ) {
+      channel.on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+
+          schema:
+            "public",
+
+          table,
+
+          filter:
+            `business_id=eq.${businessId}`,
+        },
+        scheduleRefresh,
+      );
+    }
+
+
+    channel.subscribe(
+      (
+        status:
+          string,
+      ) => {
+        if (
+          status ===
+          "SUBSCRIBED"
+        ) {
+          setLiveStatus(
+            "live",
+          );
+
+          return;
+        }
+
+
+        if (
+          status ===
+            "CHANNEL_ERROR" ||
+          status ===
+            "TIMED_OUT" ||
+          status ===
+            "CLOSED"
+        ) {
+          setLiveStatus(
+            "offline",
+          );
+        }
+      },
+    );
+
+
+    function refreshOnFocus() {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        scheduleRefresh();
+      }
+    }
+
+
+    document.addEventListener(
+      "visibilitychange",
+      refreshOnFocus,
+    );
+
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        refreshOnFocus,
+      );
+
+
+      if (
+        liveRefreshTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          liveRefreshTimerRef.current,
+        );
+
+        liveRefreshTimerRef.current =
+          null;
+      }
+
+
+      void supabase.removeChannel(
+        channel,
+      );
+    };
+  }, [
+    businessId,
+    supabase,
+  ]);
+
+
   function refresh() {
     setRefreshKey(
-      (value) =>
+      (
+        value,
+      ) =>
         value + 1,
     );
   }
@@ -167,8 +480,11 @@ export function useDashboardReport(
   return {
     report,
     loading,
+    syncing,
     error,
     refresh,
     range,
+    liveStatus,
+    lastUpdatedAt,
   };
 }

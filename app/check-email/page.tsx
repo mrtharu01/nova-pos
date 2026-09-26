@@ -48,8 +48,8 @@ export default function CheckEmailPage() {
 
         <p className="mt-3 text-sm leading-7 text-slate-400">
           {purpose === "signup"
-            ? "NOVA sent a verification link to"
-            : "NOVA sent a password reset link to"}
+            ? "ARC sent a verification link to"
+            : "ARC sent a password reset link to"}
         </p>
 
         {email && (
@@ -62,9 +62,9 @@ export default function CheckEmailPage() {
           {purpose === "signup" ? (
             <>
               Open the verification email
-              from Supabase/NOVA and
+              from Supabase/ARC and
               confirm your address. You
-              will then continue to NOVA
+              will then continue to ARC
               business setup.
             </>
           ) : (

@@ -82,7 +82,7 @@ function initials(
     pieces.length ===
     0
   ) {
-    return "NV";
+    return "AR";
   }
 
 
@@ -118,6 +118,12 @@ export function ProfileDialog({
   const fileInputRef =
     React.useRef<HTMLInputElement | null>(
       null,
+    );
+
+
+  const actionLockRef =
+    React.useRef(
+      false,
     );
 
 
@@ -285,6 +291,7 @@ export function ProfileDialog({
 
   async function handleSave() {
     if (
+      actionLockRef.current ||
       saving ||
       uploading ||
       removing
@@ -302,6 +309,10 @@ export function ProfileDialog({
 
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setSaving(true);
@@ -339,6 +350,10 @@ export function ProfileDialog({
         ),
       );
     } finally {
+      actionLockRef.current =
+        false;
+
+
       setSaving(false);
     }
   }
@@ -355,12 +370,17 @@ export function ProfileDialog({
   ) {
     if (
       !file ||
+      actionLockRef.current ||
       uploading ||
       saving ||
       removing
     ) {
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setUploading(true);
@@ -385,6 +405,10 @@ export function ProfileDialog({
         ),
       );
     } finally {
+      actionLockRef.current =
+        false;
+
+
       setUploading(false);
 
 
@@ -404,12 +428,17 @@ export function ProfileDialog({
 
   async function handleRemovePhoto() {
     if (
+      actionLockRef.current ||
       removing ||
       uploading ||
       saving
     ) {
       return;
     }
+
+
+    actionLockRef.current =
+      true;
 
 
     setRemoving(true);
@@ -432,6 +461,10 @@ export function ProfileDialog({
         ),
       );
     } finally {
+      actionLockRef.current =
+        false;
+
+
       setRemoving(false);
     }
   }
@@ -474,7 +507,7 @@ export function ProfileDialog({
           : onClose
       }
       title="Profile"
-      description="Manage your NOVA account profile."
+      description="Manage your ARC account profile."
       className="max-h-[calc(100dvh-2rem)] max-w-lg overflow-hidden"
     >
 
@@ -488,9 +521,7 @@ export function ProfileDialog({
 
       ) : profile ? (
 
-        <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
-
-          <div className="space-y-5 pb-1">
+        <div className="space-y-5 pb-1">
 
             {/* ===============================================
                 AVATAR
@@ -614,7 +645,7 @@ export function ProfileDialog({
 
 
               <p className="mt-2 text-[11px] text-muted-foreground">
-                JPG, PNG or WebP. NOVA automatically converts the image to WebP.
+                JPG, PNG or WebP. ARC automatically converts the image to WebP.
               </p>
 
             </div>
@@ -793,8 +824,6 @@ export function ProfileDialog({
 
             </div>
 
-          </div>
-
         </div>
 
       ) : (
@@ -812,7 +841,7 @@ export function ProfileDialog({
           <p className="mt-1 text-sm text-destructive">
             {
               error ??
-              "NOVA could not load your account."
+              "ARC could not load your account."
             }
           </p>
 

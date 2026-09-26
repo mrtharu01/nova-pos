@@ -12,6 +12,10 @@ export type ReceiptSettings = {
   paperWidth: ReceiptPaperWidth;
 
   autoPrint: boolean;
+
+  logoUrl?: string;
+
+  logoPath?: string;
 
   displayName?: string;
 
@@ -46,6 +50,10 @@ export type ReceiptItem = {
   quantity: number;
 
   unitPrice: number;
+
+  regularUnitPrice: number;
+
+  productDiscountTotal: number;
 
   lineSubtotal: number;
 

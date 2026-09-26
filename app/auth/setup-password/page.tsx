@@ -132,6 +132,12 @@ export default function StaffSetupPasswordPage() {
     );
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     async function initialize() {
       try {
@@ -285,7 +291,7 @@ export default function StaffSetupPasswordPage() {
         setError(
           cause instanceof Error
             ? cause.message
-            : "NOVA could not prepare this staff invitation.",
+            : "ARC could not prepare this staff invitation.",
         );
       } finally {
         setLoading(
@@ -309,6 +315,7 @@ export default function StaffSetupPasswordPage() {
 
 
     if (
+      requestLockRef.current ||
       saving ||
       !invitation
     ) {
@@ -340,6 +347,10 @@ export default function StaffSetupPasswordPage() {
     }
 
 
+    requestLockRef.current =
+      true;
+
+
     setSaving(
       true,
     );
@@ -355,7 +366,7 @@ export default function StaffSetupPasswordPage() {
 
 
       /*
-       * First create the staff member's permanent NOVA
+       * First create the staff member's permanent ARC
        * password.
        */
 
@@ -414,14 +425,19 @@ export default function StaffSetupPasswordPage() {
 
       router.refresh();
     } catch (cause) {
+      requestLockRef.current =
+        false;
+
+
+      setSaving(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Account setup failed.",
-      );
-    } finally {
-      setSaving(
-        false,
       );
     }
   }
@@ -439,7 +455,7 @@ export default function StaffSetupPasswordPage() {
 
 
           <p className="mt-4 text-sm text-slate-400">
-            Preparing your NOVA account…
+            Preparing your ARC account…
           </p>
 
         </div>
@@ -457,14 +473,14 @@ export default function StaffSetupPasswordPage() {
         <div className="flex items-center gap-4">
 
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
-            N
+            A
           </div>
 
 
           <div>
 
             <p className="text-xl font-black">
-              NOVA POS
+              ARC
             </p>
 
 
@@ -507,7 +523,7 @@ export default function StaffSetupPasswordPage() {
 
 
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Your invitation has been verified. Create your password to finish joining this NOVA workspace.
+                Your invitation has been verified. Create your password to finish joining this ARC workspace.
               </p>
 
             </div>

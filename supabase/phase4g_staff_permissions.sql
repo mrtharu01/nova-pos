@@ -48,6 +48,17 @@ begin
   end if;
 
 
+  if not (
+    select private.is_business_member(
+      p_business_id
+    )
+  ) then
+    raise exception
+      'You do not have active access to this business'
+      using errcode = '42501';
+  end if;
+
+
   select
     business.owner_user_id
   into

@@ -129,7 +129,7 @@ export async function fetchSalesList(): Promise<
 
   if (error) {
     console.error(
-      "NOVA sales query failed:",
+      "ARC sales query failed:",
       error,
     );
 

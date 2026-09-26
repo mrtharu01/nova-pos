@@ -13,17 +13,13 @@ export function isDemoMode() {
    *
    * It can only be enabled intentionally with:
    *
-   * NEXT_PUBLIC_NOVA_DEMO_MODE=true
+   * NEXT_PUBLIC_ARC_DEMO_MODE=true
    */
   return (
-    process.env.NEXT_PUBLIC_NOVA_DEMO_MODE ===
+    (
+      process.env.NEXT_PUBLIC_ARC_DEMO_MODE ??
+      process.env.NEXT_PUBLIC_NOVA_DEMO_MODE
+    ) ===
     "true"
-  );
-}
-
-export function getConfiguredBusinessId() {
-  return (
-    process.env.NEXT_PUBLIC_NOVA_BUSINESS_ID?.trim() ||
-    null
   );
 }

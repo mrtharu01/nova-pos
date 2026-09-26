@@ -281,11 +281,11 @@ export async function POST(
 
 
     /* ========================================================
-       CONFIRMED EXISTING NOVA USER
+       CONFIRMED EXISTING ARC USER
        
        No setup email is necessary.
        
-       Their existing NOVA password remains unchanged.
+       Their existing ARC password remains unchanged.
     ======================================================== */
 
     if (
@@ -300,7 +300,7 @@ export async function POST(
           "existing_user_added",
 
         message:
-          "Existing NOVA account added to this business.",
+          "Existing ARC account added to this business.",
       });
     }
 
@@ -339,7 +339,7 @@ export async function POST(
        1. Previous Supabase staff invitation account
           → safe to remove and recreate the invitation user.
        
-       2. Normal NOVA signup waiting for email verification
+       2. Normal ARC signup waiting for email verification
           → DO NOT delete.
     ======================================================== */
 
@@ -378,7 +378,7 @@ export async function POST(
           {
             error:
               existingUserError?.message ??
-              "Existing NOVA account could not be inspected.",
+              "Existing ARC account could not be inspected.",
           },
           {
             status:
@@ -464,7 +464,7 @@ export async function POST(
               "existing_user_added",
 
             message:
-              "Existing NOVA account added to this business.",
+              "Existing ARC account added to this business.",
           });
         }
 
@@ -506,7 +506,7 @@ export async function POST(
         return NextResponse.json(
           {
             error:
-              "This email already has an unverified NOVA account. Ask the user to verify that account first, then send the staff invitation again.",
+              "This email already has an unverified ARC account. Ask the user to verify that account first, then send the staff invitation again.",
           },
           {
             status:
@@ -595,7 +595,7 @@ export async function POST(
 
               nova_business_name:
                 result.businessName ??
-                "NOVA Business",
+                "ARC Business",
 
               nova_role:
                 role,

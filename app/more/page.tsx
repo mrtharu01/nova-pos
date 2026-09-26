@@ -6,7 +6,9 @@ import Link from "next/link";
 
 import {
   Archive,
+  BadgeDollarSign,
   BarChart3,
+  Barcode,
   CreditCard,
   LogOut,
   Package,
@@ -80,6 +82,13 @@ const ITEMS:
     },
 
     {
+      href: "/barcodes",
+      label: "Barcodes",
+      icon: Barcode,
+      requirement: "manager",
+    },
+
+    {
       href: "/reports",
       label: "Reports",
       icon: BarChart3,
@@ -91,6 +100,13 @@ const ITEMS:
       label: "Expenses",
       icon: CreditCard,
       requirement: "manager",
+    },
+
+    {
+      href: "/billing",
+      label: "Plan & Billing",
+      icon: BadgeDollarSign,
+      requirement: "owner",
     },
 
     {
@@ -220,7 +236,7 @@ export default function MorePage() {
 
           <p className="font-semibold">
             {business?.name ??
-              "NOVA Account"}
+              "ARC Account"}
           </p>
 
 

@@ -35,7 +35,7 @@ type CurrentBusinessSnapshot = {
 const DEMO_BUSINESS: CurrentBusiness = {
   id: "demo",
 
-  name: "NOVA Demo Store",
+  name: "ARC Demo Store",
 
   currency_code: "LKR",
 
@@ -95,19 +95,9 @@ async function loadCurrentBusinessSnapshot() {
         await Promise.all([
           supabase.auth.getUser(),
 
-          supabase
-            .from(
-              "businesses",
-            )
-            .select(
-              `
-              id,
-              name,
-              currency_code,
-              timezone
-              `,
-            )
-            .limit(1),
+          supabase.rpc(
+            "get_my_current_business",
+          ),
         ]);
 
 
@@ -210,7 +200,7 @@ export function useCurrentBusiness() {
     React.useState(
       () =>
         demo
-          ? "demo@nova.local"
+          ? "demo@arc.local"
           : configured
             ? cachedSnapshot?.email ??
               ""
@@ -256,7 +246,7 @@ export function useCurrentBusiness() {
     >(
       !demo &&
         !configured
-        ? "Supabase is not configured. Check the NOVA environment variables."
+        ? "Supabase is not configured. Check the ARC environment variables."
         : null,
     );
 
@@ -275,7 +265,7 @@ export function useCurrentBusiness() {
 
     if (demo) {
       setEmail(
-        "demo@nova.local",
+        "demo@arc.local",
       );
 
       setBusiness(
@@ -317,7 +307,7 @@ export function useCurrentBusiness() {
       );
 
       setError(
-        "Supabase is not configured. Check the NOVA environment variables.",
+        "Supabase is not configured. Check the ARC environment variables.",
       );
 
       return;

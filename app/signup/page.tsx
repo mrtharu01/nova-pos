@@ -83,6 +83,12 @@ export default function SignupPage() {
     );
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   async function handleSubmit(
     event:
       React.FormEvent<HTMLFormElement>,
@@ -91,6 +97,7 @@ export default function SignupPage() {
 
 
     if (
+      requestLockRef.current ||
       loading
     ) {
       return;
@@ -136,6 +143,10 @@ export default function SignupPage() {
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setLoading(
@@ -225,14 +236,19 @@ export default function SignupPage() {
 
       router.refresh();
     } catch (cause) {
+      requestLockRef.current =
+        false;
+
+
+      setLoading(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Account creation failed.",
-      );
-    } finally {
-      setLoading(
-        false,
       );
     }
   }
@@ -246,14 +262,14 @@ export default function SignupPage() {
         <div className="flex items-center gap-4">
 
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
-            N
+            A
           </div>
 
 
           <div>
 
             <p className="text-xl font-black">
-              NOVA POS
+              ARC
             </p>
 
 
@@ -274,8 +290,8 @@ export default function SignupPage() {
 
 
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Create your NOVA account.
-            After verification, NOVA will automatically determine the correct workspace setup.
+            Create your ARC account.
+            After verification, ARC will automatically determine the correct workspace setup.
           </p>
 
         </div>

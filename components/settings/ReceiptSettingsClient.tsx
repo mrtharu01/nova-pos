@@ -4,12 +4,14 @@ import * as React from "react";
 
 import {
   CheckCircle2,
+  ImagePlus,
   Loader2,
   Printer,
   ReceiptText,
   RotateCcw,
   Save,
   Settings2,
+  Trash2,
   TriangleAlert,
 } from "lucide-react";
 
@@ -39,6 +41,11 @@ import {
 import {
   useCurrentBusiness,
 } from "@/hooks/use-current-business";
+
+import {
+  deleteReceiptLogo,
+  uploadReceiptLogo,
+} from "@/lib/data/receipt-logo";
 
 import {
   fetchReceiptSettings,
@@ -103,6 +110,10 @@ export function ReceiptSettingsClient({
     useCurrentBusiness();
 
 
+  const businessId =
+    business?.id;
+
+
   const [
     settings,
     setSettings,
@@ -159,16 +170,117 @@ export function ReceiptSettingsClient({
     >(null);
 
 
+  const [
+    pendingLogoFile,
+    setPendingLogoFile,
+  ] =
+    React.useState<
+      File | null
+    >(
+      null,
+    );
+
+
+  const [
+    pendingLogoPreview,
+    setPendingLogoPreview,
+  ] =
+    React.useState<
+      string | null
+    >(
+      null,
+    );
+
+
+  const [
+    logoRemovalRequested,
+    setLogoRemovalRequested,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const logoInputRef =
+    React.useRef<
+      HTMLInputElement | null
+    >(
+      null,
+    );
+
+
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
+  const feedbackRef =
+    React.useRef<
+      HTMLDivElement | null
+    >(
+      null,
+    );
+
+
+  React.useEffect(
+    () =>
+      () => {
+        if (
+          pendingLogoPreview
+        ) {
+          URL.revokeObjectURL(
+            pendingLogoPreview,
+          );
+        }
+      },
+    [
+      pendingLogoPreview,
+    ],
+  );
+
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !success
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    success,
+  ]);
+
+
   /* ==========================================================
      LOAD SETTINGS
   ========================================================== */
 
   React.useEffect(() => {
     if (
-      !business?.id
+      !businessId
     ) {
       return;
     }
+
+
+    const currentBusinessId =
+      businessId;
 
 
     let cancelled =
@@ -188,7 +300,7 @@ export function ReceiptSettingsClient({
       try {
         const result =
           await fetchReceiptSettings(
-            business!.id,
+            currentBusinessId,
           );
 
 
@@ -240,7 +352,7 @@ export function ReceiptSettingsClient({
         true;
     };
   }, [
-    business?.id,
+    businessId,
   ]);
 
 
@@ -251,17 +363,25 @@ export function ReceiptSettingsClient({
   const dirty =
     React.useMemo(
       () =>
-        savedSettings
-          ? JSON.stringify(
-              settings,
-            ) !==
-            JSON.stringify(
-              savedSettings,
-            )
-          : false,
+        Boolean(
+          pendingLogoFile,
+        ) ||
+        logoRemovalRequested ||
+        (
+          savedSettings
+            ? JSON.stringify(
+                settings,
+              ) !==
+              JSON.stringify(
+                savedSettings,
+              )
+            : false
+        ),
       [
         settings,
         savedSettings,
+        pendingLogoFile,
+        logoRemovalRequested,
       ],
     );
 
@@ -299,13 +419,144 @@ export function ReceiptSettingsClient({
   }
 
 
+  function chooseLogo(
+    file:
+      File | null,
+  ) {
+    if (
+      !file
+    ) {
+      return;
+    }
+
+
+    if (
+      ![
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ].includes(
+        file.type,
+      )
+    ) {
+      setError(
+        "Use a JPG, PNG, or WebP image for the receipt logo.",
+      );
+
+
+      return;
+    }
+
+
+    if (
+      file.size >
+      12 * 1024 * 1024
+    ) {
+      setError(
+        "The original logo image must be 12 MB or smaller.",
+      );
+
+
+      return;
+    }
+
+
+    if (
+      pendingLogoPreview
+    ) {
+      URL.revokeObjectURL(
+        pendingLogoPreview,
+      );
+    }
+
+
+    setPendingLogoFile(
+      file,
+    );
+
+
+    setPendingLogoPreview(
+      URL.createObjectURL(
+        file,
+      ),
+    );
+
+
+    setLogoRemovalRequested(
+      false,
+    );
+
+
+    setError(
+      null,
+    );
+
+
+    setSuccess(
+      null,
+    );
+  }
+
+
+  function removeLogo() {
+    if (
+      pendingLogoPreview
+    ) {
+      URL.revokeObjectURL(
+        pendingLogoPreview,
+      );
+    }
+
+
+    setPendingLogoFile(
+      null,
+    );
+
+
+    setPendingLogoPreview(
+      null,
+    );
+
+
+    setLogoRemovalRequested(
+      true,
+    );
+
+
+    setSettings(
+      (
+        current,
+      ) => ({
+        ...current,
+
+        logoUrl:
+          "",
+
+        logoPath:
+          "",
+      }),
+    );
+
+
+    setError(
+      null,
+    );
+
+
+    setSuccess(
+      null,
+    );
+  }
+
+
   /* ==========================================================
      SAVE
   ========================================================== */
 
   async function save() {
     if (
-      !business?.id ||
+      saveLockRef.current ||
+      !businessId ||
       saving
     ) {
       return;
@@ -337,6 +588,10 @@ export function ReceiptSettingsClient({
     }
 
 
+    saveLockRef.current =
+      true;
+
+
     setSaving(
       true,
     );
@@ -352,12 +607,93 @@ export function ReceiptSettingsClient({
     );
 
 
+    let uploadedLogo:
+      Awaited<
+        ReturnType<
+          typeof uploadReceiptLogo
+        >
+      > | null =
+        null;
+
+
     try {
+      const previousLogoPath =
+        savedSettings?.logoPath ??
+        "";
+
+
+      let nextSettings:
+        ReceiptSettingsForm = {
+          ...settings,
+        };
+
+
+      if (
+        pendingLogoFile
+      ) {
+        uploadedLogo =
+          await uploadReceiptLogo({
+            businessId:
+              business.id,
+
+            file:
+              pendingLogoFile,
+          });
+
+
+        nextSettings = {
+          ...nextSettings,
+
+          logoUrl:
+            uploadedLogo.signedUrl,
+
+          logoPath:
+            uploadedLogo.path,
+        };
+      } else if (
+        logoRemovalRequested
+      ) {
+        nextSettings = {
+          ...nextSettings,
+
+          logoUrl:
+            "",
+
+          logoPath:
+            "",
+        };
+      }
+
+
       const saved =
         await saveReceiptSettings(
           business.id,
-          settings,
+          nextSettings,
         );
+
+
+      if (
+        pendingLogoPreview
+      ) {
+        URL.revokeObjectURL(
+          pendingLogoPreview,
+        );
+      }
+
+
+      setPendingLogoFile(
+        null,
+      );
+
+
+      setPendingLogoPreview(
+        null,
+      );
+
+
+      setLogoRemovalRequested(
+        false,
+      );
 
 
       setSettings(
@@ -370,8 +706,27 @@ export function ReceiptSettingsClient({
       );
 
 
+      if (
+        previousLogoPath &&
+        previousLogoPath !==
+          saved.logoPath
+      ) {
+        void deleteReceiptLogo(
+          previousLogoPath,
+        ).catch(
+          () => {
+            // Settings already point to the new logo.
+            // Old-file cleanup is best-effort only.
+          },
+        );
+      }
+
+
       setSuccess(
-        "Receipt settings saved successfully.",
+        pendingLogoFile ||
+        logoRemovalRequested
+          ? "Receipt logo and settings saved successfully."
+          : "Receipt settings saved successfully.",
       );
 
 
@@ -384,12 +739,29 @@ export function ReceiptSettingsClient({
         2500,
       );
     } catch (cause) {
+      if (
+        uploadedLogo?.path
+      ) {
+        try {
+          await deleteReceiptLogo(
+            uploadedLogo.path,
+          );
+        } catch {
+          // Preserve the original save error.
+        }
+      }
+
+
       setError(
         getErrorMessage(
           cause,
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(
         false,
       );
@@ -405,6 +777,30 @@ export function ReceiptSettingsClient({
     if (
       savedSettings
     ) {
+      if (
+        pendingLogoPreview
+      ) {
+        URL.revokeObjectURL(
+          pendingLogoPreview,
+        );
+      }
+
+
+      setPendingLogoFile(
+        null,
+      );
+
+
+      setPendingLogoPreview(
+        null,
+      );
+
+
+      setLogoRemovalRequested(
+        false,
+      );
+
+
       setSettings({
         ...savedSettings,
       });
@@ -498,7 +894,7 @@ export function ReceiptSettingsClient({
 
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Configure how NOVA receipts look and behave when a sale is completed.
+              Configure how ARC receipts look and behave when a sale is completed.
             </p>
 
           </div>
@@ -566,7 +962,12 @@ export function ReceiptSettingsClient({
 
         {error && (
 
-          <div className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <div
+            ref={
+              feedbackRef
+            }
+            className="flex items-start gap-2 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+          >
 
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
@@ -579,7 +980,12 @@ export function ReceiptSettingsClient({
 
         {success && (
 
-          <div className="flex items-start gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300">
+          <div
+            ref={
+              feedbackRef
+            }
+            className="flex items-start gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-300"
+          >
 
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
 
@@ -712,7 +1118,7 @@ export function ReceiptSettingsClient({
 
                 <SettingToggle
                   title="Open print dialog automatically"
-                  description="After a successful sale NOVA automatically opens the browser print dialog."
+                  description="After a successful sale ARC automatically opens the browser print dialog."
                   checked={
                     settings.autoPrint
                   }
@@ -731,7 +1137,7 @@ export function ReceiptSettingsClient({
 
                   Normal browsers cannot silently print without showing the system print dialog.
 
-                  Dedicated direct-print support can be added later for NOVA's desktop/offline mode.
+                  Web deployments use the browser and operating system print flow.
 
                 </div>
 
@@ -756,6 +1162,158 @@ export function ReceiptSettingsClient({
 
 
               <CardContent className="grid gap-4 sm:grid-cols-2">
+
+                <div className="sm:col-span-2">
+
+                  <input
+                    ref={
+                      logoInputRef
+                    }
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(
+                      event,
+                    ) => {
+                      chooseLogo(
+                        event.target
+                          .files?.[0] ??
+                        null,
+                      );
+
+
+                      event.currentTarget.value =
+                        "";
+                    }}
+                  />
+
+
+                  <div className="rounded-[18px] border bg-muted/20 p-4">
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+
+                      <div className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border bg-white p-3">
+
+                        {(
+                          pendingLogoPreview ||
+                          settings.logoUrl
+                        ) ? (
+
+                          <img
+                            src={
+                              pendingLogoPreview ??
+                              settings.logoUrl
+                            }
+                            alt="Receipt logo preview"
+                            className="max-h-full max-w-full object-contain"
+                          />
+
+                        ) : (
+
+                          <div className="text-center text-muted-foreground">
+
+                            <ImagePlus className="mx-auto h-6 w-6" />
+
+
+                            <p className="mt-2 text-[10px] font-medium">
+                              No logo
+                            </p>
+
+                          </div>
+
+                        )}
+
+                      </div>
+
+
+                      <div className="min-w-0 flex-1">
+
+                        <p className="text-sm font-semibold">
+                          Business logo
+                        </p>
+
+
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                          JPG, PNG or WebP. ARC converts it to an optimized WebP for thermal receipts.
+                        </p>
+
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-[12px]"
+                            disabled={
+                              saving
+                            }
+                            onClick={() =>
+                              logoInputRef.current
+                                ?.click()
+                            }
+                          >
+
+                            <ImagePlus className="mr-2 h-4 w-4" />
+
+                            {(
+                              pendingLogoPreview ||
+                              settings.logoUrl
+                            )
+                              ? "Replace Logo"
+                              : "Upload Logo"}
+
+                          </Button>
+
+
+                          {(
+                            pendingLogoPreview ||
+                            settings.logoUrl
+                          ) && (
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-[12px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              disabled={
+                                saving
+                              }
+                              onClick={
+                                removeLogo
+                              }
+                            >
+
+                              <Trash2 className="mr-2 h-4 w-4" />
+
+                              Remove
+
+                            </Button>
+
+                          )}
+
+                        </div>
+
+
+                        {pendingLogoFile && (
+
+                          <p className="mt-2 truncate text-[10px] text-primary">
+                            Ready to upload:{" "}
+                            {
+                              pendingLogoFile.name
+                            }
+                          </p>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
 
                 <Field
                   label="Display name"
@@ -1049,11 +1607,15 @@ export function ReceiptSettingsClient({
                       }
                       businessName={
                         business?.name ??
-                        "NOVA POS"
+                        "ARC"
                       }
                       currencyCode={
                         business?.currency_code ??
                         "LKR"
+                      }
+                      logoPreviewUrl={
+                        pendingLogoPreview ??
+                        undefined
                       }
                     />
 

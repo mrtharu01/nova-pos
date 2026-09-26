@@ -930,6 +930,12 @@ function CustomerFormDialog({
     >(null);
 
 
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     if (!isOpen) {
       return;
@@ -988,6 +994,10 @@ function CustomerFormDialog({
 
 
     setError(null);
+
+
+    saveLockRef.current =
+      false;
   }, [
     detail,
     isOpen,
@@ -997,6 +1007,7 @@ function CustomerFormDialog({
 
   async function handleSave() {
     if (
+      saveLockRef.current ||
       !businessId ||
       saving
     ) {
@@ -1064,6 +1075,10 @@ function CustomerFormDialog({
     }
 
 
+    saveLockRef.current =
+      true;
+
+
     setSaving(true);
 
     setError(null);
@@ -1109,6 +1124,10 @@ function CustomerFormDialog({
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(false);
     }
   }
@@ -1140,12 +1159,10 @@ function CustomerFormDialog({
             ? "Register a customer and optionally assign a permanent checkout discount."
             : "Register a customer using their mobile number."
       }
-      className="max-h-[calc(100vh-2rem)] max-w-xl overflow-hidden"
+      className="max-h-[calc(100dvh-2rem)] max-w-xl overflow-hidden"
     >
 
-      <div className="max-h-[calc(100vh-11rem)] overflow-y-auto pr-1">
-
-        <div className="space-y-4 pb-1">
+      <div className="space-y-4 pb-1">
 
           {error && (
 
@@ -1465,8 +1482,6 @@ function CustomerFormDialog({
 
           </div>
 
-        </div>
-
       </div>
 
     </Dialog>
@@ -1508,12 +1523,10 @@ function CustomerDetailDialog({
       description={
         detail.customer.phone
       }
-      className="max-h-[calc(100vh-2rem)] max-w-4xl overflow-hidden"
+      className="max-h-[calc(100dvh-2rem)] max-w-4xl overflow-hidden"
     >
 
-      <div className="max-h-[calc(100vh-11rem)] overflow-y-auto pr-1">
-
-        <div className="space-y-5">
+      <div className="space-y-5">
 
           <div className="flex justify-end">
 
@@ -1825,8 +1838,6 @@ function CustomerDetailDialog({
             </CardContent>
 
           </Card>
-
-        </div>
 
       </div>
 

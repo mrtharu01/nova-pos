@@ -145,6 +145,47 @@ export function LoyaltySettingsCard() {
     React.useState(false);
 
 
+  const saveLockRef =
+    React.useRef(
+      false,
+    );
+
+
+  const feedbackRef =
+    React.useRef<
+      HTMLDivElement | null
+    >(
+      null,
+    );
+
+
+  React.useEffect(() => {
+    if (
+      !error &&
+      !saved
+    ) {
+      return;
+    }
+
+
+    window.requestAnimationFrame(
+      () => {
+        feedbackRef.current
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "center",
+          });
+      },
+    );
+  }, [
+    error,
+    saved,
+  ]);
+
+
   /* ============================================================
      LOAD SETTINGS
   ============================================================ */
@@ -262,6 +303,7 @@ export function LoyaltySettingsCard() {
 
   async function handleSave() {
     if (
+      saveLockRef.current ||
       !businessId ||
       !settings ||
       saving
@@ -363,6 +405,10 @@ export function LoyaltySettingsCard() {
     }
 
 
+    saveLockRef.current =
+      true;
+
+
     setSaving(true);
 
     setSaved(false);
@@ -422,6 +468,10 @@ export function LoyaltySettingsCard() {
         ),
       );
     } finally {
+      saveLockRef.current =
+        false;
+
+
       setSaving(false);
     }
   }
@@ -469,7 +519,7 @@ export function LoyaltySettingsCard() {
 
 
               <p className="mt-1 text-sm text-muted-foreground">
-                NOVA could not determine the current business.
+                ARC could not determine the current business.
               </p>
 
             </div>
@@ -947,7 +997,12 @@ export function LoyaltySettingsCard() {
 
       {error && (
 
-        <div className="flex items-start gap-3 rounded-[18px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <div
+          ref={
+            feedbackRef
+          }
+          className="flex items-start gap-3 rounded-[18px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+        >
 
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
@@ -970,7 +1025,12 @@ export function LoyaltySettingsCard() {
 
         {saved && (
 
-          <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <span
+            ref={
+              feedbackRef
+            }
+            className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+          >
 
             <Check className="h-4 w-4" />
 

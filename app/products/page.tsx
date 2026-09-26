@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import {
   Archive,
+  FileSpreadsheet,
   Loader2,
   Pencil,
   Plus,
@@ -365,17 +366,37 @@ export default function ProductsPage() {
         </div>
 
 
-        <Button asChild>
+        <div className="flex flex-wrap gap-2">
 
-          <Link href="/products/new">
+          <Button
+            asChild
+            variant="outline"
+          >
 
-            <Plus className="mr-2 h-4 w-4" />
+            <Link href="/products/import">
 
-            Add Product
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
 
-          </Link>
+              Import CSV / Excel
 
-        </Button>
+            </Link>
+
+          </Button>
+
+
+          <Button asChild>
+
+            <Link href="/products/new">
+
+              <Plus className="mr-2 h-4 w-4" />
+
+              Add Product
+
+            </Link>
+
+          </Button>
+
+        </div>
 
       </div>
 
@@ -500,6 +521,18 @@ export default function ProductsPage() {
                             )
                           : 0;
 
+                      const regularStartingPrice =
+                        product.variants.length >
+                        0
+                          ? Math.min(
+                              ...product.variants.map(
+                                (variant) =>
+                                  variant.regularPrice ??
+                                  variant.price,
+                              ),
+                            )
+                          : 0;
+
 
                       return (
                         <TableRow
@@ -575,9 +608,33 @@ export default function ProductsPage() {
 
                           <TableCell>
 
-                            {formatMoney(
-                              startingPrice,
-                            )}
+                            <div className="flex flex-col gap-1">
+
+                              <span
+                                className={
+                                  product.promotionEnabled
+                                    ? "font-semibold text-primary"
+                                    : ""
+                                }
+                              >
+                                {formatMoney(
+                                  startingPrice,
+                                )}
+                              </span>
+
+                              {product.promotionEnabled &&
+                                regularStartingPrice >
+                                  startingPrice && (
+
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {formatMoney(
+                                    regularStartingPrice,
+                                  )}
+                                </span>
+
+                              )}
+
+                            </div>
 
                           </TableCell>
 
@@ -610,21 +667,45 @@ export default function ProductsPage() {
 
                           <TableCell>
 
-                            <Badge
-                              variant={
-                                product.status ===
-                                "Active"
-                                  ? "success"
-                                  : product.status ===
-                                      "Archived"
-                                    ? "secondary"
-                                    : "warning"
-                              }
-                            >
-                              {
-                                product.status
-                              }
-                            </Badge>
+                            <div className="flex flex-wrap items-center gap-2">
+
+                              <Badge
+                                variant={
+                                  product.status ===
+                                  "Active"
+                                    ? "success"
+                                    : product.status ===
+                                        "Archived"
+                                      ? "secondary"
+                                      : "warning"
+                                }
+                              >
+                                {
+                                  product.status
+                                }
+                              </Badge>
+
+                              {product.promotionEnabled && (
+
+                                <Badge variant="secondary">
+                                  {product.promotionActive
+                                    ? (
+                                        product.promotionType ===
+                                        "percentage"
+                                          ? `${product.promotionValue ?? 0}% off`
+                                          : `LKR ${Number(
+                                              product.promotionValue ??
+                                              0,
+                                            ).toFixed(
+                                              2,
+                                            )} off`
+                                      )
+                                    : "Scheduled"}
+                                </Badge>
+
+                              )}
+
+                            </div>
 
                           </TableCell>
 
@@ -710,7 +791,7 @@ export default function ProductsPage() {
 
                         <p className="mt-1 text-sm">
 
-                          Add your first real product to start using NOVA inventory and QR scanning.
+                          Add your first real product to start using ARC inventory and QR scanning.
 
                         </p>
 
@@ -765,7 +846,7 @@ export default function ProductsPage() {
         title="Delete product?"
         description={
           deleteTarget
-            ? `Remove "${deleteTarget.name}" from NOVA.`
+            ? `Remove "${deleteTarget.name}" from ARC.`
             : "Remove product."
         }
         className="max-w-lg"
@@ -791,7 +872,7 @@ export default function ProductsPage() {
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
 
-                If this product has stock, inventory history, or previous sales, NOVA will archive it instead of destroying historical records.
+                If this product has stock, inventory history, or previous sales, ARC will archive it instead of destroying historical records.
 
               </p>
 
@@ -872,7 +953,7 @@ export default function ProductsPage() {
                 {deleteResult ===
                 "deleted"
                   ? "Product permanently deleted."
-                  : "Product has business history, so NOVA archived it safely."}
+                  : "Product has business history, so ARC archived it safely."}
 
               </span>
 

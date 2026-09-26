@@ -90,6 +90,12 @@ export default function ResetPasswordPage() {
     );
 
 
+  const requestLockRef =
+    React.useRef(
+      false,
+    );
+
+
   React.useEffect(() => {
     async function checkSession() {
       try {
@@ -159,6 +165,7 @@ export default function ResetPasswordPage() {
 
 
     if (
+      requestLockRef.current ||
       loading ||
       !validSession
     ) {
@@ -188,6 +195,10 @@ export default function ResetPasswordPage() {
 
       return;
     }
+
+
+    requestLockRef.current =
+      true;
 
 
     setLoading(
@@ -253,14 +264,19 @@ export default function ResetPasswordPage() {
 
       router.refresh();
     } catch (cause) {
+      requestLockRef.current =
+        false;
+
+
+      setLoading(
+        false,
+      );
+
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Password could not be changed.",
-      );
-    } finally {
-      setLoading(
-        false,
       );
     }
   }
@@ -294,7 +310,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-[500px] rounded-[32px] border border-white/10 bg-[#121a2e] p-8 shadow-2xl sm:p-10">
 
         <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black">
-          N
+          A
         </div>
 
 
@@ -304,7 +320,7 @@ export default function ResetPasswordPage() {
 
 
         <p className="mt-2 text-sm leading-6 text-slate-400">
-          Create a secure new password for your NOVA account.
+          Create a secure new password for your ARC account.
         </p>
 
 

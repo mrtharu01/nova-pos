@@ -3,7 +3,6 @@
 import * as React from "react";
 
 import {
-  CalendarDays,
   Download,
   Loader2,
   Printer,
@@ -19,6 +18,10 @@ import {
 import {
   AppLayout,
 } from "@/components/layout/AppLayout";
+
+import {
+  ReportDateRangePicker,
+} from "@/components/reports/ReportDateRangePicker";
 
 import {
   ReportPrintDialog,
@@ -69,11 +72,17 @@ type ReportPreset =
   | "yesterday"
   | "7d"
   | "30d"
-  | "month";
+  | "month"
+  | "previous_month"
+  | "custom";
 
 
 const PRESETS: {
-  id: ReportPreset;
+  id:
+    Exclude<
+      ReportPreset,
+      "custom"
+    >;
   label: string;
 }[] = [
   {
@@ -95,6 +104,10 @@ const PRESETS: {
   {
     id: "month",
     label: "This Month",
+  },
+  {
+    id: "previous_month",
+    label: "Previous Month",
   },
 ];
 
@@ -176,7 +189,23 @@ function presetRange(
 
       break;
 
+    case "previous_month":
+      start.setFullYear(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1,
+      );
+
+      end.setFullYear(
+        now.getFullYear(),
+        now.getMonth(),
+        0,
+      );
+
+      break;
+
     case "today":
+    case "custom":
     default:
       break;
   }
@@ -343,6 +372,18 @@ export default function ReportsPage() {
 
 
   const [
+    range,
+    setRange,
+  ] =
+    React.useState(
+      () =>
+        presetRange(
+          "7d",
+        ),
+    );
+
+
+  const [
     report,
     setReport,
   ] =
@@ -387,15 +428,9 @@ export default function ReportsPage() {
     );
 
 
-  const range =
-    React.useMemo(
-      () =>
-        presetRange(
-          preset,
-        ),
-      [
-        preset,
-      ],
+  const reportRequestRef =
+    React.useRef(
+      0,
     );
 
 
@@ -405,6 +440,9 @@ export default function ReportsPage() {
         if (!businessId) {
           return;
         }
+
+        const requestId =
+          ++reportRequestRef.current;
 
         setLoading(
           true,
@@ -442,6 +480,14 @@ export default function ReportsPage() {
             ]);
 
 
+          if (
+            requestId !==
+            reportRequestRef.current
+          ) {
+            return;
+          }
+
+
           setReport(
             salesResult,
           );
@@ -451,15 +497,28 @@ export default function ReportsPage() {
             expenseResult,
           );
         } catch (cause) {
+          if (
+            requestId !==
+            reportRequestRef.current
+          ) {
+            return;
+          }
+
+
           setError(
             getErrorMessage(
               cause,
             ),
           );
         } finally {
-          setLoading(
-            false,
-          );
+          if (
+            requestId ===
+            reportRequestRef.current
+          ) {
+            setLoading(
+              false,
+            );
+          }
         }
       },
       [
@@ -494,6 +553,46 @@ export default function ReportsPage() {
     );
 
 
+  function selectPreset(
+    nextPreset:
+      Exclude<
+        ReportPreset,
+        "custom"
+      >,
+  ) {
+    setPreset(
+      nextPreset,
+    );
+
+
+    setRange(
+      presetRange(
+        nextPreset,
+      ),
+    );
+  }
+
+
+  function applyCustomRange(
+    nextRange: {
+      startDate:
+        string;
+
+      endDate:
+        string;
+    },
+  ) {
+    setPreset(
+      "custom",
+    );
+
+
+    setRange(
+      nextRange,
+    );
+  }
+
+
   function exportCsv() {
     if (
       !report ||
@@ -505,13 +604,13 @@ export default function ReportsPage() {
 
     const rows: string[][] = [
       [
-        "NOVA POS REPORT",
+        "ARC REPORT",
       ],
 
       [
         "Business",
         business?.name ??
-          "NOVA POS",
+          "ARC",
       ],
 
       [
@@ -728,7 +827,7 @@ export default function ReportsPage() {
 
 
     anchor.download =
-      `nova-report-${report.startDate}-${report.endDate}.csv`;
+      `arc-report-${report.startDate}-${report.endDate}.csv`;
 
 
     document.body.appendChild(
@@ -786,7 +885,7 @@ export default function ReportsPage() {
 
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Sales, refunds, cost of goods and operating-expense reporting from NOVA.
+              Sales, refunds, cost of goods and operating-expense reporting from ARC.
             </p>
 
           </div>
@@ -824,6 +923,7 @@ export default function ReportsPage() {
               variant="outline"
               className="rounded-[12px]"
               disabled={
+                loading ||
                 !report ||
                 !expenseReport
               }
@@ -843,6 +943,7 @@ export default function ReportsPage() {
               type="button"
               className="rounded-[12px]"
               disabled={
+                loading ||
                 !report ||
                 !expenseReport
               }
@@ -864,9 +965,9 @@ export default function ReportsPage() {
         </div>
 
 
-        <div className="flex flex-col gap-3 rounded-[18px] border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-[18px] border bg-card p-3 lg:flex-row lg:items-center lg:justify-between">
 
-          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
 
             {PRESETS.map(
               (item) => (
@@ -877,7 +978,7 @@ export default function ReportsPage() {
                   }
                   type="button"
                   onClick={() =>
-                    setPreset(
+                    selectPreset(
                       item.id,
                     )
                   }
@@ -901,24 +1002,20 @@ export default function ReportsPage() {
           </div>
 
 
-          <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
-
-            <CalendarDays className="h-4 w-4" />
-
-
-            <span>
-              {formatReportDate(
-                range.startDate,
-              )}
-
-              {" — "}
-
-              {formatReportDate(
-                range.endDate,
-              )}
-            </span>
-
-          </div>
+          <ReportDateRangePicker
+            startDate={
+              range.startDate
+            }
+            endDate={
+              range.endDate
+            }
+            disabled={
+              loading
+            }
+            onApply={
+              applyCustomRange
+            }
+          />
 
         </div>
 
@@ -1576,7 +1673,7 @@ export default function ReportsPage() {
         }
         businessName={
           business?.name ??
-          "NOVA POS"
+          "ARC"
         }
         currencyCode={
           currencyCode

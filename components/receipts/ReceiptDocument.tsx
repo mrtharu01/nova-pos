@@ -161,7 +161,44 @@ export function ReceiptDocument({
     );
 
 
-  /* ==========================================================
+  
+
+  const productPromotionDiscountTotal =
+    Math.round(
+      receipt.items.reduce(
+        (
+          total,
+          item,
+        ) =>
+          total +
+          item.productDiscountTotal,
+        0,
+      ) *
+        100,
+    ) / 100;
+
+
+  const totalDiscount =
+    Math.round(
+      (
+        productPromotionDiscountTotal +
+        receipt.discountTotal
+      ) *
+        100,
+    ) / 100;
+
+
+  const originalAmount =
+    Math.round(
+      (
+        receipt.subtotal +
+        productPromotionDiscountTotal
+      ) *
+        100,
+    ) / 100;
+
+
+/* ==========================================================
      REFUNDED QUANTITY PER ORIGINAL SALE ITEM
   ========================================================== */
 
@@ -272,6 +309,18 @@ export function ReceiptDocument({
         ===================================================== */}
 
         <header className="text-center">
+
+          {settings.logoUrl && (
+
+            <img
+              src={
+                settings.logoUrl
+              }
+              alt=""
+              className="mx-auto mb-2 max-h-[18mm] max-w-[80%] object-contain"
+            />
+
+          )}
 
           <h1 className="text-[16px] font-black uppercase leading-tight">
             {displayName}
@@ -560,7 +609,22 @@ export function ReceiptDocument({
                           item.unitPrice,
                         )
                       }
+
 
+                      {item.productDiscountTotal >
+                        0 && (
+
+                        <span className="ml-1 text-[9px] line-through">
+
+                          {
+                            amount(
+                              item.regularUnitPrice,
+                            )
+                          }
+
+                        </span>
+
+                      )}
                     </span>
 
 
@@ -576,6 +640,29 @@ export function ReceiptDocument({
 
                   </div>
 
+                  {item.productDiscountTotal >
+                    0 && (
+
+                    <div className="flex justify-between text-[9px]">
+
+                      <span>
+                        Product promotion
+                      </span>
+
+
+                      <span>
+                        -
+                        {
+                          amount(
+                            item.productDiscountTotal,
+                          )
+                        }
+                      </span>
+
+                    </div>
+
+                  )}
+
 
                   {item.discountTotal >
                     0 && (
@@ -583,7 +670,7 @@ export function ReceiptDocument({
                     <div className="flex justify-between text-[9px]">
 
                       <span>
-                        Item discount
+                        Other discount
                       </span>
 
 
@@ -643,20 +730,20 @@ export function ReceiptDocument({
         <section className="space-y-[3px]">
 
           <MoneyRow
-            label="SUBTOTAL"
+            label="ORIGINAL AMOUNT"
             value={
-              receipt.subtotal
+              originalAmount
             }
           />
 
 
-          {receipt.discountTotal >
+          {totalDiscount >
             0 && (
 
             <MoneyRow
-              label="DISCOUNT"
+              label="TOTAL DISCOUNT"
               value={
-                -receipt.discountTotal
+                -totalDiscount
               }
             />
 
@@ -682,7 +769,7 @@ export function ReceiptDocument({
           <div className="flex items-end justify-between gap-3 text-[15px] font-black">
 
             <span>
-              ORIGINAL TOTAL
+              TOTAL
             </span>
 
 
@@ -705,7 +792,7 @@ export function ReceiptDocument({
           </div>
 
 
-          {/* ================================================
+                    {/* ================================================
               REFUNDED TOTAL
           ================================================= */}
 
@@ -1149,7 +1236,7 @@ export function ReceiptDocument({
 
 
           <p className="mt-2 text-[8px]">
-            Powered by NOVA POS
+            Powered by ARC
           </p>
 
         </footer>

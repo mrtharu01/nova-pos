@@ -1,0 +1,1774 @@
+"use client";
+
+import * as React from "react";
+
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  Loader2,
+  ScanLine,
+  Upload,
+} from "lucide-react";
+
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  RemoteScannerControl,
+} from "@/components/pos/RemoteScannerControl";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import {
+  bulkImportProducts,
+  type BulkProductImportResult,
+} from "@/lib/data/catalog-admin";
+
+import {
+  buildCatalogCsvFromImportRows,
+  buildCatalogCsvTemplate,
+  buildCatalogImportPreview,
+  type CatalogImportPreview,
+  type CatalogImportPreviewRow,
+} from "@/lib/import/catalog-import";
+
+import {
+  parseSpreadsheetFile,
+} from "@/lib/import/spreadsheet";
+
+import {
+  parseNovaQrValue,
+} from "@/lib/qr/qr-value";
+
+import type {
+  RemoteScanResult,
+} from "@/lib/remote-scanner/protocol";
+
+
+const MAX_ROWS =
+  2000;
+
+
+const PREVIEW_PAGE_SIZE =
+  30;
+
+
+const IDENTITY_ERROR =
+  "Provide a SKU or barcode.";
+
+
+const LEGACY_IDENTITY_ERROR =
+  "Provide a SKU or manufacturer barcode.";
+
+
+// Phone capture fills spreadsheet rows without manual barcode typing.
+
+
+function refreshIdentityValidation(
+  rows:
+    CatalogImportPreviewRow[],
+) {
+  const seenSkus =
+    new Map<
+      string,
+      number
+    >();
+
+
+  const seenBarcodes =
+    new Map<
+      string,
+      number
+    >();
+
+
+  const nextRows =
+    rows.map(
+      (
+        row,
+      ) => {
+        const sku =
+          row.data.sku
+            ?.trim()
+            .toUpperCase() ??
+          "";
+
+
+        const barcode =
+          row.data.barcode
+            ?.trim() ??
+          "";
+
+
+        const errors =
+          row.errors.filter(
+            (
+              message,
+            ) =>
+              message !==
+                IDENTITY_ERROR &&
+              message !==
+                LEGACY_IDENTITY_ERROR &&
+              !message.startsWith(
+                "SKU duplicates row ",
+              ) &&
+              !message.startsWith(
+                "Barcode duplicates row ",
+              ),
+          );
+
+
+        if (
+          !sku &&
+          !barcode
+        ) {
+          errors.push(
+            IDENTITY_ERROR,
+          );
+        }
+
+
+        if (
+          sku
+        ) {
+          const key =
+            sku.toLowerCase();
+
+
+          const duplicateRow =
+            seenSkus.get(
+              key,
+            );
+
+
+          if (
+            duplicateRow
+          ) {
+            errors.push(
+              `SKU duplicates row ${duplicateRow}.`,
+            );
+          } else {
+            seenSkus.set(
+              key,
+              row.sourceRow,
+            );
+          }
+        }
+
+
+        if (
+          barcode
+        ) {
+          const duplicateRow =
+            seenBarcodes.get(
+              barcode,
+            );
+
+
+          if (
+            duplicateRow
+          ) {
+            errors.push(
+              `Barcode duplicates row ${duplicateRow}.`,
+            );
+          } else {
+            seenBarcodes.set(
+              barcode,
+              row.sourceRow,
+            );
+          }
+        }
+
+
+        return {
+          ...row,
+
+          data: {
+            ...row.data,
+
+            sku,
+
+            barcode:
+              barcode ||
+              undefined,
+          },
+
+          errors,
+        };
+      },
+    );
+
+
+  return {
+    rows:
+      nextRows,
+
+    validRows:
+      nextRows.filter(
+        (
+          row,
+        ) =>
+          row.errors.length ===
+            0,
+      ).length,
+
+    invalidRows:
+      nextRows.filter(
+        (
+          row,
+        ) =>
+          row.errors.length >
+            0,
+      ).length,
+  };
+}
+
+
+export function BulkProductImport() {
+  const inputRef =
+    React.useRef<
+      HTMLInputElement |
+      null
+    >(
+      null,
+    );
+
+
+  const [
+    fileName,
+    setFileName,
+  ] =
+    React.useState(
+      "",
+    );
+
+
+  const [
+    preview,
+    setPreview,
+  ] =
+    React.useState<
+      CatalogImportPreview |
+      null
+    >(
+      null,
+    );
+
+
+  const [
+    parsing,
+    setParsing,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const [
+    importing,
+    setImporting,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const [
+    error,
+    setError,
+  ] =
+    React.useState<
+      string |
+      null
+    >(
+      null,
+    );
+
+
+  const [
+    result,
+    setResult,
+  ] =
+    React.useState<
+      BulkProductImportResult |
+      null
+    >(
+      null,
+    );
+
+
+  const [
+    captureTargetSourceRow,
+    setCaptureTargetSourceRow,
+  ] =
+    React.useState<
+      number |
+      null
+    >(
+      null,
+    );
+
+
+  const [
+    previewPage,
+    setPreviewPage,
+  ] =
+    React.useState(
+      0,
+    );
+
+
+  function reset() {
+    setFileName(
+      "",
+    );
+
+    setPreview(
+      null,
+    );
+
+    setError(
+      null,
+    );
+
+    setResult(
+      null,
+    );
+
+
+    setCaptureTargetSourceRow(
+      null,
+    );
+
+
+    setPreviewPage(
+      0,
+    );
+
+
+    if (
+      inputRef.current
+    ) {
+      inputRef.current.value =
+        "";
+    }
+  }
+
+
+  function downloadTemplate() {
+    const blob =
+      new Blob(
+        [
+          buildCatalogCsvTemplate(),
+        ],
+        {
+          type:
+            "text/csv;charset=utf-8",
+        },
+      );
+
+
+    const url =
+      URL.createObjectURL(
+        blob,
+      );
+
+
+    const anchor =
+      document.createElement(
+        "a",
+      );
+
+
+    anchor.href =
+      url;
+
+    anchor.download =
+      "arc-product-import-template.csv";
+
+
+    document.body
+      .appendChild(
+        anchor,
+      );
+
+
+    anchor.click();
+
+    anchor.remove();
+
+
+    URL.revokeObjectURL(
+      url,
+    );
+  }
+
+
+  function downloadWorkingCopy() {
+    if (
+      !preview
+    ) {
+      return;
+    }
+
+
+    const blob =
+      new Blob(
+        [
+          buildCatalogCsvFromImportRows(
+            preview.rows.map(
+              (
+                row,
+              ) =>
+                row.data,
+            ),
+          ),
+        ],
+        {
+          type:
+            "text/csv;charset=utf-8",
+        },
+      );
+
+
+    const url =
+      URL.createObjectURL(
+        blob,
+      );
+
+
+    const anchor =
+      document.createElement(
+        "a",
+      );
+
+
+    const baseName =
+      (
+        fileName ||
+        "arc-products"
+      )
+        .replace(
+          /\.[^.]+$/,
+          "",
+        )
+        .replace(
+          /[^a-z0-9-_]+/gi,
+          "-",
+        );
+
+
+    anchor.href =
+      url;
+
+    anchor.download =
+      `${baseName}-with-barcodes.csv`;
+
+
+    document.body
+      .appendChild(
+        anchor,
+      );
+
+
+    anchor.click();
+
+    anchor.remove();
+
+
+    URL.revokeObjectURL(
+      url,
+    );
+  }
+
+
+  function captureBarcode(
+    value:
+      string,
+  ): RemoteScanResult {
+    if (
+      !preview
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "Upload a spreadsheet before scanning barcodes.",
+      };
+    }
+
+
+    const barcode =
+      value.trim();
+
+
+    if (
+      !barcode
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "No barcode value was detected.",
+      };
+    }
+
+
+    if (
+      parseNovaQrValue(
+        barcode,
+      )
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "That is an ARC QR code. Scan the manufacturer barcode printed on the product.",
+      };
+    }
+
+
+    const targetSourceRow =
+      captureTargetSourceRow ??
+      preview.rows.find(
+        (
+          row,
+        ) =>
+          !row.data.barcode,
+      )?.sourceRow;
+
+
+    if (
+      !targetSourceRow
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "Every spreadsheet row already has a barcode.",
+      };
+    }
+
+
+    const target =
+      preview.rows.find(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+          targetSourceRow,
+      );
+
+
+    if (
+      !target
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          "The selected spreadsheet row could not be found.",
+      };
+    }
+
+
+    const duplicate =
+      preview.rows.find(
+        (
+          row,
+        ) =>
+          row.sourceRow !==
+            targetSourceRow &&
+          row.data.barcode
+            ?.trim() ===
+            barcode,
+      );
+
+
+    if (
+      duplicate
+    ) {
+      return {
+        accepted:
+          false,
+
+        message:
+          `That barcode is already assigned to row ${duplicate.sourceRow}: ${duplicate.data.product_name}.`,
+      };
+    }
+
+
+    const changedRows =
+      preview.rows.map(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+            targetSourceRow
+            ? {
+                ...row,
+
+                data: {
+                  ...row.data,
+
+                  barcode,
+
+                  sku:
+                    row.data.sku
+                      ?.trim()
+                      .toUpperCase() ||
+                    `BC-${barcode}`
+                      .toUpperCase(),
+                },
+              }
+            : row,
+      );
+
+
+    const refreshed =
+      refreshIdentityValidation(
+        changedRows,
+      );
+
+
+    const currentIndex =
+      refreshed.rows.findIndex(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+          targetSourceRow,
+      );
+
+
+    const nextTarget =
+      refreshed.rows
+        .slice(
+          currentIndex +
+            1,
+        )
+        .find(
+          (
+            row,
+          ) =>
+            !row.data.barcode,
+        ) ??
+      refreshed.rows.find(
+        (
+          row,
+        ) =>
+          !row.data.barcode,
+      );
+
+
+    setPreview({
+      ...preview,
+
+      rows:
+        refreshed.rows,
+
+      validRows:
+        refreshed.validRows,
+
+      invalidRows:
+        refreshed.invalidRows,
+    });
+
+
+    setCaptureTargetSourceRow(
+      nextTarget?.sourceRow ??
+      null,
+    );
+
+
+    return {
+      accepted:
+        true,
+
+      label:
+        target.data.product_name,
+
+      message:
+        nextTarget
+          ? `Barcode saved for ${target.data.product_name}. Next: row ${nextTarget.sourceRow} · ${nextTarget.data.product_name}.`
+          : `Barcode saved for ${target.data.product_name}. All spreadsheet rows now have barcodes.`,
+    };
+  }
+
+
+  async function chooseFile(
+    file?:
+      File,
+  ) {
+    if (
+      !file ||
+      parsing ||
+      importing
+    ) {
+      return;
+    }
+
+
+    setParsing(
+      true,
+    );
+
+    setError(
+      null,
+    );
+
+    setResult(
+      null,
+    );
+
+
+    try {
+      const parsed =
+        await parseSpreadsheetFile(
+          file,
+        );
+
+
+      const nextPreview =
+        buildCatalogImportPreview(
+          parsed.rows,
+        );
+
+
+      if (
+        nextPreview.rows.length ===
+          0
+      ) {
+        throw new Error(
+          "No product rows were found in this file.",
+        );
+      }
+
+
+      if (
+        nextPreview.rows.length >
+          MAX_ROWS
+      ) {
+        throw new Error(
+          `This file has ${nextPreview.rows.length} product rows. ARC imports up to ${MAX_ROWS} rows at a time.`,
+        );
+      }
+
+
+      if (
+        !nextPreview
+          .recognizedColumns
+          .includes(
+            "product_name",
+          )
+      ) {
+        throw new Error(
+          "ARC could not find a Product Name column.",
+        );
+      }
+
+
+      if (
+        !nextPreview
+          .recognizedColumns
+          .includes(
+            "price",
+          )
+      ) {
+        throw new Error(
+          "ARC could not find a Price column.",
+        );
+      }
+
+
+      setFileName(
+        parsed.fileName,
+      );
+
+      setPreview(
+        nextPreview,
+      );
+
+
+      setPreviewPage(
+        0,
+      );
+
+
+      setCaptureTargetSourceRow(
+        nextPreview.rows.find(
+          (
+            row,
+          ) =>
+            !row.data.barcode,
+        )?.sourceRow ??
+        null,
+      );
+    } catch (
+      cause
+    ) {
+      setFileName(
+        "",
+      );
+
+      setPreview(
+        null,
+      );
+
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "ARC could not read this spreadsheet.",
+      );
+    } finally {
+      setParsing(
+        false,
+      );
+    }
+  }
+
+
+  async function runImport() {
+    if (
+      !preview ||
+      importing ||
+      preview.invalidRows >
+        0 ||
+      preview.rows.length ===
+        0
+    ) {
+      return;
+    }
+
+
+    setImporting(
+      true,
+    );
+
+    setError(
+      null,
+    );
+
+    setResult(
+      null,
+    );
+
+
+    try {
+      const importResult =
+        await bulkImportProducts(
+          preview.rows.map(
+            (
+              row,
+            ) =>
+              row.data,
+          ),
+        );
+
+
+      setResult(
+        importResult,
+      );
+    } catch (
+      cause
+    ) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "The product import failed.",
+      );
+    } finally {
+      setImporting(
+        false,
+      );
+    }
+  }
+
+
+  const canImport =
+    Boolean(
+      preview,
+    ) &&
+    (
+      preview?.invalidRows ??
+      0
+    ) ===
+      0 &&
+    (
+      preview?.rows.length ??
+      0
+    ) >
+      0 &&
+    !importing;
+
+
+  const previewPageCount =
+    Math.max(
+      1,
+      Math.ceil(
+        (
+          preview?.rows.length ??
+          0
+        ) /
+          PREVIEW_PAGE_SIZE,
+      ),
+    );
+
+
+  const safePreviewPage =
+    Math.min(
+      previewPage,
+      previewPageCount -
+        1,
+    );
+
+
+  const previewStartIndex =
+    safePreviewPage *
+    PREVIEW_PAGE_SIZE;
+
+
+  const shownRows =
+    preview?.rows.slice(
+      previewStartIndex,
+      previewStartIndex +
+        PREVIEW_PAGE_SIZE,
+    ) ??
+    [];
+
+
+  const invalidPreviewRows =
+    preview?.rows.filter(
+      (
+        row,
+      ) =>
+        row.errors.length >
+        0,
+    ) ??
+    [];
+
+
+  const capturedBarcodeCount =
+    preview?.rows.filter(
+      (
+        row,
+      ) =>
+        Boolean(
+          row.data.barcode,
+        ),
+    ).length ??
+    0;
+
+
+  const activeCaptureRow =
+    preview?.rows.find(
+      (
+        row,
+      ) =>
+        row.sourceRow ===
+        captureTargetSourceRow,
+    ) ??
+    null;
+
+
+  React.useEffect(() => {
+    if (
+      !preview ||
+      captureTargetSourceRow ===
+        null
+    ) {
+      return;
+    }
+
+
+    const targetIndex =
+      preview.rows.findIndex(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+          captureTargetSourceRow,
+      );
+
+
+    if (
+      targetIndex <
+      0
+    ) {
+      return;
+    }
+
+
+    setPreviewPage(
+      Math.floor(
+        targetIndex /
+          PREVIEW_PAGE_SIZE,
+      ),
+    );
+  }, [
+    captureTargetSourceRow,
+    preview,
+  ]);
+
+
+  return (
+    <div className="space-y-6">
+
+      <Card className="rounded-[24px]">
+
+        <CardHeader>
+
+          <CardTitle>
+            Import Products
+          </CardTitle>
+
+
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+            Upload a CSV or modern Excel workbook (.xlsx). ARC validates the sheet first, shows a preview, then imports the catalog and starting stock in one transaction.
+          </p>
+
+        </CardHeader>
+
+
+        <CardContent className="space-y-5">
+
+          <div className="grid gap-3 md:grid-cols-3">
+
+            <div className="rounded-[18px] border bg-muted/10 p-4">
+
+              <p className="text-sm font-semibold">
+                One row = one variant
+              </p>
+
+
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Most shop products can simply use one row with Variant Name = Standard.
+              </p>
+
+            </div>
+
+
+            <div className="rounded-[18px] border bg-muted/10 p-4">
+
+              <p className="text-sm font-semibold">
+                Group variants
+              </p>
+
+
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Give several rows the same Product Key to create one product with multiple variants.
+              </p>
+
+            </div>
+
+
+            <div className="rounded-[18px] border bg-muted/10 p-4">
+
+              <p className="text-sm font-semibold">
+                SKU / optional printed barcode
+              </p>
+
+
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Upload the sheet first, then pair a phone and scan printed barcodes directly into the rows. If SKU is blank, ARC creates one from the barcode.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div className="rounded-[18px] border border-dashed p-5">
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+              <div>
+
+                <div className="flex items-center gap-2">
+
+                  <FileSpreadsheet className="h-5 w-5" />
+
+
+                  <p className="font-semibold">
+                    CSV / Excel file
+                  </p>
+
+                </div>
+
+
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  Accepted: .csv, .tsv and .xlsx. For barcodes or SKUs with leading zeroes, format those Excel columns as Text before saving.
+                </p>
+
+              </div>
+
+
+              <div className="flex flex-wrap gap-2">
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={
+                    downloadTemplate
+                  }
+                >
+                  <Download className="mr-2 h-4 w-4" />
+
+                  Download Template
+                </Button>
+
+
+                <Button
+                  type="button"
+                  disabled={
+                    parsing ||
+                    importing
+                  }
+                  onClick={() =>
+                    inputRef.current
+                      ?.click()
+                  }
+                >
+                  {parsing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" />
+                  )}
+
+                  {parsing
+                    ? "Reading..."
+                    : "Choose File"}
+                </Button>
+
+              </div>
+
+            </div>
+
+
+            <input
+              ref={
+                inputRef
+              }
+              type="file"
+              accept=".csv,.tsv,.xlsx,text/csv,text/tab-separated-values,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className="hidden"
+              onChange={
+                (
+                  event,
+                ) =>
+                  void chooseFile(
+                    event.target.files?.[0],
+                  )
+              }
+            />
+
+
+            {fileName ? (
+
+              <div className="mt-4 rounded-[14px] border bg-muted/20 px-4 py-3 text-sm">
+
+                <span className="font-semibold">
+                  {fileName}
+                </span>
+
+
+                {preview ? (
+                  <span className="ml-2 text-muted-foreground">
+                    · {preview.rows.length} row{preview.rows.length === 1 ? "" : "s"}
+                  </span>
+                ) : null}
+
+              </div>
+
+            ) : null}
+
+          </div>
+
+
+          <div className="rounded-[18px] border bg-muted/10 p-4">
+
+            <p className="text-sm font-semibold">
+              Recommended columns
+            </p>
+
+
+            <p className="mt-2 text-xs leading-6 text-muted-foreground">
+              Product Name and Price are required. A row needs a SKU or a printed barcode as its import identity; the printed barcode itself is optional. If both are blank, add a SKU or capture the package barcode before import. After import, ARC also provides its own generated barcode automatically. Optional columns: Product Key, Category, Description, Variant Name, Cost, Stock, Low Stock Threshold and Status.
+            </p>
+
+
+            <p className="mt-2 text-xs leading-6 text-muted-foreground">
+              Categories that do not already exist are created automatically. Blank Stock defaults to 0, Cost to 0, Low Stock Threshold to 5, Variant Name to Standard and Status to Active.
+            </p>
+
+          </div>
+
+        </CardContent>
+
+      </Card>
+
+
+      {error ? (
+
+        <div className="rounded-[18px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {error}
+        </div>
+
+      ) : null}
+
+
+      {result ? (
+
+        <Card className="rounded-[24px] border-primary/30">
+
+          <CardContent className="p-6">
+
+            <div className="flex items-start gap-3">
+
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+
+
+              <div>
+
+                <p className="font-semibold">
+                  Import completed
+                </p>
+
+
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {result.productsCreated} products, {result.variantsCreated} variants and {result.categoriesCreated} new categories were created from {result.rowsImported} spreadsheet rows.
+                </p>
+
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={
+                    reset
+                  }
+                >
+                  Import Another File
+                </Button>
+
+              </div>
+
+            </div>
+
+          </CardContent>
+
+        </Card>
+
+      ) : null}
+
+
+      {preview ? (
+
+        <Card className="overflow-hidden rounded-[24px]">
+
+          <CardHeader>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+
+              <div>
+
+                <CardTitle>
+                  Import Preview
+                </CardTitle>
+
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {preview.validRows} valid · {preview.invalidRows} with errors
+                </p>
+
+              </div>
+
+
+              <Button
+                type="button"
+                disabled={
+                  !canImport
+                }
+                onClick={() =>
+                  void runImport()
+                }
+              >
+                {importing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
+
+                {importing
+                  ? "Importing..."
+                  : `Import ${preview.rows.length} Rows`}
+              </Button>
+
+            </div>
+
+          </CardHeader>
+
+
+          <CardContent className="space-y-4">
+
+            <div className="rounded-[18px] border bg-muted/10 p-4">
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                <div>
+
+                  <div className="flex items-center gap-2">
+
+                    <ScanLine className="h-4 w-4" />
+
+
+                    <p className="text-sm font-semibold">
+                      Bulk Barcode Capture
+                    </p>
+
+                  </div>
+
+
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    Pair your phone once, then scan the physical products in spreadsheet order. Each accepted scan fills the selected row and automatically advances to the next row without a barcode.
+                  </p>
+
+                </div>
+
+
+                <div className="flex flex-wrap gap-2">
+
+                  <RemoteScannerControl
+                    onScan={
+                      captureBarcode
+                    }
+                  />
+
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={
+                      downloadWorkingCopy
+                    }
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+
+                    Download Updated CSV
+                  </Button>
+
+                </div>
+
+              </div>
+
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+                <div className="rounded-[14px] border bg-background/70 p-3">
+
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Captured
+                  </p>
+
+
+                  <p className="mt-1 text-lg font-bold">
+                    {capturedBarcodeCount}/{preview.rows.length}
+                  </p>
+
+                </div>
+
+
+                <div className="rounded-[14px] border bg-background/70 p-3 sm:col-span-2">
+
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Next phone scan
+                  </p>
+
+
+                  <p className="mt-1 text-sm font-semibold">
+                    {activeCaptureRow
+                      ? `Row ${activeCaptureRow.sourceRow} · ${activeCaptureRow.data.product_name}`
+                      : "All rows already have barcodes"}
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+                Products without a manufacturer barcode can keep a normal SKU instead. Click “Scan here” on any visible row if the physical product order does not match the spreadsheet.
+              </p>
+
+            </div>
+
+
+            {preview.ignoredColumns.length >
+            0 ? (
+
+              <div className="rounded-[14px] border bg-muted/20 p-3 text-xs text-muted-foreground">
+                Ignored columns: {preview.ignoredColumns.join(", ")}
+              </div>
+
+            ) : null}
+
+
+            {preview.invalidRows >
+            0 ? (
+
+              <div className="flex gap-3 rounded-[16px] border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+
+
+                <div>
+
+                  <p className="font-medium">
+                    ARC will not partially import a file with validation errors. Each row needs a SKU or a manufacturer barcode; if a barcode is captured for a row without a SKU, ARC creates the SKU from that barcode automatically.
+                  </p>
+
+
+                  <ul className="mt-2 space-y-1 text-xs">
+
+                    {invalidPreviewRows
+                      .slice(
+                        0,
+                        6,
+                      )
+                      .map(
+                        (
+                          row,
+                        ) => (
+                          <li
+                            key={
+                              row.sourceRow
+                            }
+                          >
+                            Row {row.sourceRow}: {row.errors.join(" · ")}
+                          </li>
+                        ),
+                      )}
+
+
+                    {invalidPreviewRows.length >
+                    6 ? (
+                      <li>
+                        + {invalidPreviewRows.length - 6} more row{invalidPreviewRows.length - 6 === 1 ? "" : "s"} with errors
+                      </li>
+                    ) : null}
+
+                  </ul>
+
+
+                  <p className="mt-2 text-xs">
+                    Manufacturer barcodes are optional when the row already has a SKU. Use phone capture only for products whose printed package barcode you want ARC to recognize.
+                  </p>
+
+                </div>
+
+              </div>
+
+            ) : null}
+
+
+            <div className="overflow-x-auto">
+
+              <table className="w-full min-w-[980px] text-left text-sm">
+
+                <thead>
+
+                  <tr className="border-b text-xs text-muted-foreground">
+
+                    <th className="px-3 py-3">
+                      Row
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Product
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Variant
+                    </th>
+
+                    <th className="px-3 py-3">
+                      SKU
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Barcode
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Capture
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Price
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Stock
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Status
+                    </th>
+
+                    <th className="px-3 py-3">
+                      Validation
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {shownRows.map(
+                    (
+                      row,
+                    ) => (
+
+                      <tr
+                        key={
+                          row.sourceRow
+                        }
+                        className={
+                          row.sourceRow ===
+                            captureTargetSourceRow
+                            ? "border-b bg-primary/5 last:border-0"
+                            : "border-b last:border-0"
+                        }
+                      >
+
+                        <td className="px-3 py-3 font-mono text-xs">
+                          {row.sourceRow}
+                        </td>
+
+
+                        <td className="px-3 py-3">
+
+                          <p className="font-medium">
+                            {row.data.product_name ||
+                              "—"}
+                          </p>
+
+
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {row.data.category ||
+                              "Uncategorized"}
+                          </p>
+
+                        </td>
+
+
+                        <td className="px-3 py-3">
+                          {row.data.variant_name ||
+                            "Standard"}
+                        </td>
+
+
+                        <td className="px-3 py-3 font-mono text-xs">
+                          {row.data.sku ||
+                            "—"}
+                        </td>
+
+
+                        <td className="px-3 py-3 font-mono text-xs">
+                          {row.data.barcode ||
+                            "—"}
+                        </td>
+
+
+                        <td className="px-3 py-3">
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={
+                              row.sourceRow ===
+                                captureTargetSourceRow
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              setCaptureTargetSourceRow(
+                                row.sourceRow,
+                              )
+                            }
+                          >
+                            <ScanLine className="mr-2 h-3.5 w-3.5" />
+
+                            Scan here
+                          </Button>
+
+                        </td>
+
+
+                        <td className="px-3 py-3">
+                          {row.data.price}
+                        </td>
+
+
+                        <td className="px-3 py-3">
+                          {row.data.stock ??
+                            0}
+                        </td>
+
+
+                        <td className="px-3 py-3 capitalize">
+                          {row.data.status ??
+                            "active"}
+                        </td>
+
+
+                        <td className="max-w-[280px] px-3 py-3">
+
+                          {row.errors.length ===
+                          0 ? (
+
+                            <span className="inline-flex items-center gap-1 text-xs font-medium">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Ready
+                            </span>
+
+                          ) : (
+
+                            <ul className="space-y-1 text-xs text-destructive">
+
+                              {row.errors.map(
+                                (
+                                  message,
+                                ) => (
+                                  <li
+                                    key={
+                                      message
+                                    }
+                                  >
+                                    {message}
+                                  </li>
+                                ),
+                              )}
+
+                            </ul>
+
+                          )}
+
+                        </td>
+
+                      </tr>
+
+                    ),
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+
+            {preview.rows.length >
+            PREVIEW_PAGE_SIZE ? (
+
+              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <p className="text-center text-xs text-muted-foreground sm:text-left">
+                  Showing rows {previewStartIndex + 1}–{Math.min(previewStartIndex + shownRows.length, preview.rows.length)} of {preview.rows.length}. All rows will be imported.
+                </p>
+
+
+                <div className="flex items-center justify-center gap-2">
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      safePreviewPage ===
+                      0
+                    }
+                    onClick={() =>
+                      setPreviewPage(
+                        (
+                          page,
+                        ) =>
+                          Math.max(
+                            0,
+                            page -
+                              1,
+                          ),
+                      )
+                    }
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+
+                    Previous
+                  </Button>
+
+
+                  <span className="min-w-20 text-center text-xs font-medium text-muted-foreground">
+                    Page {safePreviewPage + 1} / {previewPageCount}
+                  </span>
+
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      safePreviewPage >=
+                      previewPageCount -
+                        1
+                    }
+                    onClick={() =>
+                      setPreviewPage(
+                        (
+                          page,
+                        ) =>
+                          Math.min(
+                            previewPageCount -
+                              1,
+                            page +
+                              1,
+                          ),
+                      )
+                    }
+                  >
+                    Next
+
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+
+                </div>
+
+              </div>
+
+            ) : null}
+
+          </CardContent>
+
+        </Card>
+
+      ) : null}
+
+    </div>
+  );
+}

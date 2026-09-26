@@ -9,12 +9,24 @@ import {
   type ReceiptSettingsForm,
 } from "@/lib/domain/receipt-settings";
 
+import {
+  createReceiptLogoSignedUrl,
+} from "@/lib/data/receipt-logo";
+
 type ReceiptSettingsRow = {
   paper_width:
     "58mm" | "80mm";
 
   auto_print:
     boolean;
+
+  logo_url:
+    | string
+    | null;
+
+  logo_path:
+    | string
+    | null;
 
   display_name:
     | string
@@ -56,6 +68,7 @@ type ReceiptSettingsRow = {
 
 function mapRow(
   row: ReceiptSettingsRow,
+  resolvedLogoUrl?: string,
 ): ReceiptSettingsForm {
   return {
     paperWidth:
@@ -63,6 +76,16 @@ function mapRow(
 
     autoPrint:
       row.auto_print,
+
+
+    logoUrl:
+      resolvedLogoUrl ??
+      row.logo_url ??
+      "",
+
+    logoPath:
+      row.logo_path ??
+      "",
 
     displayName:
       row.display_name ??
@@ -120,6 +143,8 @@ export async function fetchReceiptSettings(
       .select(`
         paper_width,
         auto_print,
+        logo_url,
+        logo_path,
         display_name,
         address_line_1,
         address_line_2,
@@ -160,8 +185,21 @@ export async function fetchReceiptSettings(
     };
   }
 
+  const row =
+    data as ReceiptSettingsRow;
+
+
+  const resolvedLogoUrl =
+    row.logo_path
+      ? await createReceiptLogoSignedUrl(
+          row.logo_path,
+        )
+      : undefined;
+
+
   return mapRow(
-    data as ReceiptSettingsRow,
+    row,
+    resolvedLogoUrl,
   );
 }
 
@@ -186,6 +224,20 @@ export async function saveReceiptSettings(
 
         auto_print:
           settings.autoPrint,
+
+
+        logo_url:
+          settings.logoPath
+            .trim()
+            ? null
+            : settings.logoUrl
+                .trim() ||
+              null,
+
+        logo_path:
+          settings.logoPath
+            .trim() ||
+          null,
 
         display_name:
           settings.displayName
@@ -238,6 +290,8 @@ export async function saveReceiptSettings(
       .select(`
         paper_width,
         auto_print,
+        logo_url,
+        logo_path,
         display_name,
         address_line_1,
         address_line_2,
@@ -257,7 +311,20 @@ export async function saveReceiptSettings(
     );
   }
 
+  const row =
+    data as ReceiptSettingsRow;
+
+
+  const resolvedLogoUrl =
+    row.logo_path
+      ? await createReceiptLogoSignedUrl(
+          row.logo_path,
+        )
+      : undefined;
+
+
   return mapRow(
-    data as ReceiptSettingsRow,
+    row,
+    resolvedLogoUrl,
   );
 }
