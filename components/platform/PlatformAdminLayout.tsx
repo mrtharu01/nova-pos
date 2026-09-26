@@ -12,7 +12,6 @@ import {
   Gauge,
   Layers3,
   LogOut,
-  Settings,
   UserRoundCog,
 } from "lucide-react";
 
@@ -162,16 +161,6 @@ export function PlatformAdminLayout({
 
       icon:
         ArchiveRestore,
-    },
-    {
-      name:
-        "Settings",
-
-      path:
-        `${basePath}/settings`,
-
-      icon:
-        Settings,
     },
   ] as const;
 
