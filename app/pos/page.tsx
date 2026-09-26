@@ -66,11 +66,21 @@ import {
   formatMoney,
   priceVariantQuantity,
   type Product,
+  type ProductVariant,
 } from "@/lib/domain/catalog";
 
 import type {
   CompleteSaleResult,
 } from "@/lib/domain/checkout";
+
+import {
+  breakInventoryUnit,
+  fetchDefaultInventoryLocation,
+} from "@/lib/data/catalog-admin";
+
+import {
+  fetchCatalogProducts,
+} from "@/lib/data/catalog";
 
 import type {
   RemoteScanResult,
@@ -146,6 +156,37 @@ export default function POSPage() {
     React.useState<
       Product | null
     >(null);
+
+  const [
+    unitBreakRequest,
+    setUnitBreakRequest,
+  ] =
+    React.useState<{
+      product: Product;
+      variant: ProductVariant;
+    } | null>(
+      null,
+    );
+
+
+  const [
+    breakingUnit,
+    setBreakingUnit,
+  ] =
+    React.useState(
+      false,
+    );
+
+
+  const [
+    unitBreakError,
+    setUnitBreakError,
+  ] =
+    React.useState<
+      string | null
+    >(
+      null,
+    );
 
 
   const cart =
@@ -322,6 +363,253 @@ export default function POSPage() {
     );
 
 
+  function cartQuantityForVariant(
+    variantId: string,
+  ) {
+    return cart.items.reduce(
+      (
+        total,
+        item,
+      ) =>
+        item.variant.id ===
+        variantId
+          ? total +
+            item.quantity
+          : total,
+      0,
+    );
+  }
+
+
+  function getBreakableParent(
+    product: Product,
+    variant: ProductVariant,
+  ) {
+    if (
+      !product.multiUnitEnabled ||
+      !variant.unitParentVariantId ||
+      !variant.unitsPerParent
+    ) {
+      return null;
+    }
+
+
+    const parent =
+      product.variants.find(
+        (
+          candidate,
+        ) =>
+          candidate.id ===
+          variant.unitParentVariantId &&
+          candidate.active !==
+          false,
+      ) ??
+      null;
+
+
+    if (!parent) {
+      return null;
+    }
+
+
+    const availableParent =
+      parent.stock -
+      cartQuantityForVariant(
+        parent.id,
+      );
+
+
+    return availableParent >
+      0
+      ? parent
+      : null;
+  }
+
+
+  function canAddVariant(
+    product: Product,
+    variant: ProductVariant,
+  ) {
+    const directAvailable =
+      variant.stock -
+      cartQuantityForVariant(
+        variant.id,
+      );
+
+
+    return (
+      directAvailable >
+        0 ||
+      Boolean(
+        getBreakableParent(
+          product,
+          variant,
+        ),
+      )
+    );
+  }
+
+
+  function requestAddVariant(
+    product: Product,
+    variant: ProductVariant,
+    batchId?: string,
+  ):
+    | "added"
+    | "break"
+    | "out" {
+    const directAvailable =
+      variant.stock -
+      cartQuantityForVariant(
+        variant.id,
+      );
+
+
+    if (
+      directAvailable >
+      0
+    ) {
+      cart.addItem(
+        product,
+        variant,
+        1,
+        batchId,
+      );
+
+      return "added";
+    }
+
+
+    if (
+      getBreakableParent(
+        product,
+        variant,
+      )
+    ) {
+      setSelectedProduct(
+        null,
+      );
+
+      setScannerOpen(
+        false,
+      );
+
+      setUnitBreakError(
+        null,
+      );
+
+      setUnitBreakRequest({
+        product,
+        variant,
+      });
+
+      return "break";
+    }
+
+
+    return "out";
+  }
+
+
+  async function handleBreakAndAdd() {
+    if (
+      !unitBreakRequest ||
+      breakingUnit
+    ) {
+      return;
+    }
+
+
+    setBreakingUnit(
+      true,
+    );
+
+    setUnitBreakError(
+      null,
+    );
+
+
+    try {
+      const locationId =
+        await fetchDefaultInventoryLocation(
+          business?.id,
+        );
+
+
+      await breakInventoryUnit({
+        childVariantId:
+          unitBreakRequest.variant.id,
+        locationId,
+        parentQuantity:
+          1,
+      });
+
+
+      const freshProducts =
+        await fetchCatalogProducts();
+
+
+      const freshProduct =
+        freshProducts.find(
+          (
+            product,
+          ) =>
+            product.id ===
+            unitBreakRequest.product.id,
+        );
+
+
+      const freshVariant =
+        freshProduct?.variants.find(
+          (
+            variant,
+          ) =>
+            variant.id ===
+            unitBreakRequest.variant.id,
+        );
+
+
+      if (
+        !freshProduct ||
+        !freshVariant ||
+        freshVariant.stock <=
+          0
+      ) {
+        throw new Error(
+          "The pack was opened, but ARC could not refresh the loose stock. Refresh POS before continuing.",
+        );
+      }
+
+
+      cart.addItem(
+        freshProduct,
+        freshVariant,
+      );
+
+
+      setUnitBreakRequest(
+        null,
+      );
+
+
+      await refreshCatalog();
+    } catch (
+      cause
+    ) {
+      setUnitBreakError(
+        cause instanceof
+          Error
+          ? cause.message
+          : "ARC could not break the sealed stock.",
+      );
+    } finally {
+      setBreakingUnit(
+        false,
+      );
+    }
+  }
+
+
   /* ==========================================================
      PRODUCT CLICK
   ========================================================== */
@@ -337,15 +625,7 @@ export default function POSPage() {
         product.variants[0];
 
 
-      if (
-        variant.stock <=
-        0
-      ) {
-        return;
-      }
-
-
-      cart.addItem(
+      requestAddVariant(
         product,
         variant,
       );
@@ -409,9 +689,17 @@ export default function POSPage() {
         }
 
 
+        const addResult =
+          requestAddVariant(
+            match.product,
+            match.variant,
+            match.batchId,
+          );
+
+
         if (
-          match.variant.stock <=
-          0
+          addResult ===
+          "out"
         ) {
           return {
             accepted:
@@ -421,17 +709,26 @@ export default function POSPage() {
               `${match.product.name} · ${match.variant.name}`,
 
             message:
-              "This product is out of stock.",
+              "This unit is out of stock.",
           };
         }
 
 
-        cart.addItem(
-          match.product,
-          match.variant,
-          1,
-          match.batchId,
-        );
+        if (
+          addResult ===
+          "break"
+        ) {
+          return {
+            accepted:
+              false,
+
+            label:
+              `${match.product.name} · ${match.variant.name}`,
+
+            message:
+              "Loose stock is empty. Confirm Break & Add on the POS.",
+          };
+        }
 
 
         return {
@@ -1378,19 +1675,27 @@ export default function POSPage() {
                 }
                 type="button"
                 disabled={
-                  variant.stock <=
-                  0
-                }
-                onClick={() => {
-                  cart.addItem(
+                  !canAddVariant(
                     selectedProduct,
                     variant,
-                  );
+                  )
+                }
+                onClick={() => {
+                  const result =
+                    requestAddVariant(
+                      selectedProduct,
+                      variant,
+                    );
 
 
-                  setSelectedProduct(
-                    null,
-                  );
+                  if (
+                    result ===
+                    "added"
+                  ) {
+                    setSelectedProduct(
+                      null,
+                    );
+                  }
                 }}
                 className="
                   flex
@@ -1475,6 +1780,22 @@ export default function POSPage() {
 
                     in stock
 
+                    {variant.stock <=
+                      0 &&
+                      getBreakableParent(
+                        selectedProduct,
+                        variant,
+                      ) && (
+                        <span className="ml-1">
+                          · can open {
+                            getBreakableParent(
+                              selectedProduct,
+                              variant,
+                            )?.name
+                          }
+                        </span>
+                      )}
+
                   </p>
 
                 </div>
@@ -1485,6 +1806,117 @@ export default function POSPage() {
           )}
 
         </div>
+
+      </Dialog>
+
+
+      <Dialog
+        isOpen={
+          Boolean(
+            unitBreakRequest,
+          )
+        }
+        onClose={() =>
+          !breakingUnit &&
+          setUnitBreakRequest(
+            null,
+          )
+        }
+        title="Open sealed stock?"
+        description={
+          unitBreakRequest
+            ? `No loose ${unitBreakRequest.variant.name} stock is available.`
+            : undefined
+        }
+        className="max-w-lg"
+      >
+
+        {unitBreakRequest && (
+          <div className="space-y-4">
+
+            {unitBreakError && (
+              <div className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                {unitBreakError}
+              </div>
+            )}
+
+
+            <div className="rounded-[20px] border bg-muted/20 p-4">
+
+              <div className="flex items-start gap-3">
+
+                <div className="rounded-[12px] border bg-background p-2">
+                  <PackageOpen className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="font-semibold">
+                    {unitBreakRequest.product.name}
+                  </p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Open 1 {
+                      unitBreakRequest.product.variants.find(
+                        (
+                          variant,
+                        ) =>
+                          variant.id ===
+                          unitBreakRequest.variant.unitParentVariantId,
+                      )?.name ??
+                      "parent unit"
+                    } → {
+                      unitBreakRequest.variant.unitsPerParent
+                    } {
+                      unitBreakRequest.variant.name
+                    }
+                  </p>
+                </div>
+
+              </div>
+
+
+              <p className="mt-4 text-xs leading-5 text-muted-foreground">
+                ARC will move inventory from sealed stock to loose stock, inherit FIFO cost from the exact pack opened, then add 1 loose unit to this order.
+              </p>
+
+            </div>
+
+
+            <div className="flex justify-end gap-2">
+
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  breakingUnit
+                }
+                onClick={() =>
+                  setUnitBreakRequest(
+                    null,
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                disabled={
+                  breakingUnit
+                }
+                onClick={() =>
+                  void handleBreakAndAdd()
+                }
+              >
+                {breakingUnit
+                  ? "Opening…"
+                  : "Break & Add"}
+              </Button>
+
+            </div>
+
+          </div>
+        )}
 
       </Dialog>
 
