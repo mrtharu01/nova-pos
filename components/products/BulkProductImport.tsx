@@ -5,6 +5,8 @@ import * as React from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileSpreadsheet,
   Loader2,
@@ -57,7 +59,15 @@ const MAX_ROWS =
   2000;
 
 
+const PREVIEW_PAGE_SIZE =
+  30;
+
+
 const IDENTITY_ERROR =
+  "Provide a SKU or barcode.";
+
+
+const LEGACY_IDENTITY_ERROR =
   "Provide a SKU or manufacturer barcode.";
 
 
@@ -107,6 +117,8 @@ function refreshIdentityValidation(
             ) =>
               message !==
                 IDENTITY_ERROR &&
+              message !==
+                LEGACY_IDENTITY_ERROR &&
               !message.startsWith(
                 "SKU duplicates row ",
               ) &&
@@ -307,6 +319,15 @@ export function BulkProductImport() {
     );
 
 
+  const [
+    previewPage,
+    setPreviewPage,
+  ] =
+    React.useState(
+      0,
+    );
+
+
   function reset() {
     setFileName(
       "",
@@ -327,6 +348,11 @@ export function BulkProductImport() {
 
     setCaptureTargetSourceRow(
       null,
+    );
+
+
+    setPreviewPage(
+      0,
     );
 
 
@@ -779,6 +805,11 @@ export function BulkProductImport() {
       );
 
 
+      setPreviewPage(
+        0,
+      );
+
+
       setCaptureTargetSourceRow(
         nextPreview.rows.find(
           (
@@ -886,10 +917,48 @@ export function BulkProductImport() {
     !importing;
 
 
+  const previewPageCount =
+    Math.max(
+      1,
+      Math.ceil(
+        (
+          preview?.rows.length ??
+          0
+        ) /
+          PREVIEW_PAGE_SIZE,
+      ),
+    );
+
+
+  const safePreviewPage =
+    Math.min(
+      previewPage,
+      previewPageCount -
+        1,
+    );
+
+
+  const previewStartIndex =
+    safePreviewPage *
+    PREVIEW_PAGE_SIZE;
+
+
   const shownRows =
     preview?.rows.slice(
-      0,
-      30,
+      previewStartIndex,
+      previewStartIndex +
+        PREVIEW_PAGE_SIZE,
+    ) ??
+    [];
+
+
+  const invalidPreviewRows =
+    preview?.rows.filter(
+      (
+        row,
+      ) =>
+        row.errors.length >
+        0,
     ) ??
     [];
 
@@ -915,6 +984,46 @@ export function BulkProductImport() {
         captureTargetSourceRow,
     ) ??
     null;
+
+
+  React.useEffect(() => {
+    if (
+      !preview ||
+      captureTargetSourceRow ===
+        null
+    ) {
+      return;
+    }
+
+
+    const targetIndex =
+      preview.rows.findIndex(
+        (
+          row,
+        ) =>
+          row.sourceRow ===
+          captureTargetSourceRow,
+      );
+
+
+    if (
+      targetIndex <
+      0
+    ) {
+      return;
+    }
+
+
+    setPreviewPage(
+      Math.floor(
+        targetIndex /
+          PREVIEW_PAGE_SIZE,
+      ),
+    );
+  }, [
+    captureTargetSourceRow,
+    preview,
+  ]);
 
 
   return (
@@ -1327,7 +1436,50 @@ export function BulkProductImport() {
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
 
 
-                ARC will not partially import a file with validation errors. A product needs a SKU, but it never needs a barcode. Phone capture can fill an optional barcode and create a SKU from it when useful; other data errors should be corrected in the spreadsheet and re-uploaded.
+                <div>
+
+                  <p className="font-medium">
+                    ARC will not partially import a file with validation errors. Each row needs a SKU or a manufacturer barcode; if a barcode is captured for a row without a SKU, ARC creates the SKU from that barcode automatically.
+                  </p>
+
+
+                  <ul className="mt-2 space-y-1 text-xs">
+
+                    {invalidPreviewRows
+                      .slice(
+                        0,
+                        6,
+                      )
+                      .map(
+                        (
+                          row,
+                        ) => (
+                          <li
+                            key={
+                              row.sourceRow
+                            }
+                          >
+                            Row {row.sourceRow}: {row.errors.join(" · ")}
+                          </li>
+                        ),
+                      )}
+
+
+                    {invalidPreviewRows.length >
+                    6 ? (
+                      <li>
+                        + {invalidPreviewRows.length - 6} more row{invalidPreviewRows.length - 6 === 1 ? "" : "s"} with errors
+                      </li>
+                    ) : null}
+
+                  </ul>
+
+
+                  <p className="mt-2 text-xs">
+                    Manufacturer barcodes are optional when the row already has a SKU. Use phone capture only for products whose printed package barcode you want ARC to recognize.
+                  </p>
+
+                </div>
 
               </div>
 
@@ -1534,11 +1686,80 @@ export function BulkProductImport() {
 
 
             {preview.rows.length >
-            shownRows.length ? (
+            PREVIEW_PAGE_SIZE ? (
 
-              <p className="text-center text-xs text-muted-foreground">
-                Showing the first {shownRows.length} rows. The remaining {preview.rows.length - shownRows.length} rows will also be imported.
-              </p>
+              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <p className="text-center text-xs text-muted-foreground sm:text-left">
+                  Showing rows {previewStartIndex + 1}–{Math.min(previewStartIndex + shownRows.length, preview.rows.length)} of {preview.rows.length}. All rows will be imported.
+                </p>
+
+
+                <div className="flex items-center justify-center gap-2">
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      safePreviewPage ===
+                      0
+                    }
+                    onClick={() =>
+                      setPreviewPage(
+                        (
+                          page,
+                        ) =>
+                          Math.max(
+                            0,
+                            page -
+                              1,
+                          ),
+                      )
+                    }
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+
+                    Previous
+                  </Button>
+
+
+                  <span className="min-w-20 text-center text-xs font-medium text-muted-foreground">
+                    Page {safePreviewPage + 1} / {previewPageCount}
+                  </span>
+
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      safePreviewPage >=
+                      previewPageCount -
+                        1
+                    }
+                    onClick={() =>
+                      setPreviewPage(
+                        (
+                          page,
+                        ) =>
+                          Math.min(
+                            previewPageCount -
+                              1,
+                            page +
+                              1,
+                          ),
+                      )
+                    }
+                  >
+                    Next
+
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+
+                </div>
+
+              </div>
 
             ) : null}
 
