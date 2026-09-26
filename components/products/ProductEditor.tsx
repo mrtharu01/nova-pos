@@ -59,6 +59,7 @@ type EditorVariant = ProductVariantInput & {
   clientId: string;
   currentStock?: number;
   qrToken?: string;
+  unitParentClientId?: string;
 };
 
 type ImageConversionInfo = {
@@ -109,6 +110,10 @@ function mapProductVariants(product: Product): EditorVariant[] {
     isActive: variant.active !== false,
     currentStock: variant.stock,
     qrToken: variant.qrToken,
+    unitParentClientId:
+      variant.unitParentVariantId,
+    unitsPerParent:
+      variant.unitsPerParent,
   }));
 }
 
@@ -307,6 +312,15 @@ export function ProductEditor({
     );
 
   const [
+    multiUnitEnabled,
+    setMultiUnitEnabled,
+  ] =
+    React.useState(
+      product?.multiUnitEnabled ??
+      false,
+    );
+
+  const [
     promotionType,
     setPromotionType,
   ] =
@@ -489,11 +503,25 @@ export function ProductEditor({
         return current;
       }
 
-      return current.filter(
-        (variant) =>
-          variant.clientId !==
-          clientId,
-      );
+      return current
+        .filter(
+          (variant) =>
+            variant.clientId !==
+            clientId,
+        )
+        .map(
+          (variant) =>
+            variant.unitParentClientId ===
+              clientId
+              ? {
+                  ...variant,
+                  unitParentClientId:
+                    undefined,
+                  unitsPerParent:
+                    undefined,
+                }
+              : variant,
+        );
     });
   }
 
@@ -744,6 +772,115 @@ export function ProductEditor({
     }
 
     if (
+      multiUnitEnabled
+    ) {
+      const linkedVariants =
+        variants.filter(
+          (variant) =>
+            Boolean(
+              variant.unitParentClientId,
+            ),
+        );
+
+
+      if (
+        linkedVariants.length ===
+        0
+      ) {
+        setError(
+          "Multi-unit mode needs at least one loose/smaller unit linked to a parent unit.",
+        );
+        return;
+      }
+
+
+      for (
+        const variant of
+          linkedVariants
+      ) {
+        const parent =
+          variants.find(
+            (candidate) =>
+              candidate.clientId ===
+              variant.unitParentClientId,
+          );
+
+
+        if (
+          !parent ||
+          parent.clientId ===
+            variant.clientId
+        ) {
+          setError(
+            `Choose a valid parent unit for ${variant.name || "the linked variant"}.`,
+          );
+          return;
+        }
+
+
+        if (
+          !Number.isFinite(
+            variant.unitsPerParent,
+          ) ||
+          !Number.isInteger(
+            variant.unitsPerParent,
+          ) ||
+          (
+            variant.unitsPerParent ??
+            0
+          ) <
+            2
+        ) {
+          setError(
+            `Enter how many ${variant.name || "child units"} come from one ${parent.name || "parent unit"}.`,
+          );
+          return;
+        }
+      }
+
+
+      for (
+        const startVariant of
+          variants
+      ) {
+        const visited =
+          new Set<string>();
+
+        let current:
+          EditorVariant | undefined =
+            startVariant;
+
+        while (
+          current
+            ?.unitParentClientId
+        ) {
+          if (
+            visited.has(
+              current.clientId,
+            )
+          ) {
+            setError(
+              "Unit conversion links cannot form a circular chain.",
+            );
+            return;
+          }
+
+          visited.add(
+            current.clientId,
+          );
+
+          current =
+            variants.find(
+              (candidate) =>
+                candidate.clientId ===
+                current?.unitParentClientId,
+            );
+        }
+      }
+    }
+
+
+    if (
       promotionEnabled &&
       !Number.isFinite(
         promotionValue,
@@ -865,7 +1002,35 @@ export function ProductEditor({
             promotionStartIso,
           promotionEndsAt:
             promotionEndIso,
-          variants,
+          multiUnitEnabled,
+          variants:
+            variants.map(
+              (
+                variant,
+              ) => {
+                const parent =
+                  variant.unitParentClientId
+                    ? variants.find(
+                        (candidate) =>
+                          candidate.clientId ===
+                          variant.unitParentClientId,
+                      )
+                    : undefined;
+
+                return {
+                  ...variant,
+                  unitParentSku:
+                    multiUnitEnabled
+                      ? parent?.sku
+                      : undefined,
+                  unitsPerParent:
+                    multiUnitEnabled &&
+                    parent
+                      ? variant.unitsPerParent
+                      : undefined,
+                };
+              },
+            ),
         });
 
       void productId;
@@ -1571,6 +1736,42 @@ export function ProductEditor({
         </CardHeader>
 
         <CardContent className="space-y-4">
+
+          <div className="rounded-[20px] border bg-background p-4">
+
+            <label className="flex cursor-pointer items-start justify-between gap-4">
+
+              <div>
+                <p className="text-sm font-semibold">
+                  Sell in multiple units
+                </p>
+
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
+                  Enable only for products that can be physically opened or converted, such as Pack of 6 → Singles. Sealed and loose stock stay separate.
+                </p>
+              </div>
+
+              <input
+                type="checkbox"
+                checked={
+                  multiUnitEnabled
+                }
+                onChange={
+                  (
+                    event,
+                  ) =>
+                    setMultiUnitEnabled(
+                      event.target.checked,
+                    )
+                }
+                className="mt-1 h-4 w-4 shrink-0"
+              />
+
+            </label>
+
+          </div>
+
+
           {variants.map(
             (variant, index) => {
               const qrPayload =
@@ -1937,6 +2138,181 @@ export function ProductEditor({
                         />
                       </label>
                     </div>
+
+                    {multiUnitEnabled && (
+
+                      <div className="md:col-span-2 lg:col-span-4">
+
+                        <div className="rounded-[18px] border bg-background p-4">
+
+                          <label className="flex cursor-pointer items-start justify-between gap-4">
+
+                            <div>
+                              <p className="text-sm font-semibold">
+                                This is a loose / smaller unit
+                              </p>
+
+                              <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                                Link this variant to the sealed unit that ARC should open when more loose stock is needed.
+                              </p>
+                            </div>
+
+                            <input
+                              type="checkbox"
+                              checked={
+                                Boolean(
+                                  variant.unitParentClientId,
+                                )
+                              }
+                              onChange={
+                                (
+                                  event,
+                                ) =>
+                                  updateVariant(
+                                    variant.clientId,
+                                    event.target.checked
+                                      ? {
+                                          unitParentClientId:
+                                            variants.find(
+                                              (candidate) =>
+                                                candidate.clientId !==
+                                                variant.clientId,
+                                            )?.clientId,
+                                          unitsPerParent:
+                                            variant.unitsPerParent ??
+                                            2,
+                                        }
+                                      : {
+                                          unitParentClientId:
+                                            undefined,
+                                          unitsPerParent:
+                                            undefined,
+                                        },
+                                  )
+                              }
+                              disabled={
+                                variants.length <
+                                2
+                              }
+                              className="mt-1 h-4 w-4 shrink-0"
+                            />
+
+                          </label>
+
+
+                          {variant.unitParentClientId && (
+
+                            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_150px]">
+
+                              <div>
+                                <FieldLabel>
+                                  Parent / sealed unit
+                                </FieldLabel>
+
+                                <Select
+                                  value={
+                                    variant.unitParentClientId
+                                  }
+                                  onChange={
+                                    (
+                                      event,
+                                    ) =>
+                                      updateVariant(
+                                        variant.clientId,
+                                        {
+                                          unitParentClientId:
+                                            event.target.value,
+                                        },
+                                      )
+                                  }
+                                >
+                                  {variants
+                                    .filter(
+                                      (candidate) =>
+                                        candidate.clientId !==
+                                        variant.clientId,
+                                    )
+                                    .map(
+                                      (candidate) => (
+                                        <option
+                                          key={
+                                            candidate.clientId
+                                          }
+                                          value={
+                                            candidate.clientId
+                                          }
+                                        >
+                                          {candidate.name || "Unnamed"} · {candidate.sku || "No SKU"}
+                                        </option>
+                                      ),
+                                    )}
+                                </Select>
+                              </div>
+
+
+                              <div>
+                                <FieldLabel>
+                                  Units produced
+                                </FieldLabel>
+
+                                <Input
+                                  type="number"
+                                  min="2"
+                                  step="1"
+                                  value={
+                                    numberInputValue(
+                                      variant.unitsPerParent ??
+                                      2,
+                                    )
+                                  }
+                                  onChange={
+                                    (
+                                      event,
+                                    ) =>
+                                      updateVariant(
+                                        variant.clientId,
+                                        {
+                                          unitsPerParent:
+                                            parseNumberInput(
+                                              event.target.value,
+                                            ),
+                                        },
+                                      )
+                                  }
+                                />
+                              </div>
+
+
+                              <p className="md:col-span-2 text-[11px] leading-5 text-muted-foreground">
+                                1 {
+                                  variants.find(
+                                    (candidate) =>
+                                      candidate.clientId ===
+                                      variant.unitParentClientId,
+                                  )?.name ||
+                                  "parent unit"
+                                } opens into {
+                                  Number.isFinite(
+                                    variant.unitsPerParent,
+                                  )
+                                    ? variant.unitsPerParent
+                                    : "—"
+                                } {
+                                  variant.name ||
+                                  "child units"
+                                }. ARC does not convert stock until a pack is actually opened.
+                              </p>
+
+                            </div>
+
+                          )}
+
+                        </div>
+
+                      </div>
+
+                    )}
+
 
                     {/* QR Identity */}
 
