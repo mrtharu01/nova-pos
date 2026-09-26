@@ -9,9 +9,6 @@ import {
   ThemeProvider,
 } from "@/components/providers/ThemeProvider";
 
-
-  // ARC preview redeploy marker: card-terminal-scroll-fix-2026-09-26-retry
-
 export const metadata: Metadata = {
   title: {
     default:
@@ -23,8 +20,6 @@ export const metadata: Metadata = {
 
   description:
     "ARC is a fast, mobile-first point of sale, inventory and business operations platform.",
-
-  // ARC brand deployment marker.
 
   applicationName:
     "ARC",
