@@ -101,6 +101,8 @@ select private.arc_preproduction_reset_business(
 
 This preserves business identity, owner/auth, staff members, inventory locations, receipt/report/loyalty settings, subscription/package state, backup history and profile avatars.
 
+The reset is deliberately blocked if the business is already approved for production handoff. Reopen handoff first if a reset is genuinely required before the store goes live.
+
 It removes test catalog, stock/FIFO history, sales/refunds/voids/payments, customers/loyalty ledger, expenses, remote scanner sessions and pending staff invitations for that business.
 
 Afterward, delete that business UUID folder from **Supabase Storage → product-images** using the Storage UI. Do not delete `storage.objects` rows directly with SQL.
