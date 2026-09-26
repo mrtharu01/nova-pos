@@ -647,14 +647,15 @@ export function RefundSaleDialog({
       }
       title="Refund Items"
       description={`Create a refund against ${sale.receiptNumber}. The original transaction will remain in the audit history.`}
-      className="max-h-[calc(100vh-2rem)] max-w-4xl overflow-hidden"
+      className="max-h-[calc(100dvh-2rem)] max-w-4xl overflow-hidden"
+      contentClassName="flex min-h-0 flex-col !overflow-hidden !pr-0 [scrollbar-gutter:auto]"
     >
 
       {/* ======================================================
           SCROLLABLE DIALOG BODY
       ======================================================= */}
 
-      <div className="flex max-h-[calc(100vh-10rem)] flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
 
