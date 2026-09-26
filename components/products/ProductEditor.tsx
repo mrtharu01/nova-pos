@@ -486,7 +486,59 @@ export function ProductEditor({
     );
   }
 
-  function removeNewVariant(
+  function setUnitParent(
+    childClientId: string,
+    parentClientId:
+      string | undefined,
+  ) {
+    setVariants(
+      (
+        current,
+      ) =>
+        current.map(
+          (
+            variant,
+          ) => {
+            if (
+              parentClientId &&
+              variant.clientId ===
+              parentClientId
+            ) {
+              return {
+                ...variant,
+                unitParentClientId:
+                  undefined,
+                unitsPerParent:
+                  undefined,
+              };
+            }
+
+
+            if (
+              variant.clientId ===
+              childClientId
+            ) {
+              return {
+                ...variant,
+                unitParentClientId:
+                  parentClientId,
+                unitsPerParent:
+                  parentClientId
+                    ? variant.unitsPerParent ??
+                      2
+                    : undefined,
+              };
+            }
+
+
+            return variant;
+          },
+        ),
+    );
+  }
+
+
+    function removeNewVariant(
     clientId: string,
   ) {
     setVariants((current) => {
@@ -910,6 +962,31 @@ export function ProductEditor({
 
 
       for (
+        const variant of
+          linkedVariants
+      ) {
+        const parent =
+          variants.find(
+            (
+              candidate,
+            ) =>
+              candidate.clientId ===
+              variant.unitParentClientId,
+          );
+
+
+        if (
+          parent?.unitParentClientId
+        ) {
+          setError(
+            `${parent.name || "The parent unit"} cannot also be configured as a loose/smaller unit. A sealed parent must stay at the top level.`,
+          );
+          return;
+        }
+      }
+
+
+      for (
         const startVariant of
           variants
       ) {
@@ -930,7 +1007,7 @@ export function ProductEditor({
             )
           ) {
             setError(
-              "Unit conversion links cannot form a circular chain.",
+              "Invalid unit relationship detected. A parent/sealed unit cannot point back to one of its loose units.",
             );
             return;
           }
@@ -2354,26 +2431,23 @@ export function ProductEditor({
                                 (
                                   event,
                                 ) =>
-                                  updateVariant(
+                                  setUnitParent(
                                     variant.clientId,
                                     event.target.checked
-                                      ? {
-                                          unitParentClientId:
-                                            variants.find(
-                                              (candidate) =>
-                                                candidate.clientId !==
-                                                variant.clientId,
-                                            )?.clientId,
-                                          unitsPerParent:
-                                            variant.unitsPerParent ??
-                                            2,
-                                        }
-                                      : {
-                                          unitParentClientId:
-                                            undefined,
-                                          unitsPerParent:
-                                            undefined,
-                                        },
+                                      ? (
+                                          variants.find(
+                                            (candidate) =>
+                                              candidate.clientId !==
+                                                variant.clientId &&
+                                              !candidate.unitParentClientId,
+                                          ) ??
+                                          variants.find(
+                                            (candidate) =>
+                                              candidate.clientId !==
+                                              variant.clientId,
+                                          )
+                                        )?.clientId
+                                      : undefined,
                                   )
                               }
                               disabled={
@@ -2403,12 +2477,9 @@ export function ProductEditor({
                                     (
                                       event,
                                     ) =>
-                                      updateVariant(
+                                      setUnitParent(
                                         variant.clientId,
-                                        {
-                                          unitParentClientId:
-                                            event.target.value,
-                                        },
+                                        event.target.value,
                                       )
                                   }
                                 >
@@ -2416,7 +2487,12 @@ export function ProductEditor({
                                     .filter(
                                       (candidate) =>
                                         candidate.clientId !==
-                                        variant.clientId,
+                                          variant.clientId &&
+                                        (
+                                          !candidate.unitParentClientId ||
+                                          candidate.clientId ===
+                                            variant.unitParentClientId
+                                        ),
                                     )
                                     .map(
                                       (candidate) => (
