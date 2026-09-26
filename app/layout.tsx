@@ -10,7 +10,7 @@ import {
 } from "@/components/providers/ThemeProvider";
 
 
-  // ARC preview redeploy marker: cashier-batch-selection-2026-09-26-retry-2
+  // ARC preview redeploy marker: phase8a-pack-loose-2026-09-26
 
 export const metadata: Metadata = {
   title: {
