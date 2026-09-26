@@ -58,7 +58,7 @@ const MAX_ROWS =
 
 
 const IDENTITY_ERROR =
-  "Provide a SKU or barcode.";
+  "Provide a SKU. Barcode is optional.";
 
 
 // Phone capture fills spreadsheet rows without manual barcode typing.
@@ -1328,7 +1328,7 @@ export function BulkProductImport() {
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
 
 
-                ARC will not partially import a file with validation errors. Missing SKU/barcode rows can be fixed with phone capture above; other data errors should be corrected in the spreadsheet and re-uploaded.
+                ARC will not partially import a file with validation errors. A product needs a SKU, but it never needs a barcode. Phone capture can fill an optional barcode and create a SKU from it when useful; other data errors should be corrected in the spreadsheet and re-uploaded.
 
               </div>
 
