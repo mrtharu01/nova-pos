@@ -55,13 +55,13 @@ export function Dialog({
               exit={{ opacity: 0, scale: 0.98, y: 10 }}
               transition={{ duration: 0.2, type: "spring", bounce: 0, damping: 25 }}
               className={cn(
-                "w-full max-w-lg overflow-hidden rounded-[32px] border bg-card p-6 shadow-2xl sm:p-8",
+                "flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[32px] border bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8",
                 className
               )}
               onClick={(e) => e.stopPropagation()}
             >
               {(title || !hideCloseButton) && (
-                <div className="mb-6 flex items-start justify-between">
+                <div className="mb-6 flex shrink-0 items-start justify-between">
                   <div>
                     {title && <h2 className="text-xl font-semibold tracking-tight">{title}</h2>}
                     {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
@@ -76,7 +76,9 @@ export function Dialog({
                   )}
                 </div>
               )}
-              {children}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
+                {children}
+              </div>
             </motion.div>
           </div>
         </>
