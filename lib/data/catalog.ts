@@ -63,6 +63,7 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
     .from("catalog_variant_inventory")
     .select("*")
     .eq("business_id", businessId)
+    .neq("product_status", "archived")
     .order("product_name", { ascending: true })
     .order("variant_name", { ascending: true });
 
