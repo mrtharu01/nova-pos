@@ -21,6 +21,8 @@ select
 
 
 -- Dangerous reset RPC must NOT be callable by application roles.
+-- The reset function also blocks execution when the target business
+-- already has an approved production handoff.
 select
   has_function_privilege(
     'anon',
