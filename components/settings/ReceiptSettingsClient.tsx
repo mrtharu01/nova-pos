@@ -1129,7 +1129,7 @@ export function ReceiptSettingsClient({
 
                   Normal browsers cannot silently print without showing the system print dialog.
 
-                  Dedicated direct-print support can be added later for ARC's desktop/offline mode.
+                  Dedicated direct-print support can be added later for ARC&apos;s desktop/offline mode.
 
                 </div>
 
