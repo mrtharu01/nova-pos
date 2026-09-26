@@ -125,6 +125,12 @@ export function useDashboardReport(
     );
 
 
+  const hasReportRef =
+    React.useRef(
+      false,
+    );
+
+
   const liveRefreshTimerRef =
     React.useRef<
       number | null
@@ -160,6 +166,11 @@ export function useDashboardReport(
         null,
       );
 
+
+      hasReportRef.current =
+        false;
+
+
       setLoading(
         false,
       );
@@ -182,9 +193,7 @@ export function useDashboardReport(
 
     async function load() {
       const background =
-        Boolean(
-          report,
-        );
+        hasReportRef.current;
 
 
       if (
@@ -231,6 +240,10 @@ export function useDashboardReport(
         setReport(
           result,
         );
+
+
+        hasReportRef.current =
+          true;
 
 
         setLastUpdatedAt(
