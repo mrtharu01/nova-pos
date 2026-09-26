@@ -500,11 +500,11 @@ export default function BarcodesPage() {
 
         <div>
           <h2 className="text-lg font-semibold">
-            Optional ARC barcode labels
+            Optional ARC barcode labels — use only when needed
           </h2>
 
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-            Keep manufacturer barcodes when products already have them. ARC product labels are optional, while price-batch labels can identify the exact old or new stock price automatically at checkout.
+            Nothing in ARC requires these labels. Products can run with SKU + ARC QR only, keep an existing manufacturer barcode, or use ARC-generated product/batch barcodes when that is useful for the shop.
           </p>
         </div>
 
@@ -698,7 +698,7 @@ export default function BarcodesPage() {
                 {mode ===
                 "batch"
                   ? "Stock In a priced delivery to create a batch label."
-                  : "Saved product variants automatically have a stable ARC barcode identity available here."}
+                  : "ARC can create a barcode label when you choose to use one. Products do not need a barcode to exist or sell."}
               </p>
 
             </div>
