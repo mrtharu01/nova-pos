@@ -972,7 +972,7 @@ export function BulkProductImport() {
             <div className="rounded-[18px] border bg-muted/10 p-4">
 
               <p className="text-sm font-semibold">
-                SKU or barcode
+                SKU / optional printed barcode
               </p>
 
 
@@ -1100,7 +1100,7 @@ export function BulkProductImport() {
 
 
             <p className="mt-2 text-xs leading-6 text-muted-foreground">
-              Product Name and Price are required. SKU and Barcode can be left blank while preparing the sheet, then filled by barcode capture before import. Optional columns: Product Key, Category, Description, Variant Name, Cost, Stock, Low Stock Threshold and Status.
+              Product Name and Price are required. A row needs a SKU or a printed barcode as its import identity; the printed barcode itself is optional. If both are blank, add a SKU or capture the package barcode before import. After import, ARC also provides its own generated barcode automatically. Optional columns: Product Key, Category, Description, Variant Name, Cost, Stock, Low Stock Threshold and Status.
             </p>
 
 
