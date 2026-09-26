@@ -892,7 +892,7 @@ export function RemoteScannerControl({
             </Button>
           </div>
         ) : (
-          <div className="max-h-[calc(100dvh-10rem)] space-y-4 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
+          <div className="space-y-4">
 
             {/* ======================
                 STATUS
