@@ -514,7 +514,7 @@ export function ReportPrintDialog({
       hideCloseButton
     >
 
-      <div className="flex max-h-[calc(100dvh-9rem)] flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
 
         <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
 
