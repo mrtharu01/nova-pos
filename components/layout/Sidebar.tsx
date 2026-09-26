@@ -108,6 +108,9 @@ const NAV_ITEMS:
 
       icon:
         ShoppingCart,
+
+      requirement:
+        "checkout",
     },
 
     {
@@ -147,6 +150,9 @@ const NAV_ITEMS:
 
       icon:
         ReceiptText,
+
+      requirement:
+        "viewSales",
     },
 
     {
