@@ -98,9 +98,12 @@ function mapProductVariants(product: Product): EditorVariant[] {
     sku: variant.sku,
     barcode: variant.barcode ?? "",
     price:
+      variant.defaultPrice ??
       variant.regularPrice ??
       variant.price,
-    cost: variant.cost,
+    cost:
+      variant.defaultCost ??
+      variant.cost,
     initialStock: 0,
     lowStockThreshold: variant.lowStockThreshold ?? 5,
     isActive: variant.active !== false,
