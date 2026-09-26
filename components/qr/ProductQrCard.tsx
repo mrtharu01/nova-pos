@@ -25,6 +25,10 @@ import {
   buildVariantQrPayload,
 } from "@/lib/domain/catalog";
 
+import {
+  printHtmlDocument,
+} from "@/lib/print/print-html-document";
+
 export function qrSvgElementId(
   variantId: string,
 ) {
@@ -152,21 +156,6 @@ export function ProductQrCard({
       return;
     }
 
-    const printWindow =
-      window.open(
-        "",
-        "_blank",
-        "width=520,height=680",
-      );
-
-    if (!printWindow) {
-      console.error(
-        "Print window could not be opened.",
-      );
-
-      return;
-    }
-
     const safeProductName =
       escapeHtml(
         productName,
@@ -182,7 +171,8 @@ export function ProductQrCard({
         sku,
       );
 
-    printWindow.document.write(`
+    const printed =
+      printHtmlDocument(`
       <!doctype html>
       <html>
         <head>
@@ -282,25 +272,15 @@ export function ProductQrCard({
               ${safeSku}
             </div>
           </div>
-
-          <script>
-            window.addEventListener(
-              "load",
-              function () {
-                window.print();
-
-                window.onafterprint =
-                  function () {
-                    window.close();
-                  };
-              }
-            );
-          </script>
         </body>
       </html>
     `);
 
-    printWindow.document.close();
+    if (!printed) {
+      console.error(
+        "QR print document could not be prepared.",
+      );
+    }
   }
 
   return (
