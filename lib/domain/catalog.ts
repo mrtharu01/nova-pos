@@ -91,6 +91,10 @@ export type InventoryItem = {
 
   stock: number;
 
+  cost: number;
+
+  sellingPrice: number;
+
   image: string;
 
   threshold: number;
@@ -400,6 +404,13 @@ export function flattenInventory(
 
           stock:
             variant.stock,
+
+          cost:
+            variant.cost,
+
+          sellingPrice:
+            variant.regularPrice ??
+            variant.price,
 
           image:
             product.image,
