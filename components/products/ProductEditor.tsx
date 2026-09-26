@@ -1858,7 +1858,9 @@ export function ProductEditor({
                           min="0"
                           step="1"
                           value={
-                            variant.initialStock
+                            numberInputValue(
+                              variant.initialStock,
+                            )
                           }
                           onChange={(
                             event,
