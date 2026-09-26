@@ -10,7 +10,7 @@ import {
 } from "@/components/providers/ThemeProvider";
 
 
-  // ARC preview redeploy marker: numeric-input-fix-2026-09-26-c
+  // ARC preview redeploy marker: cashier-batch-selection-2026-09-26
 
 export const metadata: Metadata = {
   title: {
