@@ -508,12 +508,6 @@ export async function adjustInventory(
 
     note:
       string;
-
-    incomingUnitCost?:
-      number;
-
-    newSellingPrice?:
-      number;
   },
 ) {
   const supabase =
@@ -525,70 +519,100 @@ export async function adjustInventory(
     error,
   } =
     await supabase.rpc(
-      (
-        input.incomingUnitCost !==
-          undefined ||
-        input.newSellingPrice !==
-          undefined
-      )
-        ? "adjust_inventory_with_cost"
-        : "adjust_inventory",
-      (
-        input.incomingUnitCost !==
-          undefined ||
-        input.newSellingPrice !==
-          undefined
-      )
-        ? {
-            p_variant_id:
-              input.variantId,
+      "adjust_inventory",
+      {
+        p_variant_id:
+          input.variantId,
 
-            p_location_id:
-              input.locationId,
+        p_location_id:
+          input.locationId,
 
-            p_delta:
-              input.delta,
+        p_delta:
+          input.delta,
 
-            p_movement_type:
-              input.movementType,
+        p_movement_type:
+          input.movementType,
 
-            p_reason:
-              input.reason
-                .trim(),
+        p_reason:
+          input.reason
+            .trim(),
 
-            p_note:
-              input.note
-                .trim(),
+        p_note:
+          input.note
+            .trim(),
+      },
+    );
 
-            p_incoming_unit_cost:
-              input.incomingUnitCost ??
-              null,
 
-            p_new_selling_price:
-              input.newSellingPrice ??
-              null,
-          }
-        : {
-            p_variant_id:
-              input.variantId,
+  if (error) {
+    throw error;
+  }
 
-            p_location_id:
-              input.locationId,
 
-            p_delta:
-              input.delta,
+  return data;
+}
 
-            p_movement_type:
-              input.movementType,
 
-            p_reason:
-              input.reason
-                .trim(),
+export async function receiveInventoryBatch(
+  input: {
+    variantId:
+      string;
 
-            p_note:
-              input.note
-                .trim(),
-          },
+    locationId:
+      string;
+
+    quantity:
+      number;
+
+    unitCost?:
+      number;
+
+    sellingPrice?:
+      number;
+
+    reason:
+      string;
+
+    note:
+      string;
+  },
+) {
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "receive_inventory_batch",
+      {
+        p_variant_id:
+          input.variantId,
+
+        p_location_id:
+          input.locationId,
+
+        p_quantity:
+          input.quantity,
+
+        p_unit_cost:
+          input.unitCost ??
+          null,
+
+        p_selling_price:
+          input.sellingPrice ??
+          null,
+
+        p_reason:
+          input.reason
+            .trim(),
+
+        p_note:
+          input.note
+            .trim(),
+      },
     );
 
 
