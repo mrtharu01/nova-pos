@@ -314,7 +314,10 @@ export default function InventoryPage() {
         {selected && (
           <div className="space-y-4">
             {adjustError && <div className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{adjustError}</div>}
-            <div className="rounded-[20px] border bg-muted/20 p-3 text-sm"><span className="text-muted-foreground">Current stock</span><span className="float-right font-semibold">{selected.stock}</span></div>
+            <div className="rounded-[20px] border bg-muted/20 p-3 text-sm">
+              <span className="text-muted-foreground">{selected.variantName} stock</span>
+              <span className="float-right font-semibold">{selected.stock}</span>
+            </div>
 
             {selected.unitParentVariantId &&
               selected.unitsPerParent && (
@@ -365,7 +368,7 @@ export default function InventoryPage() {
                     />
 
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      {selected.parentStock ?? 0} sealed available · creates {
+                      Parent {selected.unitParentVariantName ?? "unit"} stock: {selected.parentStock ?? 0} · creates {
                         Number.isFinite(
                           breakQuantity,
                         )
@@ -381,7 +384,13 @@ export default function InventoryPage() {
                     </p>
                   </div>
 
-                  <Button
+                  {(selected.parentStock ?? 0) <= 0 && (
+                    <div className="sm:col-span-2 rounded-[14px] border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-5 text-amber-700 dark:text-amber-300">
+                      Break Stock is disabled because the parent/sealed variant “{selected.unitParentVariantName ?? "Parent"}” has 0 stock. The {selected.stock} shown above belongs to “{selected.variantName}” itself and is separate loose stock.
+                    </div>
+                  )}
+
+                                    <Button
                     type="button"
                     variant="secondary"
                     className="rounded-[14px]"
