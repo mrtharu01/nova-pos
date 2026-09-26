@@ -225,6 +225,9 @@ const NAV_ITEMS:
 
       icon:
         BadgeDollarSign,
+
+      requirement:
+        "owner",
     },
 
     {
