@@ -1549,7 +1549,7 @@ export function ProductEditor({
             </CardTitle>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Each variant has its own permanent ARC QR identity, optional manufacturer barcode, and independent stock.
+              Each variant has its own permanent ARC QR identity and independent stock. Manufacturer barcodes are completely optional.
             </p>
           </div>
 
@@ -1681,7 +1681,7 @@ export function ProductEditor({
 
                     <div>
                       <FieldLabel>
-                        Manufacturer barcode
+                        Manufacturer barcode (optional)
                       </FieldLabel>
 
                       <div className="flex flex-wrap gap-2">
@@ -1739,7 +1739,7 @@ export function ProductEditor({
                       </div>
 
                       <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                        Optional. Type it, scan with this device, or connect a phone and scan the barcode already printed on the product.
+                        Leave this blank if the product has no barcode or you do not want to use barcode scanning. You can type or scan an existing manufacturer barcode at any time later.
                       </p>
                     </div>
 
