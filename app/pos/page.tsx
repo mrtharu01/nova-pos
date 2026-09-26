@@ -302,6 +302,60 @@ export default function POSPage() {
     );
 
 
+  function getProductStockLabel(
+    product: Product,
+  ) {
+    if (
+      product.variants.length ===
+      1
+    ) {
+      return `${product.variants[0].stock} in stock`;
+    }
+
+
+    const ordered =
+      [...product.variants]
+        .sort(
+          (
+            left,
+            right,
+          ) =>
+            right.stock -
+            left.stock,
+        );
+
+
+    const visible =
+      ordered.slice(
+        0,
+        2,
+      );
+
+
+    const summary =
+      visible
+        .map(
+          (
+            variant,
+          ) =>
+            `${variant.name} ${variant.stock}`,
+        )
+        .join(
+          " · ",
+        );
+
+
+    const extra =
+      ordered.length >
+      visible.length
+        ? ` · +${ordered.length - visible.length} more`
+        : "";
+
+
+    return `${summary}${extra}`;
+  }
+
+
   /* ==========================================================
      FILTER PRODUCTS
   ========================================================== */
@@ -1246,12 +1300,10 @@ export default function POSPage() {
                           <p className="mt-1 text-xs font-medium text-muted-foreground">
 
                             {
-                              product
-                                .variants[0]
-                                .stock
-                            }{" "}
-
-                            in stock
+                              getProductStockLabel(
+                                product,
+                              )
+                            }
 
                           </p>
 
