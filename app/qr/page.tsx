@@ -33,6 +33,10 @@ import {
   useCatalog,
 } from "@/hooks/use-catalog";
 
+import {
+  printHtmlDocument,
+} from "@/lib/print/print-html-document";
+
 
 
 function escapeHtml(
@@ -474,28 +478,8 @@ export default function QRCodePage() {
     }
 
 
-    const printWindow =
-      window.open(
-
-        "",
-
-        "_blank",
-
-        "width=900,height=700",
-
-      );
-
-
-    if (
-      !printWindow
-    ) {
-
-      return;
-
-    }
-
-
-    printWindow.document.write(`
+    const printed =
+      printHtmlDocument(`
       <!doctype html>
 
       <html>
@@ -624,19 +608,15 @@ export default function QRCodePage() {
     `);
 
 
-    printWindow.document.close();
+    if (
+      !printed
+    ) {
 
-    printWindow.focus();
+      console.error(
+        "QR labels could not be prepared for printing.",
+      );
 
-
-    window.setTimeout(
-
-      () =>
-        printWindow.print(),
-
-      200,
-
-    );
+    }
 
   }
 
