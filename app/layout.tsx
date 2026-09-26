@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description:
     "ARC is a fast, mobile-first point of sale, inventory and business operations platform.",
 
+  // ARC brand deployment marker.
+
   applicationName:
     "ARC",
 
