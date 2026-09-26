@@ -58,11 +58,10 @@ const MAX_ROWS =
 
 
 const IDENTITY_ERROR =
-  "Provide a SKU. Barcode is optional.";
+  "Provide a SKU or manufacturer barcode.";
 
 
 // Phone capture fills spreadsheet rows without manual barcode typing.
-// Deployment retry marker for the barcode-capture preview.
 
 
 function refreshIdentityValidation(
