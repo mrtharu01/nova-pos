@@ -8,11 +8,14 @@ Do **not** rerun the entire migration folder against an existing ARC database.
 
 Migrations in this repository are historical, forward-only steps. For a database that has already followed the project development, apply only the new/unapplied SQL files and run their matching verification helpers.
 
-The current newest feature migration is:
+The current newest feature / handoff migrations are:
 
 ```text
 phase8b_supplier_bonus_stock.sql
 phase8b_supplier_bonus_stock_verify.sql
+
+pre_handoff_tenant_export_current_model.sql
+pre_handoff_tenant_export_current_model_verify.sql
 ```
 
 The final pre-handoff helpers are:
@@ -84,7 +87,7 @@ It requires the target business UUID, the exact business name and the confirmati
 RESET ARC TEST DATA
 ```
 
-This prevents an accidental cross-tenant/global cleanup.
+This prevents an accidental cross-tenant/global cleanup. The reset also fails closed if the target business has already been approved for production handoff.
 
 Product-image bytes are intentionally not deleted directly with SQL. Remove the target business folder through Supabase Storage so physical objects are deleted correctly.
 
