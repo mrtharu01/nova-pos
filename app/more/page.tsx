@@ -106,6 +106,7 @@ const ITEMS:
       href: "/billing",
       label: "Plan & Billing",
       icon: BadgeDollarSign,
+      requirement: "owner",
     },
 
     {
