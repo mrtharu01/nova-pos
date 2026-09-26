@@ -136,5 +136,41 @@ where
     bonus.total_received;
 
 
+-- 7. Supplier/invoice/effective FIFO cost math must agree.
+-- Expected: zero rows.
+select
+  bonus.id,
+  bonus.paid_quantity,
+  bonus.bonus_quantity,
+  bonus.supplier_unit_cost,
+  bonus.invoice_cost,
+  bonus.effective_unit_cost,
+  batch_record.unit_cost
+from public.inventory_supplier_bonus_receipts
+  as bonus
+join public.inventory_price_batches
+  as batch_record
+  on
+    batch_record.id =
+      bonus.batch_id
+where
+  bonus.invoice_cost <>
+    round(
+      bonus.paid_quantity *
+      bonus.supplier_unit_cost,
+      2
+    )
+  or
+  bonus.effective_unit_cost <>
+    round(
+      bonus.invoice_cost /
+      bonus.total_received,
+      2
+    )
+  or
+  batch_record.unit_cost <>
+    bonus.effective_unit_cost;
+
+
 notify pgrst,
 'reload schema';
