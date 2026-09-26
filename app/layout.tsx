@@ -10,7 +10,7 @@ import {
 } from "@/components/providers/ThemeProvider";
 
 
-  // ARC preview redeploy marker: phase8a-pack-loose-2026-09-26-retry-2
+  // ARC preview redeploy marker: multi-unit-ux-2026-09-26-retry
 
 export const metadata: Metadata = {
   title: {
