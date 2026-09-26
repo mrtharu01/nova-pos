@@ -41,7 +41,12 @@ declare
     );
 
   v_business_id uuid;
+  v_product_id uuid;
   v_location_business_id uuid;
+
+  v_promotion_enabled boolean := false;
+  v_promotion_type text;
+  v_promotion_value numeric(12,2) := 0;
 
   v_before integer;
   v_after integer;
@@ -105,6 +110,7 @@ begin
 
   select
     variant_record.business_id,
+    variant_record.product_id,
     coalesce(
       variant_record.cost,
       0
@@ -115,6 +121,7 @@ begin
     )
   into
     v_business_id,
+    v_product_id,
     v_cost_before,
     v_price_after
   from public.product_variants
@@ -301,11 +308,48 @@ begin
   if
     p_new_selling_price is not null
   then
+
+    select
+      product_record.promotion_enabled,
+      product_record.promotion_type::text,
+      coalesce(
+        product_record.promotion_value,
+        0
+      )
+    into
+      v_promotion_enabled,
+      v_promotion_type,
+      v_promotion_value
+    from public.products
+      as product_record
+    where
+      product_record.id =
+        v_product_id
+      and
+      product_record.business_id =
+        v_business_id;
+
+
+    if
+      v_promotion_enabled
+      and
+      v_promotion_type =
+        'fixed'
+      and
+      v_promotion_value >=
+        p_new_selling_price
+    then
+      raise exception
+        'New selling price must be greater than the active fixed promotion amount';
+    end if;
+
+
     v_price_after :=
       round(
         p_new_selling_price,
         2
       );
+
   end if;
 
 
