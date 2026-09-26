@@ -221,8 +221,12 @@ export function PlatformAdminLayout({
 
           <div className="flex items-center gap-2">
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-[12px] border bg-background">
-              <ShieldCheck className="h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[12px] border bg-background">
+              <img
+                src="/arc-icon.svg"
+                alt="ARC Control"
+                className="h-full w-full object-cover"
+              />
             </div>
 
 
