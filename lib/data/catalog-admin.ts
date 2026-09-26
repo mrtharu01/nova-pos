@@ -383,6 +383,42 @@ export async function saveProduct(
 }
 
 
+export async function setVariantBarcode(
+  input: {
+    variantId:
+      string;
+
+    barcode:
+      string | null;
+  },
+): Promise<void> {
+  const supabase =
+    createClient();
+
+
+  const {
+    error,
+  } =
+    await supabase.rpc(
+      "set_variant_barcode",
+      {
+        p_variant_id:
+          input.variantId,
+
+        p_barcode:
+          input.barcode
+            ?.trim() ||
+          null,
+      },
+    );
+
+
+  if (error) {
+    throw error;
+  }
+}
+
+
 /* ============================================================
    PRODUCT PROMOTION
 ============================================================ */
