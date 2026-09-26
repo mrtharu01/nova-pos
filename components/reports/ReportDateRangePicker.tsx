@@ -489,7 +489,7 @@ export function ReportDateRangePicker({
   }
 
 
-  function useQuickRange(
+  function applyQuickRange(
     range:
       DateRange,
   ) {
@@ -641,7 +641,7 @@ export function ReportDateRangePicker({
               type="button"
               className="rounded-full bg-muted px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-muted/70"
               onClick={() =>
-                useQuickRange(
+                applyQuickRange(
                   thisMonthRange(),
                 )
               }
@@ -654,7 +654,7 @@ export function ReportDateRangePicker({
               type="button"
               className="rounded-full bg-muted px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-muted/70"
               onClick={() =>
-                useQuickRange(
+                applyQuickRange(
                   previousMonthRange(),
                 )
               }
