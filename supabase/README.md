@@ -1,63 +1,114 @@
-# NOVA POS Supabase
+# ARC Supabase
 
-Use a dedicated NOVA Supabase project.
+ARC uses Supabase for PostgreSQL, Auth, Storage and Realtime.
 
-## Install order
+## Existing database rule
 
-Run these SQL files in Supabase SQL Editor in order:
+Do **not** rerun the entire migration folder against an existing ARC database.
 
-1. `phase2_catalog_inventory.sql`
-2. `phase3a_auth_onboarding.sql`
-3. `phase3b_product_inventory_crud.sql`
+Migrations in this repository are historical, forward-only steps. For a database that has already followed the project development, apply only the new/unapplied SQL files and run their matching verification helpers.
 
-Optional verification queries:
+The current newest feature migration is:
 
-- `phase3a_verify.sql`
-- `phase3b_verify.sql`
+```text
+phase8b_supplier_bonus_stock.sql
+phase8b_supplier_bonus_stock_verify.sql
+```
 
-## Current database foundation
+The final pre-handoff helpers are:
 
-- businesses
-- staff_members
-- categories
-- products
-- product_variants
-- inventory_locations
-- inventory_levels
-- inventory_movements
-- `catalog_variant_inventory` security-invoker view
-- `inventory_movement_details` security-invoker view
-- `bootstrap_business()` onboarding RPC
-- `create_category()` manager RPC
-- `save_product()` atomic product/variant RPC
-- `adjust_inventory()` atomic inventory RPC
-- RLS policies + explicit Data API grants
+```text
+preproduction_test_data_reset.sql
+preproduction_test_data_reset_verify.sql
+pre_handoff_integrity_audit.sql
+pre_handoff_security_audit.sql
+```
 
-Every product variant receives a permanent UUID `qr_token`. The encoded QR payload is:
+## Current database areas
+
+ARC currently stores and protects:
+
+- businesses, staff and staff invitations
+- categories, products and variants
+- inventory locations, levels and movements
+- FIFO inventory price/cost batches
+- pack/loose conversion audit events
+- supplier bonus/free-stock audit events
+- sales, sale items and payments
+- refunds, refund items and void audit records
+- customers and loyalty ledger/settings
+- receipt/report settings
+- expenses
+- remote scanner sessions
+- subscription/package state
+- platform backup/recovery events
+- production-handoff state
+
+Storage includes tenant-scoped product images, receipt assets and private profile avatars.
+
+## Compatibility identifiers
+
+Some database objects retain legacy `nova_*` names and the original permanent QR payload prefix:
 
 ```text
 NOVA:V1:<qr_token>
 ```
 
-Mutable information such as price, cost, stock and product name is never encoded into the QR.
+These are internal compatibility contracts and must not be renamed casually. ARC-generated Code 128 identities use the current ARC formats.
 
-## Security model
+## Security rules
 
-- `anon` has no catalog/inventory table access.
-- authenticated users are restricted by business membership through RLS.
-- catalog/inventory mutation requires manager authority.
-- QR token updates are not granted to the regular authenticated application role.
-- inventory movement history is append-only from the application.
-- both exposed views use `security_invoker = true` so underlying RLS is respected.
+- `anon` does not receive general tenant-table access.
+- authenticated users are restricted by RLS and database-resolved tenant membership.
+- owner/manager mutations are checked inside security-definer RPCs.
+- security-definer functions use a fixed empty `search_path`.
+- ordinary application users cannot execute the pre-production destructive reset helper.
+- inventory movement history and sales history are not edited directly from the application.
+- private Storage assets are resolved through signed URLs or deliberately scoped policies.
 
-Never place a Supabase secret/service-role key in a `NEXT_PUBLIC_` environment variable.
+Never expose a Supabase secret/service-role key through a `NEXT_PUBLIC_` environment variable.
 
-## Database tests
+## Test-data reset
 
-The initial pgTAP structural security suite is in:
+Before importing the permanent first catalog, use:
 
 ```text
-supabase/tests/catalog_inventory_security.test.sql
+preproduction_test_data_reset.sql
 ```
 
-Behavioral tests for owner/manager/cashier/non-member access will expand as staff management is implemented.
+The script only **defines** a protected SQL-editor helper. It does not reset anything automatically.
+
+It requires the target business UUID, the exact business name and the confirmation phrase:
+
+```text
+RESET ARC TEST DATA
+```
+
+This prevents an accidental cross-tenant/global cleanup.
+
+Product-image bytes are intentionally not deleted directly with SQL. Remove the target business folder through Supabase Storage so physical objects are deleted correctly.
+
+## Final audits
+
+After real products/opening stock are loaded, run:
+
+```text
+pre_handoff_integrity_audit.sql
+pre_handoff_security_audit.sql
+```
+
+Exception result sets should be empty before handoff.
+
+Also run all verification scripts associated with newly applied migrations.
+
+## Backup policy
+
+After permanent production data begins:
+
+- use forward-only migrations
+- verify a database backup before destructive/high-risk changes
+- back up Storage object bytes separately from the database
+- keep an independent encrypted logical dump
+- test restoration in an isolated environment
+
+See `docs/PRODUCTION_BACKUP_RECOVERY.md`.
