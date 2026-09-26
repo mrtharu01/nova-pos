@@ -1,3 +1,9 @@
+import {
+  buildArcBatchBarcodePayload,
+  buildArcVariantBarcodePayload,
+} from "@/lib/barcode/code128";
+
+
 export type ProductStatus =
   | "Active"
   | "Draft"
@@ -466,16 +472,16 @@ export function shortQrToken(
 
 
 export function findVariantByScanValue(
-
   products: Product[],
-
   value: string,
-
 ) {
-
   const normalized =
-    value.trim();
+    value
+      .trim();
 
+  const normalizedLower =
+    normalized
+      .toLowerCase();
 
   const qrToken =
     extractQrToken(
@@ -487,116 +493,105 @@ export function findVariantByScanValue(
     const product
     of products
   ) {
-
     if (
-      product.status
-      !==
+      product.status !==
       "Active"
     ) {
-
       continue;
-
     }
 
 
-    const variant =
-      product.variants.find(
-
-        (
-          candidate,
-        ) => {
-
-
-          if (
-            candidate.active
-            ===
-            false
-          ) {
-
-            return false;
-
-          }
+    for (
+      const variant
+      of product.variants
+    ) {
+      if (
+        variant.active ===
+        false
+      ) {
+        continue;
+      }
 
 
-          /*
-           * SKU fallback.
-           */
-
-          if (
-            candidate.sku.toLowerCase() ===
-              normalized.toLowerCase()
-          ) {
-            return true;
-          }
-
-
-          /*
-           * Manufacturer barcode.
-           *
-           * Kept separate from the ARC QR token so packaged
-           * products can use their existing EAN / UPC / Code128
-           * value while ARC QR remains available for everything
-           * else.
-           */
-
-          if (
-            candidate.barcode &&
-            candidate.barcode ===
-              normalized
-          ) {
-            return true;
-          }
+      if (
+        variant.sku.toLowerCase() ===
+        normalizedLower
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
 
 
-          /*
-           * Permanent ARC QR.
-           */
-
-          if (
-            !qrToken
-            ||
-            !candidate.qrToken
-          ) {
-
-            return false;
-
-          }
+      if (
+        variant.barcode &&
+        variant.barcode ===
+        normalized
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
 
 
-          return (
+      if (
+        qrToken &&
+        variant.qrToken &&
+        variant.qrToken.toLowerCase() ===
+        qrToken
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
 
-            candidate.qrToken.toLowerCase()
-            ===
-            qrToken
 
+      if (
+        variant.qrToken &&
+        buildArcVariantBarcodePayload(
+          variant.qrToken,
+        ).toLowerCase() ===
+        normalizedLower
+      ) {
+        return {
+          product,
+          variant,
+        };
+      }
+
+
+      const priceBatch =
+        variant.priceBatches
+          ?.find(
+            (
+              batch,
+            ) =>
+              buildArcBatchBarcodePayload(
+                batch.id,
+              ).toLowerCase() ===
+              normalizedLower,
           );
 
-        },
 
-      );
-
-
-    if (
-      variant
-    ) {
-
-      return {
-
-        product,
-
-        variant,
-
-      };
-
+      if (
+        priceBatch
+      ) {
+        return {
+          product,
+          variant,
+          batchId:
+            priceBatch.id,
+        };
+      }
     }
-
   }
 
 
   return null;
-
 }
-
 
 export function flattenInventory(
 
