@@ -614,7 +614,7 @@ export function PlatformBusinessDetailClient({
             </CardTitle>
 
             <p className="text-sm leading-6 text-muted-foreground">
-              These are calculated from ARC's actual database state and recovery records.
+              These are calculated from ARC&apos;s actual database state and recovery records.
             </p>
           </CardHeader>
 
