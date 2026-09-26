@@ -16,10 +16,6 @@ import {
 } from "@/components/ui/card";
 
 import {
-  useCurrentBusiness,
-} from "@/hooks/use-current-business";
-
-import {
   useSubscription,
 } from "@/hooks/use-subscription";
 
@@ -82,12 +78,6 @@ function humanize(
 
 
 export function SubscriptionSettingsCard() {
-  const {
-    business,
-  } =
-    useCurrentBusiness();
-
-
   const {
     subscription,
     loading:
@@ -196,16 +186,6 @@ export function SubscriptionSettingsCard() {
 
   const currentCode =
     subscription?.plan?.code;
-
-
-  const currentSortOrder =
-    plans.find(
-      (
-        plan,
-      ) =>
-        plan.code ===
-          currentCode,
-    )?.sortOrder;
 
 
   const complimentaryLabel =
@@ -409,13 +389,6 @@ export function SubscriptionSettingsCard() {
                   const current =
                     plan.code ===
                       currentCode;
-
-
-                  const upgrade =
-                    currentSortOrder !==
-                      undefined &&
-                    plan.sortOrder >
-                      currentSortOrder;
 
 
                   const enabledFeatures =
