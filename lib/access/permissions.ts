@@ -5,6 +5,7 @@ import type {
 
 
 export type AccessRequirement =
+  | "owner"
   | "manager"
   | keyof BusinessPermissions;
 
@@ -33,6 +34,16 @@ type RouteRule = {
 const ROUTE_RULES:
   RouteRule[] = [
     {
+      path: "/pos",
+      requirement: "checkout",
+    },
+
+    {
+      path: "/sales",
+      requirement: "viewSales",
+    },
+
+    {
       path: "/products",
       requirement: "manageCatalog",
     },
@@ -45,6 +56,16 @@ const ROUTE_RULES:
     {
       path: "/qr",
       requirement: "manager",
+    },
+
+    {
+      path: "/barcodes",
+      requirement: "manager",
+    },
+
+    {
+      path: "/billing",
+      requirement: "owner",
     },
 
     {
@@ -91,6 +112,11 @@ export function hasAccessRequirement(
 ) {
   if (!requirement) {
     return true;
+  }
+
+
+  if (requirement === "owner") {
+    return access.role === "owner";
   }
 
 
