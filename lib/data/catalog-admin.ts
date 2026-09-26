@@ -37,6 +37,10 @@ export type ProductVariantInput = {
   lowStockThreshold: number;
 
   isActive: boolean;
+
+  unitParentSku?: string;
+
+  unitsPerParent?: number;
 };
 
 
@@ -72,6 +76,9 @@ export type SaveProductInput = {
   promotionEndsAt?:
     | string
     | null;
+
+  multiUnitEnabled?:
+    boolean;
 
   variants:
     ProductVariantInput[];
@@ -305,6 +312,23 @@ export async function saveProduct(
 
         is_active:
           variant.isActive,
+
+        unit_parent_sku:
+          variant.unitParentSku
+            ?.trim()
+            .toUpperCase() ||
+          null,
+
+        units_per_parent:
+          variant.unitParentSku
+            ? Math.max(
+                2,
+                Math.trunc(
+                  variant.unitsPerParent ??
+                  2,
+                ),
+              )
+            : null,
       }),
     );
 
@@ -314,7 +338,7 @@ export async function saveProduct(
     error,
   } =
     await supabase.rpc(
-      "save_product_with_promotion_v3",
+      "save_product_with_promotion_v4",
       {
         p_product_id:
           input.id ??
@@ -361,6 +385,10 @@ export async function saveProduct(
         p_promotion_ends_at:
           input.promotionEndsAt ??
           null,
+
+        p_multi_unit_enabled:
+          input.multiUnitEnabled ??
+          false,
       },
     );
 
@@ -658,6 +686,133 @@ export async function receiveInventoryBatch(
 
 
   return data;
+}
+
+
+export type BreakInventoryUnitResult = {
+  breakId: string;
+  parentVariantId: string;
+  parentVariantName: string;
+  parentQuantity: number;
+  childVariantId: string;
+  childVariantName: string;
+  childQuantity: number;
+  unitsPerParent: number;
+};
+
+
+export async function breakInventoryUnit(
+  input: {
+    childVariantId:
+      string;
+
+    locationId:
+      string;
+
+    parentQuantity?:
+      number;
+  },
+): Promise<BreakInventoryUnitResult> {
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "break_inventory_unit",
+      {
+        p_child_variant_id:
+          input.childVariantId,
+
+        p_location_id:
+          input.locationId,
+
+        p_parent_quantity:
+          Math.max(
+            1,
+            Math.trunc(
+              input.parentQuantity ??
+              1,
+            ),
+          ),
+      },
+    );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  const row =
+    (
+      data as
+        | Array<
+            Record<
+              string,
+              unknown
+            >
+          >
+        | null
+    )?.[0];
+
+
+  if (!row) {
+    throw new Error(
+      "ARC did not return a pack-break result.",
+    );
+  }
+
+
+  return {
+    breakId:
+      String(
+        row.break_id,
+      ),
+
+    parentVariantId:
+      String(
+        row.parent_variant_id,
+      ),
+
+    parentVariantName:
+      String(
+        row.parent_variant_name ??
+        "Parent unit",
+      ),
+
+    parentQuantity:
+      Number(
+        row.parent_quantity ??
+        0,
+      ),
+
+    childVariantId:
+      String(
+        row.child_variant_id,
+      ),
+
+    childVariantName:
+      String(
+        row.child_variant_name ??
+        "Child unit",
+      ),
+
+    childQuantity:
+      Number(
+        row.child_quantity ??
+        0,
+      ),
+
+    unitsPerParent:
+      Number(
+        row.units_per_parent ??
+        0,
+      ),
+  };
 }
 
 
