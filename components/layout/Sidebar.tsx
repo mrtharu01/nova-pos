@@ -495,10 +495,12 @@ export function Sidebar({
 
         <div className="flex items-center gap-3 p-6">
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary text-[10px] font-black tracking-[0.08em] text-primary-foreground shadow-lg shadow-primary/20">
-
-            ARC
-
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[12px] border bg-background shadow-sm">
+            <img
+              src="/arc-icon.svg"
+              alt="ARC"
+              className="h-full w-full object-cover"
+            />
           </div>
 
 
