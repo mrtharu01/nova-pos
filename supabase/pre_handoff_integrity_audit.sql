@@ -702,7 +702,197 @@ where
 
 
 -- ============================================================
--- 15. FINAL MARKER
+-- 15. SALE ITEM -> FIFO BATCH CONSISTENCY
+-- After the pre-production reset all real sales should be on the
+-- current FIFO model.
+-- Expected: zero rows
+-- ============================================================
+
+select
+  sale_item.business_id,
+
+  sale_item.sale_id,
+
+  sale_item.id
+    as sale_item_id,
+
+  sale_item.variant_id,
+
+  sale_item.batch_id,
+
+  batch_record.variant_id
+    as batch_variant_id,
+
+  batch_record.business_id
+    as batch_business_id
+
+from public.sale_items
+  as sale_item
+
+left join public.inventory_price_batches
+  as batch_record
+  on
+    batch_record.id =
+      sale_item.batch_id
+
+where
+  sale_item.batch_id is null
+  or
+  batch_record.id is null
+  or
+  batch_record.business_id <>
+    sale_item.business_id
+  or
+  batch_record.variant_id <>
+    sale_item.variant_id;
+
+
+-- ============================================================
+-- 16. PACK / LOOSE BREAK AUDIT
+-- Expected: zero rows
+-- ============================================================
+
+select
+  break_record.id,
+
+  break_record.business_id,
+
+  break_record.parent_variant_id,
+
+  break_record.child_variant_id,
+
+  break_record.parent_quantity,
+
+  break_record.units_per_parent,
+
+  break_record.child_quantity,
+
+  parent_variant.product_id
+    as parent_product_id,
+
+  child_variant.product_id
+    as child_product_id
+
+from public.inventory_unit_breaks
+  as break_record
+
+left join public.product_variants
+  as parent_variant
+  on
+    parent_variant.id =
+      break_record.parent_variant_id
+
+left join public.product_variants
+  as child_variant
+  on
+    child_variant.id =
+      break_record.child_variant_id
+
+where
+  break_record.parent_quantity <= 0
+  or
+  break_record.units_per_parent < 2
+  or
+  break_record.child_quantity <>
+    break_record.parent_quantity *
+    break_record.units_per_parent
+  or
+  break_record.parent_variant_id =
+    break_record.child_variant_id
+  or
+  parent_variant.id is null
+  or
+  child_variant.id is null
+  or
+  parent_variant.business_id <>
+    break_record.business_id
+  or
+  child_variant.business_id <>
+    break_record.business_id
+  or
+  parent_variant.product_id <>
+    child_variant.product_id;
+
+
+-- ============================================================
+-- 17. SUPPLIER BONUS FIFO / COST AUDIT
+-- Expected: zero rows
+-- ============================================================
+
+select
+  bonus.id,
+
+  bonus.business_id,
+
+  bonus.variant_id,
+
+  bonus.paid_quantity,
+
+  bonus.bonus_quantity,
+
+  bonus.total_received,
+
+  bonus.supplier_unit_cost,
+
+  bonus.invoice_cost,
+
+  bonus.effective_unit_cost,
+
+  batch_record.initial_quantity
+    as batch_initial_quantity,
+
+  batch_record.unit_cost
+    as batch_unit_cost
+
+from public.inventory_supplier_bonus_receipts
+  as bonus
+
+left join public.inventory_price_batches
+  as batch_record
+  on
+    batch_record.id =
+      bonus.batch_id
+
+where
+  bonus.paid_quantity <= 0
+  or
+  bonus.bonus_quantity <= 0
+  or
+  bonus.total_received <>
+    bonus.paid_quantity +
+    bonus.bonus_quantity
+  or
+  bonus.invoice_cost <>
+    round(
+      bonus.paid_quantity *
+      bonus.supplier_unit_cost,
+      2
+    )
+  or
+  bonus.effective_unit_cost <>
+    round(
+      bonus.invoice_cost /
+      bonus.total_received,
+      2
+    )
+  or
+  batch_record.id is null
+  or
+  batch_record.business_id <>
+    bonus.business_id
+  or
+  batch_record.variant_id <>
+    bonus.variant_id
+  or
+  batch_record.initial_quantity <>
+    bonus.total_received
+  or
+  batch_record.unit_cost <>
+    bonus.effective_unit_cost;
+
+
+-- ============================================================
+-- 18. FINAL MARKER
 -- ============================================================
 
 select
