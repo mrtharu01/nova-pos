@@ -429,6 +429,8 @@ export default function POSPage() {
         cart.addItem(
           match.product,
           match.variant,
+          1,
+          match.batchId,
         );
 
 
