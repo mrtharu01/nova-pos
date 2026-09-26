@@ -1132,6 +1132,9 @@ export function CheckoutDialog({
 
                 quantity:
                   item.quantity,
+
+                batchId:
+                  item.batchId,
               }),
             ),
 
