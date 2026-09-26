@@ -315,6 +315,8 @@ declare
   v_deleted_customers bigint := 0;
   v_deleted_expenses bigint := 0;
   v_deleted_images bigint := 0;
+
+  v_handoff_approved boolean := false;
 begin
 
   if
@@ -357,6 +359,37 @@ begin
     raise exception
       'Business name confirmation failed. Expected exact name: %',
       v_business_name;
+  end if;
+
+
+  -- Once a tenant has been explicitly approved for production
+  -- handoff, the destructive pre-production helper must fail
+  -- closed. Reopen the handoff first if a reset is genuinely
+  -- required before live operation.
+  if to_regclass(
+    'public.platform_business_handoff'
+  ) is not null
+  then
+    execute $sql$
+      select
+        approved_at is not null
+      from public.platform_business_handoff
+      where business_id = $1
+    $sql$
+    into
+      v_handoff_approved
+    using
+      p_business_id;
+
+
+    if coalesce(
+      v_handoff_approved,
+      false
+    )
+    then
+      raise exception
+        'Pre-production reset is blocked because this business is already approved for handoff. Reopen the handoff before any reset.';
+    end if;
   end if;
 
 
