@@ -393,13 +393,39 @@ export default function DashboardPage() {
                 unitsOnHand +=
                   stock;
 
-                costValue +=
-                  stock *
-                  variant.cost;
+                if (
+                  variant.priceBatches &&
+                  variant.priceBatches.length >
+                    0
+                ) {
+                  variant.priceBatches.forEach(
+                    (batch) => {
+                      const batchQuantity =
+                        Math.max(
+                          0,
+                          Math.trunc(
+                            batch.quantity,
+                          ),
+                        );
 
-                retailValue +=
-                  stock *
-                  variant.price;
+                      costValue +=
+                        batchQuantity *
+                        batch.cost;
+
+                      retailValue +=
+                        batchQuantity *
+                        batch.price;
+                    },
+                  );
+                } else {
+                  costValue +=
+                    stock *
+                    variant.cost;
+
+                  retailValue +=
+                    stock *
+                    variant.price;
+                }
               },
             );
           },
