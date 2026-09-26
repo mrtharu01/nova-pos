@@ -64,6 +64,7 @@ import {
 import {
   findVariantByScanValue,
   formatMoney,
+  priceVariantQuantity,
   type Product,
 } from "@/lib/domain/catalog";
 
@@ -1649,7 +1650,14 @@ function CartContent({
             {cart.items.map(
               (
                 item,
-              ) => (
+              ) => {
+                const pricing =
+                  priceVariantQuantity(
+                    item.variant,
+                    item.quantity,
+                  );
+
+                return (
 
                 <motion.div
                   key={
@@ -1704,37 +1712,56 @@ function CartContent({
                     </p>
 
 
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-1">
 
-                      <p className="text-sm font-medium text-primary">
+                      <div className="flex items-center gap-2">
 
-                        {formatMoney(
-                          item.variant.price,
-                          currencyCode,
-                        )}
-
-                      </p>
-
-                      {item.product.promotionEnabled &&
-                        (
-                          item.variant
-                            .regularPrice ??
-                          item.variant
-                            .price
-                        ) >
-                          item.variant
-                            .price && (
-
-                        <p className="text-xs text-muted-foreground line-through">
+                        <p className="text-sm font-medium text-primary">
 
                           {formatMoney(
-                            item.variant
-                              .regularPrice ??
-                            item.variant
-                              .price,
+                            pricing.subtotal,
                             currencyCode,
                           )}
 
+                        </p>
+
+                        <span className="text-[10px] text-muted-foreground">
+                          line total
+                        </span>
+
+                      </div>
+
+
+                      {pricing.lines.length >
+                        1 && (
+
+                        <p className="mt-1 text-[10px] leading-4 text-muted-foreground">
+                          FIFO:{" "}
+                          {pricing.lines.map(
+                            (
+                              line,
+                              index,
+                            ) => (
+                              <React.Fragment
+                                key={
+                                  line.batchId ??
+                                  index
+                                }
+                              >
+                                {index >
+                                  0
+                                  ? " + "
+                                  : ""}
+
+                                {line.quantity}
+                                {" × "}
+                                {formatMoney(
+                                  line.price,
+                                  currencyCode,
+                                )}
+                              </React.Fragment>
+                            ),
+                          )}
                         </p>
 
                       )}
@@ -1807,7 +1834,8 @@ function CartContent({
 
                 </motion.div>
 
-              ),
+                );
+              },
             )}
 
           </AnimatePresence>
