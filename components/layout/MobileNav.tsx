@@ -66,6 +66,7 @@ const MOBILE_NAV_ITEMS:
       href: "/pos",
       label: "POS",
       icon: ShoppingCart,
+      requirement: "checkout",
     },
 
     {
@@ -73,12 +74,14 @@ const MOBILE_NAV_ITEMS:
       label: "Scan",
       icon: Scan,
       primary: true,
+      requirement: "checkout",
     },
 
     {
       href: "/sales",
       label: "Sales",
       icon: ReceiptText,
+      requirement: "viewSales",
     },
 
     {
