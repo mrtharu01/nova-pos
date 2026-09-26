@@ -20,7 +20,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
       SUPABASE_SECRET_KEY: ci-placeholder-secret
-      NEXT_PUBLIC_NOVA_DEMO_MODE: "false"
+      NEXT_PUBLIC_ARC_DEMO_MODE: "false"
 
     steps:
       - name: Checkout
@@ -34,6 +34,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Build
         run: npm run build
