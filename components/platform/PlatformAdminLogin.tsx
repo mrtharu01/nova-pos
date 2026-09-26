@@ -199,8 +199,12 @@ export function PlatformAdminLogin({
 
         <div className="mb-10 text-center">
 
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] border bg-card shadow-sm">
-            <ShieldCheck className="h-5 w-5" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-[16px] border bg-card shadow-sm">
+            <img
+              src="/arc-icon.svg"
+              alt="ARC Control"
+              className="h-full w-full object-cover"
+            />
           </div>
 
 
