@@ -159,12 +159,8 @@ export default async function OnboardingPage({
 
           <div className="mb-7 flex items-center gap-3">
 
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[16px] border bg-background">
-              <img
-                src="/arc-icon.svg"
-                alt="ARC"
-                className="h-full w-full object-cover"
-              />
+            <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-primary text-lg font-black text-primary-foreground">
+              A
             </div>
 
 
