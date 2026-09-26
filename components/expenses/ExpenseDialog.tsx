@@ -399,13 +399,14 @@ export function ExpenseDialog({
           : "Record a business operating expense."
       }
       className="max-h-[calc(100dvh-1rem)] max-w-xl overflow-hidden"
+      contentClassName="flex min-h-0 flex-col !overflow-hidden !pr-0 [scrollbar-gutter:auto]"
     >
 
       <form
         onSubmit={
           handleSubmit
         }
-        className="flex max-h-[calc(100dvh-9rem)] flex-col"
+        className="flex min-h-0 flex-1 flex-col"
       >
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
