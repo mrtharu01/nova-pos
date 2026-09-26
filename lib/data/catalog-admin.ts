@@ -508,6 +508,12 @@ export async function adjustInventory(
 
     note:
       string;
+
+    incomingUnitCost?:
+      number;
+
+    newSellingPrice?:
+      number;
   },
 ) {
   const supabase =
@@ -519,28 +525,70 @@ export async function adjustInventory(
     error,
   } =
     await supabase.rpc(
-      "adjust_inventory",
-      {
-        p_variant_id:
-          input.variantId,
+      (
+        input.incomingUnitCost !==
+          undefined ||
+        input.newSellingPrice !==
+          undefined
+      )
+        ? "adjust_inventory_with_cost"
+        : "adjust_inventory",
+      (
+        input.incomingUnitCost !==
+          undefined ||
+        input.newSellingPrice !==
+          undefined
+      )
+        ? {
+            p_variant_id:
+              input.variantId,
 
-        p_location_id:
-          input.locationId,
+            p_location_id:
+              input.locationId,
 
-        p_delta:
-          input.delta,
+            p_delta:
+              input.delta,
 
-        p_movement_type:
-          input.movementType,
+            p_movement_type:
+              input.movementType,
 
-        p_reason:
-          input.reason
-            .trim(),
+            p_reason:
+              input.reason
+                .trim(),
 
-        p_note:
-          input.note
-            .trim(),
-      },
+            p_note:
+              input.note
+                .trim(),
+
+            p_incoming_unit_cost:
+              input.incomingUnitCost ??
+              null,
+
+            p_new_selling_price:
+              input.newSellingPrice ??
+              null,
+          }
+        : {
+            p_variant_id:
+              input.variantId,
+
+            p_location_id:
+              input.locationId,
+
+            p_delta:
+              input.delta,
+
+            p_movement_type:
+              input.movementType,
+
+            p_reason:
+              input.reason
+                .trim(),
+
+            p_note:
+              input.note
+                .trim(),
+          },
     );
 
 
