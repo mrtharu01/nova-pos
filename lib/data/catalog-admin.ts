@@ -689,6 +689,173 @@ export async function receiveInventoryBatch(
 }
 
 
+export type ReceiveInventorySupplierBonusResult = {
+  newOnHand: number;
+  movementId: string;
+  batchId: string;
+  paidQuantity: number;
+  bonusQuantity: number;
+  totalReceived: number;
+  supplierUnitCost: number;
+  invoiceCost: number;
+  effectiveUnitCost: number;
+  sellingPrice: number;
+};
+
+
+export async function receiveInventorySupplierBonus(
+  input: {
+    variantId: string;
+    locationId: string;
+    paidQuantity: number;
+    bonusQuantity: number;
+    supplierUnitCost?: number;
+    sellingPrice?: number;
+    reason: string;
+    note: string;
+  },
+): Promise<ReceiveInventorySupplierBonusResult> {
+  const supabase =
+    createClient();
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.rpc(
+      "receive_inventory_supplier_bonus",
+      {
+        p_variant_id:
+          input.variantId,
+
+        p_location_id:
+          input.locationId,
+
+        p_paid_quantity:
+          Math.max(
+            1,
+            Math.trunc(
+              input.paidQuantity,
+            ),
+          ),
+
+        p_bonus_quantity:
+          Math.max(
+            1,
+            Math.trunc(
+              input.bonusQuantity,
+            ),
+          ),
+
+        p_supplier_unit_cost:
+          input.supplierUnitCost ??
+          null,
+
+        p_selling_price:
+          input.sellingPrice ??
+          null,
+
+        p_reason:
+          input.reason
+            .trim(),
+
+        p_note:
+          input.note
+            .trim(),
+      },
+    );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  const row =
+    (
+      data as
+        | Array<
+            Record<
+              string,
+              unknown
+            >
+          >
+        | null
+    )?.[0];
+
+
+  if (!row) {
+    throw new Error(
+      "ARC did not return a supplier bonus stock result.",
+    );
+  }
+
+
+  return {
+    newOnHand:
+      Number(
+        row.new_on_hand ??
+        0,
+      ),
+
+    movementId:
+      String(
+        row.movement_id ??
+        "",
+      ),
+
+    batchId:
+      String(
+        row.batch_id ??
+        "",
+      ),
+
+    paidQuantity:
+      Number(
+        row.paid_quantity ??
+        0,
+      ),
+
+    bonusQuantity:
+      Number(
+        row.bonus_quantity ??
+        0,
+      ),
+
+    totalReceived:
+      Number(
+        row.total_received ??
+        0,
+      ),
+
+    supplierUnitCost:
+      Number(
+        row.supplier_unit_cost ??
+        0,
+      ),
+
+    invoiceCost:
+      Number(
+        row.invoice_cost ??
+        0,
+      ),
+
+    effectiveUnitCost:
+      Number(
+        row.effective_unit_cost ??
+        0,
+      ),
+
+    sellingPrice:
+      Number(
+        row.selling_price ??
+        0,
+      ),
+  };
+}
+
+
 export type BreakInventoryUnitResult = {
   breakId: string;
   parentVariantId: string;
