@@ -69,10 +69,6 @@ import {
   type ProductVariant,
 } from "@/lib/domain/catalog";
 
-import type {
-  CompleteSaleResult,
-} from "@/lib/domain/checkout";
-
 import {
   breakInventoryUnit,
   fetchDefaultInventoryLocation,
@@ -704,133 +700,111 @@ export default function POSPage() {
      - SKU / ARC QR input
   ========================================================== */
 
-  const processScan =
-    React.useCallback(
-      (
-        value: string,
-      ): RemoteScanResult => {
-        const match =
-          findVariantByScanValue(
-            products,
-            value,
-          );
-
-
-        if (!match) {
-          if (
-            canManageCatalog
-          ) {
-            setUnknownScanValue(
-              value.trim(),
-            );
-
-
-            setScannerOpen(
-              false,
-            );
-          }
-
-
-          return {
-            accepted:
-              false,
-
-            message:
-              canManageCatalog
-                ? "Product was not found. You can add this scanned code as a new product."
-                : "Product was not found.",
-          };
-        }
-
-
-        const addResult =
-          requestAddVariant(
-            match.product,
-            match.variant,
-            match.batchId,
-          );
-
-
-        if (
-          addResult ===
-          "out"
-        ) {
-          return {
-            accepted:
-              false,
-
-            label:
-              `${match.product.name} · ${match.variant.name}`,
-
-            message:
-              "This unit is out of stock.",
-          };
-        }
-
-
-        if (
-          addResult ===
-          "break"
-        ) {
-          return {
-            accepted:
-              false,
-
-            label:
-              `${match.product.name} · ${match.variant.name}`,
-
-            message:
-              "Loose stock is empty. Confirm Break & Add on the POS.",
-          };
-        }
-
-
-        return {
-          accepted:
-            true,
-
-          label:
-            `${match.product.name} · ${match.variant.name}`,
-        };
-      },
-
-      [
-        canManageCatalog,
-        cart,
+  function processScan(
+    value: string,
+  ): RemoteScanResult {
+    const match =
+      findVariantByScanValue(
         products,
-      ],
+        value,
+      );
+
+
+    if (!match) {
+      if (
+        canManageCatalog
+      ) {
+        setUnknownScanValue(
+          value.trim(),
+        );
+
+
+        setScannerOpen(
+          false,
+        );
+      }
+
+
+      return {
+        accepted:
+          false,
+
+        message:
+          canManageCatalog
+            ? "Product was not found. You can add this scanned code as a new product."
+            : "Product was not found.",
+      };
+    }
+
+
+    const addResult =
+      requestAddVariant(
+        match.product,
+        match.variant,
+        match.batchId,
+      );
+
+
+    if (
+      addResult ===
+      "out"
+    ) {
+      return {
+        accepted:
+          false,
+
+        label:
+          `${match.product.name} · ${match.variant.name}`,
+
+        message:
+          "This unit is out of stock.",
+      };
+    }
+
+
+    if (
+      addResult ===
+      "break"
+    ) {
+      return {
+        accepted:
+          false,
+
+        label:
+          `${match.product.name} · ${match.variant.name}`,
+
+        message:
+          "Loose stock is empty. Confirm Break & Add on the POS.",
+      };
+    }
+
+
+    return {
+      accepted:
+        true,
+
+      label:
+        `${match.product.name} · ${match.variant.name}`,
+    };
+  }
+
+
+  function handleLocalScan(
+    value: string,
+  ) {
+    return processScan(
+      value,
+    ).accepted;
+  }
+
+
+  function handleRemoteScan(
+    value: string,
+  ) {
+    return processScan(
+      value,
     );
-
-
-  const handleLocalScan =
-    React.useCallback(
-      (
-        value: string,
-      ) =>
-        processScan(
-          value,
-        ).accepted,
-
-      [
-        processScan,
-      ],
-    );
-
-
-  const handleRemoteScan =
-    React.useCallback(
-      (
-        value: string,
-      ) =>
-        processScan(
-          value,
-        ),
-
-      [
-        processScan,
-      ],
-    );
-
+  }
 
   /* ==========================================================
      CHECKOUT
@@ -861,10 +835,7 @@ export default function POSPage() {
   }
 
 
-  async function handleSaleCompleted(
-    _result:
-      CompleteSaleResult,
-  ) {
+  async function handleSaleCompleted() {
     /*
      * Database transaction already
      * committed before this runs.
