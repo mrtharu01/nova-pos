@@ -47,14 +47,17 @@ Use a long random ARC platform portal key.
 
 Do not replay historical migrations on the existing database.
 
-At the current branch, check whether the following newest feature migration has already been installed:
+At the current branch, check whether the following newest migrations have already been installed:
 
 ```text
 supabase/phase8b_supplier_bonus_stock.sql
 supabase/phase8b_supplier_bonus_stock_verify.sql
+
+supabase/pre_handoff_tenant_export_current_model.sql
+supabase/pre_handoff_tenant_export_current_model_verify.sql
 ```
 
-If it has not been installed, run the migration first and its verify file second.
+Run only the migrations that are still pending, followed by their matching verify files. The tenant-export update is required even if supplier bonus receiving remains unused, because it adds the current FIFO / pack-loose inventory history to ARC Control exports.
 
 The application already expects all earlier accepted migrations through pack/loose inventory (Phase 8A).
 
