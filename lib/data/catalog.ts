@@ -45,6 +45,9 @@ type CatalogVariantRow = {
     | null;
   default_price: number | string;
   default_cost: number | string;
+  multi_unit_enabled: boolean;
+  unit_parent_variant_id: string | null;
+  units_per_parent: number | null;
 };
 
 function mapStatus(status: CatalogVariantRow["product_status"]): ProductStatus {
@@ -195,6 +198,16 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       qrToken: row.qr_token,
       barcode: row.barcode ?? undefined,
       lowStockThreshold: row.low_stock_threshold ?? 5,
+      unitParentVariantId:
+        row.unit_parent_variant_id ??
+        undefined,
+      unitsPerParent:
+        row.unit_parent_variant_id
+          ? Number(
+              row.units_per_parent ??
+              1,
+            )
+          : undefined,
     };
 
     if (existing) {
@@ -228,6 +241,9 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       promotionValue: Number(row.promotion_value),
       promotionStartsAt: row.promotion_starts_at ?? undefined,
       promotionEndsAt: row.promotion_ends_at ?? undefined,
+      multiUnitEnabled:
+        row.multi_unit_enabled ??
+        false,
       variants: [variant],
     });
   }
