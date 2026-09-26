@@ -232,6 +232,57 @@ export default function InventoryPage() {
           <div className="space-y-4">
             {adjustError && <div className="rounded-[16px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{adjustError}</div>}
             <div className="rounded-[20px] border bg-muted/20 p-3 text-sm"><span className="text-muted-foreground">Current stock</span><span className="float-right font-semibold">{selected.stock}</span></div>
+
+            {selected.priceBatches &&
+              selected.priceBatches.length >
+                0 && (
+              <div className="rounded-[20px] border bg-muted/20 p-4">
+                <p className="text-xs font-semibold">
+                  FIFO price batches
+                </p>
+
+                <div className="mt-3 space-y-2">
+                  {selected.priceBatches.map(
+                    (
+                      batch,
+                      index,
+                    ) => (
+                      <div
+                        key={
+                          batch.id ||
+                          index
+                        }
+                        className="flex items-center justify-between gap-3 rounded-[14px] border bg-background px-3 py-2 text-xs"
+                      >
+                        <div>
+                          <p className="font-semibold">
+                            {index ===
+                            0
+                              ? "Selling now"
+                              : `Queued #${index + 1}`}
+                          </p>
+
+                          <p className="mt-0.5 text-muted-foreground">
+                            {batch.quantity} unit{batch.quantity === 1 ? "" : "s"}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="font-semibold">
+                            LKR {batch.regularPrice.toFixed(2)}
+                          </p>
+
+                          <p className="mt-0.5 text-muted-foreground">
+                            cost {batch.cost.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Action</label><Select value={action} onChange={(event) => setAction(event.target.value as AdjustmentAction)}><option value="stock_in">Stock In</option><option value="stock_out">Stock Out</option><option value="return">Customer Return</option><option value="damage">Damaged</option><option value="loss">Lost</option><option value="increase">Manual Increase</option><option value="decrease">Manual Decrease</option></Select></div>
             <div><label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Quantity</label><Input type="number" min="1" step="1" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} /></div>
 
