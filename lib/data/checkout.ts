@@ -188,6 +188,10 @@ export async function completeSale(
 
         quantity:
           item.quantity,
+
+        batch_id:
+          item.batchId ??
+          null,
       }),
     );
 
