@@ -8,6 +8,7 @@ import {
   Archive,
   BadgeDollarSign,
   BarChart3,
+  Barcode,
   CreditCard,
   LogOut,
   Package,
@@ -77,6 +78,13 @@ const ITEMS:
       href: "/qr",
       label: "QR Codes",
       icon: QrCode,
+      requirement: "manager",
+    },
+
+    {
+      href: "/barcodes",
+      label: "Barcodes",
+      icon: Barcode,
       requirement: "manager",
     },
 
