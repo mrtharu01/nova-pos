@@ -1558,6 +1558,24 @@ function CartContent({
   onClose?:
     () => void;
 }) {
+  const [
+    batchPickerItemId,
+    setBatchPickerItemId,
+  ] =
+    React.useState<string | null>(
+      null,
+    );
+
+
+  const batchPickerItem =
+    cart.items.find(
+      (item) =>
+        item.id ===
+        batchPickerItemId,
+    ) ??
+    null;
+
+
   return (
     <div className="flex h-full min-h-0 flex-col">
 
@@ -1655,7 +1673,33 @@ function CartContent({
                   priceVariantQuantity(
                     item.variant,
                     item.quantity,
+                    item.batchId,
                   );
+
+                const selectedBatch =
+                  item.variant
+                    .priceBatches
+                    ?.find(
+                      (batch) =>
+                        batch.id ===
+                        item.batchId,
+                    );
+
+                const selectedBatchIndex =
+                  item.variant
+                    .priceBatches
+                    ?.findIndex(
+                      (batch) =>
+                        batch.id ===
+                        item.batchId,
+                    ) ??
+                  -1;
+
+                const batchCapacity =
+                  selectedBatch
+                    ?.quantity ??
+                  item.variant
+                    .stock;
 
                 return (
 
@@ -1714,56 +1758,61 @@ function CartContent({
 
                     <div className="mt-1">
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 
                         <p className="text-sm font-medium text-primary">
-
                           {formatMoney(
-                            pricing.subtotal,
+                            pricing.lines[0]
+                              ?.price ??
+                              item.variant
+                                .price,
                             currencyCode,
-                          )}
-
+                          )}{" "}
+                          each
                         </p>
 
-                        <span className="text-[10px] text-muted-foreground">
-                          line total
-                        </span>
+
+                        {item.quantity >
+                          1 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            · {formatMoney(
+                              pricing.subtotal,
+                              currencyCode,
+                            )} total
+                          </span>
+                        )}
 
                       </div>
 
 
-                      {pricing.lines.length >
-                        1 && (
-
-                        <p className="mt-1 text-[10px] leading-4 text-muted-foreground">
-                          FIFO:{" "}
-                          {pricing.lines.map(
-                            (
-                              line,
-                              index,
-                            ) => (
-                              <React.Fragment
-                                key={
-                                  line.batchId ??
-                                  index
-                                }
-                              >
-                                {index >
-                                  0
-                                  ? " + "
-                                  : ""}
-
-                                {line.quantity}
-                                {" × "}
-                                {formatMoney(
-                                  line.price,
-                                  currencyCode,
-                                )}
-                              </React.Fragment>
-                            ),
-                          )}
+                      {selectedBatch && (
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {selectedBatchIndex ===
+                          0
+                            ? "Oldest stock"
+                            : `Price batch #${selectedBatchIndex + 1}`}
+                          {" · "}
+                          {selectedBatch.quantity} unit{selectedBatch.quantity === 1 ? "" : "s"} available
                         </p>
+                      )}
 
+
+                      {(item.variant
+                        .priceBatches
+                        ?.length ??
+                        0) >
+                        1 && (
+                        <button
+                          type="button"
+                          className="mt-1.5 text-[11px] font-semibold text-primary hover:underline"
+                          onClick={() =>
+                            setBatchPickerItemId(
+                              item.id,
+                            )
+                          }
+                        >
+                          Change price batch
+                        </button>
                       )}
 
                     </div>
@@ -1812,7 +1861,7 @@ function CartContent({
                         className="rounded-r-lg p-1.5 transition-colors hover:bg-background disabled:opacity-40"
                         disabled={
                           item.quantity >=
-                          item.variant.stock
+                          batchCapacity
                         }
                         onClick={() =>
                           cart.updateQuantity(
@@ -1942,6 +1991,134 @@ function CartContent({
         </Button>
 
       </div>
+
+
+      <Dialog
+        isOpen={
+          Boolean(
+            batchPickerItem,
+          )
+        }
+        onClose={() =>
+          setBatchPickerItemId(
+            null,
+          )
+        }
+        title="Choose price batch"
+        description={
+          batchPickerItem
+            ? `${batchPickerItem.product.name} · ${batchPickerItem.variant.name}`
+            : undefined
+        }
+      >
+
+        {batchPickerItem && (
+          <div className="space-y-2">
+
+            {batchPickerItem.variant.priceBatches?.map(
+              (
+                batch,
+                index,
+              ) => {
+                const usedByOtherLine =
+                  cart.items.reduce(
+                    (
+                      total,
+                      item,
+                    ) =>
+                      item.id !==
+                        batchPickerItem.id &&
+                      item.variant.id ===
+                        batchPickerItem.variant.id &&
+                      item.batchId ===
+                        batch.id
+                        ? total +
+                          item.quantity
+                        : total,
+                    0,
+                  );
+
+                const available =
+                  Math.max(
+                    0,
+                    batch.quantity -
+                      usedByOtherLine,
+                  );
+
+                const selected =
+                  batch.id ===
+                  batchPickerItem.batchId;
+
+                const canUse =
+                  selected ||
+                  available >=
+                    batchPickerItem.quantity;
+
+                return (
+                  <button
+                    key={
+                      batch.id
+                    }
+                    type="button"
+                    disabled={
+                      !canUse
+                    }
+                    onClick={() => {
+                      cart.setItemBatch(
+                        batchPickerItem.id,
+                        batch.id,
+                      );
+
+                      setBatchPickerItemId(
+                        null,
+                      );
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-4 rounded-[16px] border p-4 text-left transition-colors",
+                      selected
+                        ? "border-primary bg-primary/5"
+                        : "bg-background hover:border-primary/40 hover:bg-muted/40",
+                      !canUse &&
+                        "cursor-not-allowed opacity-45",
+                    )}
+                  >
+                    <div>
+                      <p className="font-semibold">
+                        {index ===
+                        0
+                          ? "Oldest stock"
+                          : `Price batch #${index + 1}`}
+                      </p>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {available} unit{available === 1 ? "" : "s"} available
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-bold text-primary">
+                        {formatMoney(
+                          batch.price,
+                          currencyCode,
+                        )}
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        cost {formatMoney(
+                          batch.cost,
+                          currencyCode,
+                        )}
+                      </p>
+                    </div>
+                  </button>
+                );
+              },
+            )}
+
+          </div>
+        )}
+
+      </Dialog>
 
     </div>
   );
