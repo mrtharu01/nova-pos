@@ -6,12 +6,7 @@ import {
   Check,
   Crown,
   Gift,
-  Sparkles,
 } from "lucide-react";
-
-import {
-  Button,
-} from "@/components/ui/button";
 
 import {
   Card,
@@ -19,14 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import {
-  Dialog,
-} from "@/components/ui/dialog";
-
-import {
-  useBusinessAccess,
-} from "@/hooks/use-business-access";
 
 import {
   useCurrentBusiness,
@@ -102,14 +89,6 @@ export function SubscriptionSettingsCard() {
 
 
   const {
-    access,
-  } =
-    useBusinessAccess(
-      business?.id,
-    );
-
-
-  const {
     subscription,
     loading:
       subscriptionLoading,
@@ -145,18 +124,6 @@ export function SubscriptionSettingsCard() {
   ] =
     React.useState<
       string |
-      null
-    >(
-      null,
-    );
-
-
-  const [
-    selectedPlan,
-    setSelectedPlan,
-  ] =
-    React.useState<
-      NovaAvailablePlan |
       null
     >(
       null,
@@ -239,11 +206,6 @@ export function SubscriptionSettingsCard() {
         plan.code ===
           currentCode,
     )?.sortOrder;
-
-
-  const ownerCanManageBilling =
-    access?.role ===
-      "owner";
 
 
   const complimentaryLabel =
@@ -588,37 +550,23 @@ export function SubscriptionSettingsCard() {
 
                       <div className="mt-auto pt-5">
 
-                        <Button
-                          type="button"
-                          variant={
+                        <div
+                          className={
                             current
-                              ? "outline"
-                              : "default"
-                          }
-                          className="w-full"
-                          disabled={
-                            current ||
-                            !ownerCanManageBilling
-                          }
-                          onClick={() =>
-                            setSelectedPlan(
-                              plan,
-                            )
+                              ? "rounded-[12px] border bg-background px-3 py-2 text-center text-xs font-semibold"
+                              : "rounded-[12px] border border-dashed bg-muted/20 px-3 py-2 text-center text-xs font-medium text-muted-foreground"
                           }
                         >
                           {current
                             ? "Current Plan"
-                            : upgrade
-                              ? `Upgrade to ${plan.name}`
-                              : `Switch to ${plan.name}`}
-                        </Button>
+                            : "Available via ARC Control"}
+                        </div>
 
 
-                        {!ownerCanManageBilling &&
-                        !current ? (
+                        {!current ? (
 
-                          <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                            Only the business owner can manage billing.
+                          <p className="mt-2 text-center text-[11px] leading-5 text-muted-foreground">
+                            Package changes are assigned by the platform administrator until self-service billing is connected.
                           </p>
 
                         ) : null}
@@ -639,70 +587,7 @@ export function SubscriptionSettingsCard() {
       </Card>
 
 
-      <Dialog
-        isOpen={
-          Boolean(
-            selectedPlan,
-          )
-        }
-        onClose={() =>
-          setSelectedPlan(
-            null,
-          )
-        }
-        title={
-          selectedPlan
-            ? `Change to ${selectedPlan.name}`
-            : "Change Plan"
-        }
-        description="ARC's tenant-facing package UI is ready; online payment processing is the remaining commercial step."
-      >
 
-        <div className="space-y-5">
-
-          <div className="rounded-[16px] border bg-muted/20 p-4">
-
-            <div className="flex items-start gap-3">
-
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
-
-
-              <div>
-
-                <p className="text-sm font-semibold">
-                  Self-service billing is not connected yet
-                </p>
-
-
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Until the payment gateway is added, package changes are performed from ARC Control by the platform administrator. This button will become the real checkout / upgrade flow when billing goes live.
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div className="flex justify-end">
-
-            <Button
-              type="button"
-              onClick={() =>
-                setSelectedPlan(
-                  null,
-                )
-              }
-            >
-              Got it
-            </Button>
-
-          </div>
-
-        </div>
-
-      </Dialog>
 
     </div>
   );
