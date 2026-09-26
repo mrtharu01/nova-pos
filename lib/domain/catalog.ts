@@ -62,6 +62,10 @@ export type ProductVariant = {
 
   lowStockThreshold?: number;
 
+  unitParentVariantId?: string;
+
+  unitsPerParent?: number;
+
 };
 
 
@@ -97,6 +101,8 @@ export type Product = {
 
   promotionEndsAt?: string;
 
+  multiUnitEnabled?: boolean;
+
 };
 
 
@@ -129,6 +135,14 @@ export type InventoryItem = {
   image: string;
 
   threshold: number;
+
+  unitParentVariantId?: string;
+
+  unitParentVariantName?: string;
+
+  unitsPerParent?: number;
+
+  parentStock?: number;
 
 };
 
@@ -609,7 +623,17 @@ export function flattenInventory(
 
         (
           variant,
-        ) => ({
+        ) => {
+          const parentVariant =
+            variant.unitParentVariantId
+              ? product.variants.find(
+                  (candidate) =>
+                    candidate.id ===
+                    variant.unitParentVariantId,
+                )
+              : undefined;
+
+          return ({
 
           productId:
             product.id,
@@ -662,7 +686,20 @@ export function flattenInventory(
             ??
             5,
 
-        }),
+          unitParentVariantId:
+            variant.unitParentVariantId,
+
+          unitParentVariantName:
+            parentVariant?.name,
+
+          unitsPerParent:
+            variant.unitsPerParent,
+
+          parentStock:
+            parentVariant?.stock,
+
+        });
+        },
 
       ),
 
