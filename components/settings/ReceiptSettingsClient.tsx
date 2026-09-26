@@ -279,6 +279,10 @@ export function ReceiptSettingsClient({
     }
 
 
+    const currentBusinessId =
+      businessId;
+
+
     let cancelled =
       false;
 
@@ -296,7 +300,7 @@ export function ReceiptSettingsClient({
       try {
         const result =
           await fetchReceiptSettings(
-            businessId,
+            currentBusinessId,
           );
 
 
