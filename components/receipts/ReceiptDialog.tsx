@@ -338,7 +338,7 @@ export function ReceiptDialog({
 
 
       {receipt && (
-        <div className="space-y-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
 
           {/* =====================
               TOOLBAR
@@ -429,7 +429,7 @@ export function ReceiptDialog({
               PREVIEW
           ====================== */}
 
-          <div className="max-h-[65vh] overflow-auto rounded-[24px] bg-muted/60 p-6">
+          <div className="min-h-0 flex-1 overflow-auto rounded-[24px] bg-muted/60 p-6 [-webkit-overflow-scrolling:touch]">
 
             <ReceiptDocument
               receipt={
