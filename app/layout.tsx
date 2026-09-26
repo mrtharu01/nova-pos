@@ -10,7 +10,7 @@ import {
 } from "@/components/providers/ThemeProvider";
 
 
-  // ARC preview redeploy marker: circular-unit-fix-2026-09-26-retry-2
+  // ARC preview redeploy marker: card-terminal-scroll-fix-2026-09-26-retry
 
 export const metadata: Metadata = {
   title: {
