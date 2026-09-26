@@ -13,6 +13,19 @@ export type PromotionType =
   | "fixed";
 
 
+export type ProductPriceBatch = {
+  id: string;
+
+  quantity: number;
+
+  price: number;
+
+  regularPrice: number;
+
+  cost: number;
+};
+
+
 export type ProductVariant = {
 
   id: string;
@@ -26,6 +39,12 @@ export type ProductVariant = {
   regularPrice?: number;
 
   cost: number;
+
+  defaultPrice?: number;
+
+  defaultCost?: number;
+
+  priceBatches?: ProductPriceBatch[];
 
   stock: number;
 
@@ -95,11 +114,161 @@ export type InventoryItem = {
 
   sellingPrice: number;
 
+  priceBatches?: ProductPriceBatch[];
+
   image: string;
 
   threshold: number;
 
 };
+
+
+export function priceVariantQuantity(
+  variant: ProductVariant,
+  quantity: number,
+) {
+  const requested =
+    Math.max(
+      0,
+      Math.trunc(
+        quantity,
+      ),
+    );
+
+  let remaining =
+    requested;
+
+  let subtotal =
+    0;
+
+  let regularSubtotal =
+    0;
+
+  let costTotal =
+    0;
+
+  const lines: Array<{
+    batchId?: string;
+    quantity: number;
+    price: number;
+    regularPrice: number;
+    cost: number;
+  }> = [];
+
+
+  for (
+    const batch of
+      variant.priceBatches ??
+      []
+  ) {
+    if (
+      remaining <= 0
+    ) {
+      break;
+    }
+
+    const available =
+      Math.max(
+        0,
+        Math.trunc(
+          batch.quantity,
+        ),
+      );
+
+    if (
+      available <= 0
+    ) {
+      continue;
+    }
+
+    const take =
+      Math.min(
+        remaining,
+        available,
+      );
+
+    subtotal +=
+      take *
+      batch.price;
+
+    regularSubtotal +=
+      take *
+      batch.regularPrice;
+
+    costTotal +=
+      take *
+      batch.cost;
+
+    lines.push({
+      batchId:
+        batch.id,
+      quantity:
+        take,
+      price:
+        batch.price,
+      regularPrice:
+        batch.regularPrice,
+      cost:
+        batch.cost,
+    });
+
+    remaining -=
+      take;
+  }
+
+
+  if (
+    remaining > 0
+  ) {
+    const regularPrice =
+      variant.regularPrice ??
+      variant.price;
+
+    subtotal +=
+      remaining *
+      variant.price;
+
+    regularSubtotal +=
+      remaining *
+      regularPrice;
+
+    costTotal +=
+      remaining *
+      variant.cost;
+
+    lines.push({
+      quantity:
+        remaining,
+      price:
+        variant.price,
+      regularPrice,
+      cost:
+        variant.cost,
+    });
+  }
+
+
+  return {
+    quantity:
+      requested,
+    subtotal:
+      Math.round(
+        subtotal *
+        100,
+      ) / 100,
+    regularSubtotal:
+      Math.round(
+        regularSubtotal *
+        100,
+      ) / 100,
+    costTotal:
+      Math.round(
+        costTotal *
+        100,
+      ) / 100,
+    lines,
+  };
+}
 
 
 export const DEFAULT_CURRENCY =
@@ -411,6 +580,9 @@ export function flattenInventory(
           sellingPrice:
             variant.regularPrice ??
             variant.price,
+
+          priceBatches:
+            variant.priceBatches,
 
           image:
             product.image,
