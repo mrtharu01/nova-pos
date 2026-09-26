@@ -256,7 +256,7 @@ export default function InventoryPage() {
                     step="0.01"
                     value={incomingUnitCost}
                     onChange={(event) => setIncomingUnitCost(event.target.value)}
-                    placeholder={selected.cost.toFixed(2)}
+                    placeholder={selected.defaultCost.toFixed(2)}
                   />
                 </div>
 
@@ -268,7 +268,7 @@ export default function InventoryPage() {
                     step="0.01"
                     value={newSellingPrice}
                     onChange={(event) => setNewSellingPrice(event.target.value)}
-                    placeholder={selected.sellingPrice.toFixed(2)}
+                    placeholder={selected.defaultSellingPrice.toFixed(2)}
                   />
                   <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
                     This creates a new FIFO price batch. The same barcode keeps selling the older stock at its old price first, then switches automatically to this batch price.
