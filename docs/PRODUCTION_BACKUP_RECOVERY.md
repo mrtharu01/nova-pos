@@ -48,9 +48,16 @@ Storage object bytes must be copied separately from the database backup. Keep th
 
 ## 4. Tenant export
 
-From **ARC Control → Backups → Tenant exports**, download a JSON export for the business.
+Before relying on tenant exports, apply and verify:
 
-`ARC_TENANT_EXPORT_V1` contains business data, tenant-owned tables, owner/staff account IDs and emails, subscription metadata, and a product/receipt Storage object manifest.
+```text
+supabase/pre_handoff_tenant_export_current_model.sql
+supabase/pre_handoff_tenant_export_current_model_verify.sql
+```
+
+Then, from **ARC Control → Backups → Tenant exports**, download a JSON export for the business.
+
+`ARC_TENANT_EXPORT_V1` contains business data, tenant-owned tables, owner/staff account IDs and emails, subscription metadata, current FIFO price batches, pack/loose conversion history, supplier-bonus receipt history, handoff checklist state, and a product/receipt Storage object manifest.
 
 It deliberately excludes passwords, API keys, secret keys, and Storage object bytes.
 
