@@ -341,6 +341,12 @@ export function CheckoutDialog({
     );
 
 
+  const checkoutScrollRef =
+    React.useRef<HTMLDivElement | null>(
+      null,
+    );
+
+
   /* ==========================================================
      LOYALTY SETTINGS
   ========================================================== */
@@ -731,6 +737,32 @@ export function CheckoutDialog({
 
 
     setError(null);
+  }, [
+    isOpen,
+  ]);
+
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+
+    const frame =
+      window.requestAnimationFrame(
+        () => {
+          checkoutScrollRef.current?.scrollTo({
+            top: 0,
+            behavior: "auto",
+          });
+        },
+      );
+
+
+    return () =>
+      window.cancelAnimationFrame(
+        frame,
+      );
   }, [
     isOpen,
   ]);
@@ -1291,16 +1323,21 @@ export function CheckoutDialog({
         title="Payment"
         description="ARC verifies live price, stock, customer discounts and loyalty inside PostgreSQL before committing the sale."
         className="w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] max-w-2xl overflow-hidden sm:w-full"
-        contentClassName="!overflow-hidden !pr-0 [scrollbar-gutter:auto]"
+        contentClassName="flex min-h-0 flex-col !overflow-hidden !pr-0 [scrollbar-gutter:auto]"
       >
 
-        <div className="flex min-h-0 max-h-[calc(100dvh-9rem)] flex-col">
+        <div className="flex min-h-0 flex-1 flex-col">
 
           {/* ==================================================
               SCROLLABLE CONTENT
           =================================================== */}
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
+          <div
+            ref={
+              checkoutScrollRef
+            }
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]"
+          >
 
             <div className="space-y-5 pb-6">
 
