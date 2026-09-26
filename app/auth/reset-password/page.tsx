@@ -309,12 +309,8 @@ export default function ResetPasswordPage() {
 
       <div className="w-full max-w-[500px] rounded-[32px] border border-white/10 bg-[#121a2e] p-8 shadow-2xl sm:p-10">
 
-        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[16px] border border-white/10 bg-white shadow-lg shadow-black/20">
-          <img
-            src="/arc-icon.svg"
-            alt="ARC"
-            className="h-full w-full object-cover"
-          />
+        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black">
+          A
         </div>
 
 
