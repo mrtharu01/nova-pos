@@ -472,12 +472,8 @@ export default function StaffSetupPasswordPage() {
 
         <div className="flex items-center gap-4">
 
-          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[16px] border border-white/10 bg-white shadow-lg shadow-black/20">
-            <img
-              src="/arc-icon.svg"
-              alt="ARC"
-              className="h-full w-full object-cover"
-            />
+          <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-indigo-500 text-xl font-black shadow-lg shadow-indigo-500/20">
+            A
           </div>
 
 
