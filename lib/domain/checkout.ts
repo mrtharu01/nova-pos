@@ -5,6 +5,7 @@ import type {
 export type CheckoutItemInput = {
   variantId: string;
   quantity: number;
+  batchId?: string;
 };
 
 export type CompleteSaleInput = {
