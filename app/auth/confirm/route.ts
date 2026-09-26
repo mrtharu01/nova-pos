@@ -41,7 +41,16 @@ function safeRedirect(
 
     if (
       target.origin !==
-      origin
+        origin ||
+      target.pathname.startsWith(
+        "/internal/",
+      ) ||
+      target.pathname.startsWith(
+        "/auth/",
+      ) ||
+      target.pathname.startsWith(
+        "/onboarding",
+      )
     ) {
       return new URL(
         "/",
