@@ -338,7 +338,7 @@ export function ReportSettingsCard() {
 
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Customize ARC's printable sales reports and PDF layout.
+              Customize ARC&apos;s printable sales reports and PDF layout.
             </p>
 
           </div>
