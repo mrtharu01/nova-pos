@@ -39,6 +39,11 @@ const ROUTE_RULES:
     },
 
     {
+      path: "/scan",
+      requirement: "checkout",
+    },
+
+    {
       path: "/sales",
       requirement: "viewSales",
     },

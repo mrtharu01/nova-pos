@@ -358,7 +358,7 @@ export function SubscriptionSettingsCard() {
 
 
           <p className="text-sm leading-6 text-muted-foreground">
-            Starter, Pro and Business are managed from the ARC package catalog. Self-service payments will be connected when the payment gateway goes live.
+            Starter, Pro and Business are managed from the ARC package catalog. Plan assignments and billing changes are managed by the ARC platform administrator.
           </p>
 
         </CardHeader>
@@ -515,7 +515,7 @@ export function SubscriptionSettingsCard() {
                       ) : (
 
                         <p className="mt-4 text-xs leading-5 text-muted-foreground">
-                          Features and limits will appear here as you configure them in ARC Control.
+                          No additional plan entitlements are listed for this package.
                         </p>
 
                       )}
@@ -539,7 +539,7 @@ export function SubscriptionSettingsCard() {
                         {!current ? (
 
                           <p className="mt-2 text-center text-[11px] leading-5 text-muted-foreground">
-                            Package changes are assigned by the platform administrator until self-service billing is connected.
+                            Package changes are assigned by the platform administrator in ARC Control.
                           </p>
 
                         ) : null}
