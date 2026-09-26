@@ -36,6 +36,8 @@ Historical database identifiers using the old `nova_*` naming and the legacy `NO
 
 ## Local development
 
+Use **Node.js 24+**.
+
 Install dependencies:
 
 ```bash
@@ -120,6 +122,7 @@ For the current pre-handoff workflow see:
 - `supabase/pre_handoff_integrity_audit.sql`
 - `supabase/pre_handoff_security_audit.sql`
 - `docs/HANDOFF.md`
+- `docs/PRODUCT_IMPORT.md`
 - `docs/PRODUCTION_BACKUP_RECOVERY.md`
 
 ## Inventory safety
