@@ -12,6 +12,7 @@ import {
   Archive,
   BadgeDollarSign,
   BarChart3,
+  Barcode,
   ChevronRight,
   CreditCard,
   LayoutDashboard,
@@ -168,6 +169,20 @@ const NAV_ITEMS:
 
       icon:
         QrCode,
+
+      requirement:
+        "manager",
+    },
+
+    {
+      href:
+        "/barcodes",
+
+      label:
+        "Barcodes",
+
+      icon:
+        Barcode,
 
       requirement:
         "manager",
