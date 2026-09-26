@@ -10,6 +10,7 @@ import {
   Copy,
   ImagePlus,
   Loader2,
+  PackageOpen,
   Plus,
   Save,
   ScanLine,
@@ -525,7 +526,76 @@ export function ProductEditor({
     });
   }
 
-  async function handleCreateCategory() {
+  function addLinkedLooseUnit() {
+    const parent =
+      variants[0];
+
+    if (!parent) {
+      return;
+    }
+
+    const baseSku =
+      parent.sku
+        .trim()
+        .toUpperCase();
+
+    const candidateSku =
+      baseSku
+        ? `${baseSku}-SINGLE`
+        : "";
+
+    const uniqueSku =
+      candidateSku &&
+      !variants.some(
+        (variant) =>
+          variant.sku
+            .trim()
+            .toUpperCase() ===
+          candidateSku,
+      )
+        ? candidateSku
+        : "";
+
+    const loose =
+      newVariant();
+
+    loose.name =
+      "Single";
+
+    loose.sku =
+      uniqueSku;
+
+    loose.price =
+      0;
+
+    loose.cost =
+      0;
+
+    loose.initialStock =
+      0;
+
+    loose.unitParentClientId =
+      parent.clientId;
+
+    loose.unitsPerParent =
+      2;
+
+    setVariants(
+      (
+        current,
+      ) => [
+        ...current,
+        loose,
+      ],
+    );
+
+    setMultiUnitEnabled(
+      true,
+    );
+  }
+
+
+    async function handleCreateCategory() {
     const trimmed =
       newCategoryName.trim();
 
@@ -788,7 +858,7 @@ export function ProductEditor({
         0
       ) {
         setError(
-          "Multi-unit mode needs at least one loose/smaller unit linked to a parent unit.",
+          "Multi-unit setup is incomplete. Use “Add loose unit” below, or mark a variant as a loose/smaller unit and choose its parent.",
         );
         return;
       }
@@ -1770,6 +1840,122 @@ export function ProductEditor({
             </label>
 
           </div>
+
+
+          {multiUnitEnabled && (
+
+            <div className="rounded-[20px] border bg-muted/20 p-4">
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                <div className="min-w-0">
+
+                  <div className="flex items-center gap-2">
+
+                    <PackageOpen className="h-4 w-4" />
+
+                    <p className="text-sm font-semibold">
+                      Multi-unit setup
+                    </p>
+
+                  </div>
+
+                  {variants.some(
+                    (
+                      variant,
+                    ) =>
+                      Boolean(
+                        variant.unitParentClientId,
+                      ),
+                  ) ? (
+
+                    <div className="mt-2 space-y-1">
+
+                      {variants
+                        .filter(
+                          (
+                            variant,
+                          ) =>
+                            Boolean(
+                              variant.unitParentClientId,
+                            ),
+                        )
+                        .map(
+                          (
+                            child,
+                          ) => {
+                            const parent =
+                              variants.find(
+                                (
+                                  candidate,
+                                ) =>
+                                  candidate.clientId ===
+                                  child.unitParentClientId,
+                              );
+
+                            return (
+                              <p
+                                key={
+                                  child.clientId
+                                }
+                                className="text-xs text-muted-foreground"
+                              >
+                                1 {parent?.name || "parent unit"} → {child.unitsPerParent ?? "—"} {child.name || "child units"}
+                              </p>
+                            );
+                          },
+                        )}
+
+                    </div>
+
+                  ) : (
+
+                    <p className="mt-2 max-w-2xl text-xs leading-5 text-amber-700 dark:text-amber-300">
+                      Setup incomplete. Add a loose/smaller unit and link it to the sealed parent before saving.
+                    </p>
+
+                  )}
+
+                </div>
+
+
+                {!variants.some(
+                  (
+                    variant,
+                  ) =>
+                    Boolean(
+                      variant.unitParentClientId,
+                    ),
+                ) && (
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="shrink-0 rounded-[14px]"
+                    onClick={
+                      addLinkedLooseUnit
+                    }
+                    disabled={
+                      variants.length ===
+                      0
+                    }
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add loose unit
+                  </Button>
+
+                )}
+
+              </div>
+
+
+              <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+                Example: keep “Pack of 6” as the parent variant, then create “Single” as the loose unit and set Units produced to 6. ARC will track sealed packs and loose singles separately.
+              </p>
+
+            </div>
+
+          )}
 
 
           {variants.map(
