@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { Product, ProductVariant } from "@/lib/domain/catalog";
+import { priceVariantQuantity } from "@/lib/domain/catalog";
 
 export type CartItem = {
   id: string;
@@ -77,7 +78,19 @@ export const useCart = create<CartState>((set, get) => ({
   setNote: (note) => set({ note }),
   clearCart: () => set({ items: [], customerId: null, discount: 0, note: "" }),
 
-  getSubtotal: () => get().items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0),
+  getSubtotal: () =>
+    get().items.reduce(
+      (
+        sum,
+        item,
+      ) =>
+        sum +
+        priceVariantQuantity(
+          item.variant,
+          item.quantity,
+        ).subtotal,
+      0,
+    ),
 
   getTax: () => {
     const { discount, taxRate } = get();
