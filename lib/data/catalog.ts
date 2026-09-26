@@ -34,6 +34,17 @@ type CatalogVariantRow = {
   promotion_value: number | string;
   promotion_starts_at: string | null;
   promotion_ends_at: string | null;
+  price_batches:
+    | Array<{
+        id?: string;
+        quantity?: number | string;
+        price?: number | string;
+        regularPrice?: number | string;
+        cost?: number | string;
+      }>
+    | null;
+  default_price: number | string;
+  default_cost: number | string;
 };
 
 function mapStatus(status: CatalogVariantRow["product_status"]): ProductStatus {
@@ -135,6 +146,50 @@ export async function fetchCatalogProducts(): Promise<Product[]> {
       price: Number(row.price),
       regularPrice: Number(row.regular_price),
       cost: Number(row.cost),
+      defaultPrice:
+        Number(
+          row.default_price,
+        ),
+      defaultCost:
+        Number(
+          row.default_cost,
+        ),
+      priceBatches:
+        Array.isArray(
+          row.price_batches,
+        )
+          ? row.price_batches.map(
+              (
+                batch,
+              ) => ({
+                id:
+                  String(
+                    batch.id ??
+                    "",
+                  ),
+                quantity:
+                  Number(
+                    batch.quantity ??
+                    0,
+                  ),
+                price:
+                  Number(
+                    batch.price ??
+                    0,
+                  ),
+                regularPrice:
+                  Number(
+                    batch.regularPrice ??
+                    0,
+                  ),
+                cost:
+                  Number(
+                    batch.cost ??
+                    0,
+                  ),
+              }),
+            )
+          : [],
       stock: row.stock ?? 0,
       active: row.is_active,
       qrToken: row.qr_token,
