@@ -13,7 +13,6 @@ import {
   Layers3,
   LogOut,
   Settings,
-  ShieldCheck,
   UserRoundCog,
 } from "lucide-react";
 
