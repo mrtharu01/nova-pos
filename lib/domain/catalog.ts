@@ -114,6 +114,10 @@ export type InventoryItem = {
 
   sellingPrice: number;
 
+  defaultCost: number;
+
+  defaultSellingPrice: number;
+
   priceBatches?: ProductPriceBatch[];
 
   image: string;
@@ -578,6 +582,15 @@ export function flattenInventory(
             variant.cost,
 
           sellingPrice:
+            variant.regularPrice ??
+            variant.price,
+
+          defaultCost:
+            variant.defaultCost ??
+            variant.cost,
+
+          defaultSellingPrice:
+            variant.defaultPrice ??
             variant.regularPrice ??
             variant.price,
 
