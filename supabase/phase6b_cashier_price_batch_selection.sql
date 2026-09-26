@@ -485,6 +485,9 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_on_hand integer :=
+    0;
+
   v_batch_quantity integer :=
     0;
 
@@ -497,6 +500,22 @@ declare
   v_price numeric(12,2) :=
     0;
 begin
+
+  select
+    level_record.on_hand
+  into
+    v_on_hand
+  from public.inventory_levels
+    as level_record
+  where
+    level_record.id =
+      new.id;
+
+
+  if not found then
+    return new;
+  end if;
+
 
   select
     coalesce(
@@ -522,7 +541,7 @@ begin
 
   if
     v_batch_quantity =
-    new.on_hand
+    v_on_hand
   then
     return new;
   end if;
@@ -530,18 +549,18 @@ begin
 
   if
     v_batch_quantity >
-    new.on_hand
+    v_on_hand
   then
     raise exception
       'FIFO price-batch quantity (%) exceeds inventory on hand (%) for variant %',
       v_batch_quantity,
-      new.on_hand,
+      v_on_hand,
       new.variant_id;
   end if;
 
 
   v_missing_quantity :=
-    new.on_hand -
+    v_on_hand -
     v_batch_quantity;
 
 
@@ -593,7 +612,6 @@ begin
     remaining_quantity,
     unit_cost,
     regular_unit_price,
-    source_reference,
     received_at,
     created_by_user_id
   )
@@ -605,20 +623,6 @@ begin
     v_missing_quantity,
     v_cost,
     v_price,
-    'reconcile:'
-      ||
-      new.id::text
-      ||
-      ':'
-      ||
-      new.on_hand::text
-      ||
-      ':'
-      ||
-      extract(
-        epoch from
-        now()
-      )::text,
     now(),
     (
       select auth.uid()
