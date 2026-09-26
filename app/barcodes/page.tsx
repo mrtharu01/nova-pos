@@ -17,6 +17,10 @@ import {
 } from "@/components/barcode/BarcodeLabelCard";
 
 import {
+  PrintedBarcodeManager,
+} from "@/components/barcode/PrintedBarcodeManager";
+
+import {
   AppLayout,
 } from "@/components/layout/AppLayout";
 
@@ -91,6 +95,7 @@ export default function BarcodesPage() {
     products,
     loading,
     error,
+    refresh,
   } =
     useCatalog();
 
@@ -546,6 +551,19 @@ export default function BarcodesPage() {
         </div>
 
       </div>
+
+      {mode ===
+        "product" && (
+        <PrintedBarcodeManager
+          products={
+            products
+          }
+          refresh={
+            refresh
+          }
+        />
+      )}
+
 
       <div className="mb-5 flex w-fit rounded-[16px] border bg-muted/30 p-1">
 
