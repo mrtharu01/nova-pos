@@ -15,7 +15,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, History, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { adjustInventory, fetchDefaultInventoryLocation, type InventoryMovementType } from "@/lib/data/catalog-admin";
+import { adjustInventory, fetchDefaultInventoryLocation, receiveInventoryBatch, type InventoryMovementType } from "@/lib/data/catalog-admin";
 
 type AdjustmentAction = "stock_in" | "stock_out" | "damage" | "loss" | "return" | "increase" | "decrease";
 
@@ -124,22 +124,26 @@ export default function InventoryPage() {
     setAdjustError(null);
     try {
       const locationId = await fetchDefaultInventoryLocation(business?.id);
-      await adjustInventory({
-        variantId: selected.variantId,
-        locationId,
-        delta: resolved.delta,
-        movementType: resolved.type,
-        reason: reason || action.replaceAll("_", " "),
-        note,
-        incomingUnitCost:
-          action === "stock_in"
-            ? incomingCost
-            : undefined,
-        newSellingPrice:
-          action === "stock_in"
-            ? sellingPrice
-            : undefined,
-      });
+      if (action === "stock_in") {
+        await receiveInventoryBatch({
+          variantId: selected.variantId,
+          locationId,
+          quantity: Math.trunc(quantity),
+          unitCost: incomingCost,
+          sellingPrice,
+          reason: reason || "New stock delivery",
+          note,
+        });
+      } else {
+        await adjustInventory({
+          variantId: selected.variantId,
+          locationId,
+          delta: resolved.delta,
+          movementType: resolved.type,
+          reason: reason || action.replaceAll("_", " "),
+          note,
+        });
+      };
       setSelected(null);
       await refresh();
     } catch (cause) {
@@ -148,32 +152,6 @@ export default function InventoryPage() {
       setSaving(false);
     }
   }
-
-  const parsedIncomingCost =
-    incomingUnitCost.trim() === ""
-      ? null
-      : Number(incomingUnitCost);
-
-  const projectedAverageCost =
-    selected &&
-    action === "stock_in" &&
-    Number.isFinite(parsedIncomingCost) &&
-    parsedIncomingCost !== null &&
-    Number.isFinite(quantity) &&
-    quantity > 0
-      ? (
-          (
-            selected.stock *
-              selected.cost +
-            Math.trunc(quantity) *
-              parsedIncomingCost
-          ) /
-          (
-            selected.stock +
-            Math.trunc(quantity)
-          )
-        )
-      : null;
 
   return (
     <AppLayout title="Inventory">
@@ -261,12 +239,12 @@ export default function InventoryPage() {
               <div className="space-y-3 rounded-[20px] border bg-muted/20 p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Current average cost</p>
-                    <p className="mt-1 text-base font-semibold">LKR {selected.cost.toFixed(2)}</p>
+                    <p className="text-xs font-medium text-muted-foreground">Current FIFO selling price</p>
+                    <p className="mt-1 text-base font-semibold">LKR {selected.sellingPrice.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Current selling price</p>
-                    <p className="mt-1 text-base font-semibold">LKR {selected.sellingPrice.toFixed(2)}</p>
+                    <p className="text-xs font-medium text-muted-foreground">Existing stock ahead</p>
+                    <p className="mt-1 text-base font-semibold">{selected.stock} units</p>
                   </div>
                 </div>
 
@@ -280,20 +258,10 @@ export default function InventoryPage() {
                     onChange={(event) => setIncomingUnitCost(event.target.value)}
                     placeholder={selected.cost.toFixed(2)}
                   />
-                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                    ARC uses weighted-average costing for the remaining stock and this delivery.
-                  </p>
                 </div>
 
-                {projectedAverageCost !== null && (
-                  <div className="flex items-center justify-between rounded-[14px] border bg-background px-3 py-2 text-sm">
-                    <span className="text-muted-foreground">Projected average cost</span>
-                    <span className="font-semibold">LKR {projectedAverageCost.toFixed(2)}</span>
-                  </div>
-                )}
-
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">New selling price (optional)</label>
+                  <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Selling price for this delivery (optional)</label>
                   <Input
                     type="number"
                     min="0"
@@ -303,9 +271,15 @@ export default function InventoryPage() {
                     placeholder={selected.sellingPrice.toFixed(2)}
                   />
                   <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                    Same barcode means one live selling price. If set, this price applies to both old and new units of this variant.
+                    This creates a new FIFO price batch. The same barcode keeps selling the older stock at its old price first, then switches automatically to this batch price.
                   </p>
                 </div>
+
+                {selected.stock > 0 && (
+                  <div className="rounded-[14px] border bg-background px-3 py-2 text-xs leading-5 text-muted-foreground">
+                    This delivery is queued behind the existing {selected.stock} unit{selected.stock === 1 ? "" : "s"}. ARC will not change their selling price.
+                  </div>
+                )}
               </div>
             )}
 
