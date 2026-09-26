@@ -200,6 +200,15 @@ export function CheckoutDialog({
     React.useState("");
 
 
+  const [
+    cardTerminalApproved,
+    setCardTerminalApproved,
+  ] =
+    React.useState(
+      false,
+    );
+
+
   /* ==========================================================
      CUSTOMER
   ========================================================== */
@@ -644,11 +653,18 @@ export function CheckoutDialog({
     );
 
 
+  const cardIsValid =
+    paymentMethod !==
+      "card" ||
+    cardTerminalApproved;
+
+
   const canCompleteSale =
     !checkoutBusy &&
     items.length >
       0 &&
-    cashIsValid;
+    cashIsValid &&
+    cardIsValid;
 
 
   /* ==========================================================
@@ -683,6 +699,11 @@ export function CheckoutDialog({
 
 
     setReferenceNumber("");
+
+
+    setCardTerminalApproved(
+      false,
+    );
 
 
     setCustomerName("");
@@ -907,6 +928,19 @@ export function CheckoutDialog({
     ) {
       setError(
         "Enter the customer's mobile number before registering.",
+      );
+
+      return;
+    }
+
+
+    if (
+      paymentMethod ===
+        "card" &&
+      !cardTerminalApproved
+    ) {
+      setError(
+        "Confirm the physical card terminal shows APPROVED before completing the sale.",
       );
 
       return;
@@ -1257,6 +1291,7 @@ export function CheckoutDialog({
         title="Payment"
         description="ARC verifies live price, stock, customer discounts and loyalty inside PostgreSQL before committing the sale."
         className="w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] max-w-2xl overflow-hidden sm:w-full"
+        contentClassName="!overflow-hidden !pr-0 [scrollbar-gutter:auto]"
       >
 
         <div className="flex min-h-0 max-h-[calc(100dvh-9rem)] flex-col">
@@ -1931,11 +1966,23 @@ export function CheckoutDialog({
                     disabled={
                       submitting
                     }
-                    onClick={() =>
+                    onClick={() => {
                       setPaymentMethod(
                         "cash",
-                      )
-                    }
+                      );
+
+                      setCardTerminalApproved(
+                        false,
+                      );
+
+                      setReferenceNumber(
+                        "",
+                      );
+
+                      setError(
+                        null,
+                      );
+                    }}
                   />
 
 
@@ -1951,11 +1998,23 @@ export function CheckoutDialog({
                     disabled={
                       submitting
                     }
-                    onClick={() =>
+                    onClick={() => {
                       setPaymentMethod(
                         "card",
-                      )
-                    }
+                      );
+
+                      setCardTerminalApproved(
+                        false,
+                      );
+
+                      setReferenceNumber(
+                        "",
+                      );
+
+                      setError(
+                        null,
+                      );
+                    }}
                   />
 
 
@@ -1971,11 +2030,23 @@ export function CheckoutDialog({
                     disabled={
                       submitting
                     }
-                    onClick={() =>
+                    onClick={() => {
                       setPaymentMethod(
                         "bank_transfer",
-                      )
-                    }
+                      );
+
+                      setCardTerminalApproved(
+                        false,
+                      );
+
+                      setReferenceNumber(
+                        "",
+                      );
+
+                      setError(
+                        null,
+                      );
+                    }}
                   />
 
                 </div>
@@ -2110,17 +2181,151 @@ export function CheckoutDialog({
 
                 </div>
 
+              ) : paymentMethod ===
+                "card" ? (
+
+                /* ============================================
+                   PHYSICAL CARD TERMINAL
+                ============================================= */
+
+                <div className="space-y-3">
+
+                  <div className="rounded-[20px] border bg-muted/20 p-4">
+
+                    <div className="flex items-start gap-3">
+
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] border bg-background">
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+
+
+                      <div className="min-w-0 flex-1">
+
+                        <p className="text-sm font-semibold">
+                          Physical card terminal
+                        </p>
+
+
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                          Enter this amount on the shop&apos;s card machine, then let the customer tap, insert or swipe their card.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+
+                    <div className="mt-4 rounded-[16px] bg-background p-4 text-center">
+
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Charge on terminal
+                      </p>
+
+
+                      <p className="mt-1 text-2xl font-bold text-primary">
+                        {formatSaleMoney(
+                          estimatedFinalTotal,
+                          currencyCode,
+                        )}
+                      </p>
+
+                    </div>
+
+
+                    <Button
+                      type="button"
+                      variant={
+                        cardTerminalApproved
+                          ? "outline"
+                          : "secondary"
+                      }
+                      className="mt-3 h-12 w-full rounded-[14px]"
+                      disabled={
+                        submitting
+                      }
+                      onClick={() => {
+                        setCardTerminalApproved(
+                          (
+                            current,
+                          ) =>
+                            !current,
+                        );
+
+                        setError(
+                          null,
+                        );
+                      }}
+                    >
+
+                      <Check className="mr-2 h-4 w-4" />
+
+                      {cardTerminalApproved
+                        ? "Terminal approved ✓"
+                        : "Terminal shows APPROVED"}
+
+                    </Button>
+
+
+                    <p className="mt-2 text-[10px] leading-5 text-muted-foreground">
+                      Only confirm after the physical terminal displays APPROVED. ARC never asks for or stores the customer&apos;s card number or PIN.
+                    </p>
+
+                  </div>
+
+
+                  <div className="space-y-2">
+
+                    <label className="block text-sm font-medium">
+
+                      Terminal reference{" "}
+
+                      <span className="font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+
+                    </label>
+
+
+                    <Input
+                      value={
+                        referenceNumber
+                      }
+                      disabled={
+                        submitting
+                      }
+                      onChange={(
+                        event,
+                      ) => {
+                        setReferenceNumber(
+                          event.target.value,
+                        );
+
+                        setError(
+                          null,
+                        );
+                      }}
+                      onKeyDown={
+                        handlePaymentKeyDown
+                      }
+                      placeholder="Receipt / approval reference"
+                      className="h-12 rounded-[14px] px-4"
+                    />
+
+                  </div>
+
+                </div>
+
               ) : (
 
                 /* ============================================
-                   CARD / BANK
+                   BANK TRANSFER
                 ============================================= */
 
                 <div className="space-y-2">
 
                   <label className="block text-sm font-medium">
 
-                    Reference number{" "}
+                    Transfer reference{" "}
 
                     <span className="font-normal text-muted-foreground">
                       (optional)
@@ -2143,7 +2348,6 @@ export function CheckoutDialog({
                         event.target.value,
                       );
 
-
                       setError(
                         null,
                       );
@@ -2151,12 +2355,7 @@ export function CheckoutDialog({
                     onKeyDown={
                       handlePaymentKeyDown
                     }
-                    placeholder={
-                      paymentMethod ===
-                      "card"
-                        ? "Card terminal reference"
-                        : "Transfer reference"
-                    }
+                    placeholder="Transfer reference"
                     className="h-12 rounded-[14px] px-4"
                   />
 
@@ -2307,7 +2506,14 @@ export function CheckoutDialog({
 
               {submitting
                 ? "Completing Sale…"
-                : "Complete Sale"}
+                : paymentMethod ===
+                    "card" &&
+                  !cardTerminalApproved
+                  ? "Confirm Terminal Payment"
+                  : paymentMethod ===
+                      "card"
+                    ? "Complete Card Sale"
+                    : "Complete Sale"}
 
             </Button>
 
