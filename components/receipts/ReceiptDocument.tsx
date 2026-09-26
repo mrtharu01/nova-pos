@@ -161,7 +161,44 @@ export function ReceiptDocument({
     );
 
 
-  /* ==========================================================
+  
+
+  const productPromotionDiscountTotal =
+    Math.round(
+      receipt.items.reduce(
+        (
+          total,
+          item,
+        ) =>
+          total +
+          item.productDiscountTotal,
+        0,
+      ) *
+        100,
+    ) / 100;
+
+
+  const totalDiscount =
+    Math.round(
+      (
+        productPromotionDiscountTotal +
+        receipt.discountTotal
+      ) *
+        100,
+    ) / 100;
+
+
+  const originalAmount =
+    Math.round(
+      (
+        receipt.subtotal +
+        productPromotionDiscountTotal
+      ) *
+        100,
+    ) / 100;
+
+
+/* ==========================================================
      REFUNDED QUANTITY PER ORIGINAL SALE ITEM
   ========================================================== */
 
@@ -693,20 +730,20 @@ export function ReceiptDocument({
         <section className="space-y-[3px]">
 
           <MoneyRow
-            label="SUBTOTAL"
+            label="ORIGINAL AMOUNT"
             value={
-              receipt.subtotal
+              originalAmount
             }
           />
 
 
-          {receipt.discountTotal >
+          {totalDiscount >
             0 && (
 
             <MoneyRow
-              label="DISCOUNT"
+              label="TOTAL DISCOUNT"
               value={
-                -receipt.discountTotal
+                -totalDiscount
               }
             />
 
@@ -732,7 +769,7 @@ export function ReceiptDocument({
           <div className="flex items-end justify-between gap-3 text-[15px] font-black">
 
             <span>
-              ORIGINAL TOTAL
+              TOTAL
             </span>
 
 
@@ -755,7 +792,7 @@ export function ReceiptDocument({
           </div>
 
 
-          {/* ================================================
+                    {/* ================================================
               REFUNDED TOTAL
           ================================================= */}
 
