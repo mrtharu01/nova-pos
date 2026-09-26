@@ -109,6 +109,24 @@ function mapProductVariants(product: Product): EditorVariant[] {
   }));
 }
 
+function numberInputValue(
+  value: number,
+) {
+  return Number.isFinite(
+    value,
+  )
+    ? value
+    : "";
+}
+
+function parseNumberInput(
+  value: string,
+) {
+  return value === ""
+    ? Number.NaN
+    : Number(value);
+}
+
 function FieldLabel({
   children,
 }: {
@@ -687,12 +705,49 @@ export function ProductEditor({
     if (
       variants.some(
         (variant) =>
-          variant.price < 0 ||
-          variant.cost < 0,
+          !Number.isFinite(
+            variant.price,
+          ) ||
+          !Number.isFinite(
+            variant.cost,
+          ) ||
+          !Number.isFinite(
+            variant.lowStockThreshold,
+          ) ||
+          !Number.isFinite(
+            variant.initialStock,
+          ),
       )
     ) {
       setError(
-        "Price and cost cannot be negative.",
+        "Enter valid numeric values for price, cost, low-stock threshold, and stock.",
+      );
+      return;
+    }
+
+    if (
+      variants.some(
+        (variant) =>
+          variant.price < 0 ||
+          variant.cost < 0 ||
+          variant.lowStockThreshold < 0 ||
+          variant.initialStock < 0,
+      )
+    ) {
+      setError(
+        "Price, cost, low-stock threshold, and stock cannot be negative.",
+      );
+      return;
+    }
+
+    if (
+      promotionEnabled &&
+      !Number.isFinite(
+        promotionValue,
+      )
+    ) {
+      setError(
+        "Enter a valid promotion value.",
       );
       return;
     }
@@ -799,7 +854,10 @@ export function ProductEditor({
           status,
           promotionEnabled,
           promotionType,
-          promotionValue,
+          promotionValue:
+            promotionEnabled
+              ? promotionValue
+              : 0,
           promotionStartsAt:
             promotionStartIso,
           promotionEndsAt:
@@ -1377,11 +1435,13 @@ export function ProductEditor({
                   !promotionEnabled
                 }
                 value={
-                  promotionValue
+                  numberInputValue(
+                    promotionValue,
+                  )
                 }
                 onChange={(event) =>
                   setPromotionValue(
-                    Number(
+                    parseNumberInput(
                       event.target.value,
                     ),
                   )
@@ -1441,8 +1501,16 @@ export function ProductEditor({
               <p className="mt-1 text-muted-foreground">
                 {promotionType ===
                 "percentage"
-                  ? `${promotionValue}% off the normal selling price`
-                  : `LKR ${promotionValue.toFixed(2)} off each unit`}
+                  ? Number.isFinite(
+                      promotionValue,
+                    )
+                    ? `${promotionValue}% off the normal selling price`
+                    : "Enter a discount value"
+                  : Number.isFinite(
+                      promotionValue,
+                    )
+                    ? `LKR ${promotionValue.toFixed(2)} off each unit`
+                    : "Enter a discount value"}
               </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
@@ -1686,7 +1754,9 @@ export function ProductEditor({
                         min="0"
                         step="0.01"
                         value={
-                          variant.price
+                          numberInputValue(
+                            variant.price,
+                          )
                         }
                         onChange={(
                           event,
@@ -1695,7 +1765,7 @@ export function ProductEditor({
                             variant.clientId,
                             {
                               price:
-                                Number(
+                                parseNumberInput(
                                   event
                                     .target
                                     .value,
@@ -1718,7 +1788,9 @@ export function ProductEditor({
                         min="0"
                         step="0.01"
                         value={
-                          variant.cost
+                          numberInputValue(
+                            variant.cost,
+                          )
                         }
                         onChange={(
                           event,
@@ -1727,7 +1799,7 @@ export function ProductEditor({
                             variant.clientId,
                             {
                               cost:
-                                Number(
+                                parseNumberInput(
                                   event
                                     .target
                                     .value,
@@ -1751,7 +1823,9 @@ export function ProductEditor({
                         min="0"
                         step="1"
                         value={
-                          variant.lowStockThreshold
+                          numberInputValue(
+                            variant.lowStockThreshold,
+                          )
                         }
                         onChange={(
                           event,
@@ -1760,7 +1834,7 @@ export function ProductEditor({
                             variant.clientId,
                             {
                               lowStockThreshold:
-                                Number(
+                                parseNumberInput(
                                   event
                                     .target
                                     .value,
@@ -1793,11 +1867,11 @@ export function ProductEditor({
                               variant.clientId,
                               {
                                 initialStock:
-                                  Number(
-                                    event
-                                      .target
-                                      .value,
-                                  ),
+                                parseNumberInput(
+                                  event
+                                    .target
+                                    .value,
+                                ),
                               },
                             )
                           }
