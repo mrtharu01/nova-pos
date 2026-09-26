@@ -257,15 +257,19 @@ where
   and
   procedure.prosecdef is true
 
-  and not (
-    coalesce(
-      procedure.proconfig,
-      array[]::text[]
+  and not exists (
+    select 1
+    from unnest(
+      coalesce(
+        procedure.proconfig,
+        array[]::text[]
+      )
+    ) as config(
+      value
     )
-    @>
-    array[
-      'search_path=""'
-    ]::text[]
+    where
+      config.value like
+        'search_path=%'
   );
 
 
